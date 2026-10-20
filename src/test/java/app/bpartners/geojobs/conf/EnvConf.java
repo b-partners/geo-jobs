@@ -44,7 +44,7 @@ public class EnvConf {
     registry.add("roofer.3d.bag.base.url", () -> "http://dummy.com");
     registry.add("roofer.3d.bag.api.key", () -> "dummy");
     registry.add("lidar.index.api.url", () -> "https://dummy.com");
-    registry.add("city-json-processor.api.url", () -> "https://dummy.com");
+    registry.add("threed.api.url", () -> "https://dummy.com");
     registry.add("mutation.detection.api.url", () -> "https://dummy.com");
     registry.add("geodata.api.url", () -> "https://dummy.com");
     registry.add("geodata.api.key", () -> "dummy_key");

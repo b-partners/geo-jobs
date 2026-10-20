@@ -1,12 +1,12 @@
-package app.bpartners.geojobs.service.ciytjsonprocessor;
+package app.bpartners.geojobs.service.threed;
 
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
-import app.bpartners.geojobs.service.ciytjsonprocessor.conf.CityJsonProcessorApiProperties;
-import app.bpartners.geojobs.service.ciytjsonprocessor.exception.CityJsonProcessorApiException;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.CityJsonProcessorResponse;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.CreateCityJsonFromFeatureFileUrl;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.Problem;
+import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
+import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.Lrg;
+import app.bpartners.geojobs.service.threed.model.Problem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import lombok.SneakyThrows;
@@ -23,28 +23,28 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
-public class CityJsonProcessorApiClient {
+public class ThreedApiClient {
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
-  private final CityJsonProcessorApiProperties properties;
-  private static final String PREFIX_PATH = "/cityjsons";
+  private final ThreedApiProperties properties;
+  private static final String PREFIX_PATH = "/lrg";
   private static final String SUFFIX_PATH = "/feature-file";
+  private static final String API_KEY_QUERY_PARAM = "geojobs-apikey";
 
-  public CityJsonProcessorApiClient(
-      @Qualifier("cityJsonProcessorRestTemplate") RestTemplate restTemplate,
-      CityJsonProcessorApiProperties properties,
+  public ThreedApiClient(
+      @Qualifier("threedRestTemplate") RestTemplate restTemplate,
+      ThreedApiProperties properties,
       ObjectMapper objectMapper) {
     this.restTemplate = restTemplate;
     this.properties = properties;
     this.objectMapper = objectMapper;
   }
 
-  public CityJsonProcessorResponse generate(String id, CreateCityJsonFromFeatureFileUrl request) {
+  public Lrg generate(String id, CreateLrgFromFeatureFileUrl request) {
     return generate(id, request, null);
   }
 
-  public CityJsonProcessorResponse generate(
-      String id, CreateCityJsonFromFeatureFileUrl request, String apiKey) {
+  public Lrg generate(String id, CreateLrgFromFeatureFileUrl request, String apiKey) {
     var uri = buildGenerateUri(id, apiKey);
 
     var headers = new HttpHeaders();
@@ -54,14 +54,12 @@ public class CityJsonProcessorApiClient {
     var entity = new HttpEntity<>(request, headers);
 
     try {
-      var response =
-          restTemplate.exchange(uri, HttpMethod.PUT, entity, CityJsonProcessorResponse.class);
+      var response = restTemplate.exchange(uri, HttpMethod.PUT, entity, Lrg.class);
       return response.getBody();
     } catch (HttpStatusCodeException e) {
       throw mapHttpError(e);
     } catch (RestClientException e) {
-      throw new CityJsonProcessorApiException(
-          "Unable to call CityJsonProcessor API : " + e.getMessage(), e);
+      throw new ThreedApiException("Unable to call Threed API : " + e.getMessage(), e);
     }
   }
 
@@ -71,7 +69,7 @@ public class CityJsonProcessorApiClient {
     var builder = fromUri(baseUri).pathSegment(PREFIX_PATH, id, SUFFIX_PATH);
 
     if (apiKey != null) {
-      builder = builder.queryParam("generatorApiKey", apiKey);
+      builder = builder.queryParam(API_KEY_QUERY_PARAM, apiKey);
     }
 
     var uri = builder.build().toUri();
@@ -79,7 +77,7 @@ public class CityJsonProcessorApiClient {
     return uri;
   }
 
-  private CityJsonProcessorApiException mapHttpError(HttpStatusCodeException e) {
+  private ThreedApiException mapHttpError(HttpStatusCodeException e) {
     String body = e.getResponseBodyAsString();
     String apiError = null;
     try {
@@ -93,8 +91,8 @@ public class CityJsonProcessorApiClient {
 
     var message =
         String.format(
-            "API roofer error (HTTP %s) : %s",
+            "Threed API error (HTTP %s) : %s",
             e.getStatusCode(), apiError != null ? apiError : body);
-    return new CityJsonProcessorApiException(e.getStatusCode(), apiError, message);
+    return new ThreedApiException(e.getStatusCode(), apiError, message);
   }
 }

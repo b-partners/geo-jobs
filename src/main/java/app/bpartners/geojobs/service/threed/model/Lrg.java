@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.ciytjsonprocessor.model;
+package app.bpartners.geojobs.service.threed.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CityJsonProcessorResponse {
+public class Lrg {
   @JsonProperty("id")
   private String id;
 
@@ -18,7 +18,7 @@ public class CityJsonProcessorResponse {
   private String fileUrl;
 
   @JsonProperty("status")
-  private ProcessingStatus status;
+  private GenerationStatus status;
 
   @JsonProperty("delimitationType")
   private DelimitationType delimitationType;

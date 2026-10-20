@@ -17,6 +17,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
+import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
@@ -46,6 +47,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
+  private final CityJSONThreedProcessor cityJSONThreedProcessor;
 
   // TODO: refactor
   public void accept(CityJSONRequestCreated created, boolean isSync) {
@@ -144,12 +146,27 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void processCityJSONFacade(CityJSONRequest request, boolean isSync) {
-    var generationType = getType(request);
-    if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
-      processByInternalMethod(request);
+    if (CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE.equals(
+        request.getDelimitationObjectType())) {
+      processByThreed(request);
       return;
     }
     processFullAutomaticFacade(request, isSync);
+  }
+
+  private void processByThreed(CityJSONRequest request) {
+    try {
+      var cityJsons = cityJSONThreedProcessor.apply(request);
+      succeedCityJsonRequest(request, cityJsons);
+    } catch (Exception e) {
+      log.error(
+          "Unable to process Lidar by threed for request {}, error {}",
+          request.getId(),
+          e.getMessage(),
+          e);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      throw e;
+    }
   }
 
   private void processByInternalMethod(CityJSONRequest request) {

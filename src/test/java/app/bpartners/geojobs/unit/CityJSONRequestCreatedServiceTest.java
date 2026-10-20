@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.model.lidar.LidarProcessorType.DEFAULT;
 import static app.bpartners.geojobs.model.lidar.LidarProcessorType.SAFE_MODE;
 import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
@@ -27,6 +28,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
+import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
@@ -52,6 +54,7 @@ class CityJSONRequestCreatedServiceTest {
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();
   CityJSONSafeModeProcessor cityJSONSafeModeProcessor = mock();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
+  CityJSONThreedProcessor cityJSONThreedProcessorMock = mock();
 
   CityJSONRequestCreatedService subject =
       new CityJSONRequestCreatedService(
@@ -65,7 +68,8 @@ class CityJSONRequestCreatedServiceTest {
           communityAuthorizationRepositoryMock,
           cityJson3DBagRooferProcessorMock,
           cityJSONSafeModeProcessor,
-          textureComputerMock);
+          textureComputerMock,
+          cityJSONThreedProcessorMock);
 
   @BeforeEach
   void setUp() {
@@ -198,11 +202,12 @@ class CityJSONRequestCreatedServiceTest {
   }
 
   @Test
-  void fail_process_by_internal_method_stores_message() {
+  void fail_process_by_threed_stores_message() {
     var request = mock(CityJSONRequest.class);
     when(request.getDelimitationObjectType())
         .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
-    when(request.getRequestDelimitations()).thenThrow(new IllegalStateException("no delimitation"));
+    when(cityJSONThreedProcessorMock.apply(request))
+        .thenThrow(new IllegalStateException("no delimitation"));
 
     var builder = runWithRequest(subject, request, FAILED, GEOMETRY_CONSTRUCTION, true);
 
@@ -212,8 +217,7 @@ class CityJSONRequestCreatedServiceTest {
   @Test
   void unavailable_points_have_no_message() {
     var request = mock(CityJSONRequest.class);
-    when(request.getDelimitationObjectType())
-        .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
+    when(request.getLidarProcessorType()).thenReturn(DEFAULT);
     when(request.getRequestDelimitations()).thenReturn(List.of());
     when(lasRoofsPointsExtractorMock.apply(any(), any()))
         .thenReturn(new PointsExtractionResult(Map.of()));
