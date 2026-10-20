@@ -169,6 +169,7 @@ class CityJSONRequestCreatedServiceTest {
     when(builderMock.status(status)).thenReturn(builderMock);
     when(builderMock.step(step)).thenReturn(builderMock);
     when(builderMock.message(any())).thenReturn(builderMock);
+    when(builderMock.cityJsons(any())).thenReturn(builderMock);
     when(builderMock.build()).thenReturn(request);
 
     var event =
