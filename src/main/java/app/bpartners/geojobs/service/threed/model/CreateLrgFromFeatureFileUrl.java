@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.ciytjsonprocessor.model;
+package app.bpartners.geojobs.service.threed.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCityJsonFromFeatureFileUrl {
+public class CreateLrgFromFeatureFileUrl {
   @JsonProperty("featureFileUrl")
   private String featureFileUrl;
 
