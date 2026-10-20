@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
@@ -77,42 +79,57 @@ class DetectionCreationMapperTest {
   }
 
   @Test
-  void refuses_a_layer_whose_precision_differs_from_the_required_resolution() {
+  void refuses_a_layer_whose_precision_is_available_for_none_of_the_objects() {
     givenLayerWithPrecision(10);
-    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
+    when(modelCardResolverMock.configurationsAvailableAt(any(), eq(10.0))).thenReturn(List.of());
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 20.0)));
 
     var exception =
         assertThrows(
             ApiException.class,
             () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
 
-    assertTrue(exception.getMessage().contains("image resolution must be 5 cm"));
+    assertTrue(exception.getMessage().contains("image resolution must be 5 or 20 cm"));
     assertTrue(exception.getMessage().contains("precisionLevelInCm = 10"));
   }
 
   @Test
-  void accepts_a_layer_matching_the_resolution_required_by_the_mapping() {
+  void keeps_every_object_when_all_of_them_are_available_at_the_layer_precision() {
     givenLayerWithPrecision(10);
-    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any())).thenReturn(Set.of(10.0));
+    when(modelCardResolverMock.configurationsAvailableAt(any(), eq(10.0)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
-    assertDoesNotThrow(
-        () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+    var actual = subject.apply(pointDetection(), randomUUID().toString(), null, false, null);
 
+    assertFalse(actual.getDetectableObjectConfigurations().isEmpty());
     verify(geoServerConfigurationMock).defaultGeoServerProperties("layer", 10);
   }
 
   @Test
-  void refuses_when_objects_require_different_resolutions() {
-    givenLayerWithPrecision(5);
-    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any()))
-        .thenReturn(new LinkedHashSet<>(List.of(5.0, 10.0)));
+  @SuppressWarnings("unchecked")
+  void keeps_only_the_objects_available_at_the_layer_precision() {
+    givenLayerWithPrecision(20);
+    when(modelCardResolverMock.configurationsAvailableAt(any(), eq(20.0)))
+        .thenAnswer(
+            invocation ->
+                ((List<DetectableObjectConfiguration>) invocation.getArgument(0))
+                    .stream().limit(1).toList());
 
-    var exception =
-        assertThrows(
-            ApiException.class,
-            () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+    var actual = subject.apply(pointDetection(), randomUUID().toString(), null, false, null);
 
-    assertTrue(exception.getMessage().contains("image resolution must be 5 or 10 cm"));
+    assertEquals(1, actual.getDetectableObjectConfigurations().size());
+    verify(geoServerConfigurationMock).defaultGeoServerProperties("layer", 20);
+  }
+
+  @Test
+  void refuses_a_layer_without_precision() {
+    givenLayerWithPrecision(null);
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
+
+    assertThrows(
+        ApiException.class,
+        () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
   }
 
   @Test

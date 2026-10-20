@@ -67,6 +67,8 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var detectionIdentifier = detection == null ? null : detection.getId();
     tileDetectionTask.setDetectionIdentifier(detectionIdentifier);
     tileDetectionTask.setDebugMode(detection != null && detection.isDebugMode());
+    tileDetectionTask.setSpatialResolutionInCm(
+        detection == null ? null : detection.spatialResolutionInCm());
     var tileImageBucketPath = tile.getBucketPath();
     File originalTileImageFile = null;
     if (detection != null) {

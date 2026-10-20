@@ -126,6 +126,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     var resolution =
         modelCardResolver.resolve(
             detectableObjectConfigurations,
+            tileDetectionTask.getSpatialResolutionInCm(),
             tileZoom(tile),
             modelCard -> supportsTileSize(modelCard, tileSize));
     var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
