@@ -192,7 +192,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
     var processorType = request.getLidarProcessorType();
     switch (processorType) {
-      case DEFAULT -> processByInternalMethod(request);
+      case DEFAULT -> processByThreed(request);
       case SAFE_MODE -> processFullAutomaticBySafeMode(request);
       case null, default -> processFullAutomaticBy3DBag(request);
     }
