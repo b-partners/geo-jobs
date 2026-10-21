@@ -72,7 +72,8 @@ class DetectionCreationMapperTest {
           modelCardResolverMock,
           geoServerConfigurationMock,
           geometryConverterMock,
-          buildingFinderMock);
+          buildingFinderMock,
+          new DefaultResolutionModelValidator());
 
   @Test
   void map_detection_with_detectable_object_model_list_ok() {
@@ -224,6 +225,77 @@ class DetectionCreationMapperTest {
   }
 
   @Test
+  void refuses_toiture_model_on_provided_20_cm_geo_server_properties_whatever_the_model_cards() {
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 20.0)));
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                subject.apply(
+                    polygonDetection(
+                        TOITURE, providedGeoServerProperties("FLUX_IGN_2025_20CM", 20)),
+                    randomUUID().toString(),
+                    null,
+                    false,
+                    null));
+
+    assertEquals(
+        "Cannot process detection : image resolution must be 5 cm. Current layer ="
+            + " FLUX_IGN_2025_20CM (precisionLevelInCm = 20). Model = BP_TOITURE",
+        exception.getMessage());
+  }
+
+  @Test
+  void refuses_toiture_model_on_a_resolved_20_cm_layer_whatever_the_model_cards() {
+    givenLayerWithPrecision(20);
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 20.0)));
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                subject.apply(
+                    polygonDetection(TOITURE), randomUUID().toString(), null, false, null));
+
+    assertTrue(exception.getMessage().contains("image resolution must be 5 cm"));
+    assertTrue(exception.getMessage().contains("precisionLevelInCm = 20"));
+    assertTrue(exception.getMessage().endsWith("Model = BP_TOITURE"));
+  }
+
+  @Test
+  void accepts_toiture_model_on_provided_5_cm_geo_server_properties() {
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
+
+    assertDoesNotThrow(
+        () ->
+            subject.apply(
+                polygonDetection(TOITURE, providedGeoServerProperties("layer-5cm", 5)),
+                randomUUID().toString(),
+                null,
+                false,
+                null));
+  }
+
+  @Test
+  void accepts_a_20_cm_layer_for_a_model_other_than_toiture_when_provided() {
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 20.0)));
+
+    assertDoesNotThrow(
+        () ->
+            subject.apply(
+                polygonDetection(
+                    REVETEMENT_OBSTACLE, providedGeoServerProperties("layer-20cm", 20)),
+                randomUUID().toString(),
+                null,
+                false,
+                null));
+  }
+
+  @Test
   void roof_obstacle_model_gets_lumineux_only_on_a_20_cm_layer() {
     var realResolver = new ModelCardResolver(roofObstacleConf(), mock(ModelCardRegistry.class));
     var realSubject = subjectWith(realResolver);
@@ -306,6 +378,11 @@ class DetectionCreationMapperTest {
     return pointDetection().geoServerProperties(geoServerProperties);
   }
 
+  private CreateDetection polygonDetection(
+      ModelName modelName, GeoServerProperties geoServerProperties) {
+    return polygonDetection(modelName).geoServerProperties(geoServerProperties);
+  }
+
   private static GeoServerProperties providedGeoServerProperties(Integer precisionLevelInCm) {
     return providedGeoServerProperties("provided-layer", precisionLevelInCm);
   }
@@ -348,7 +425,8 @@ class DetectionCreationMapperTest {
         resolver,
         geoServerConfigurationMock,
         geometryConverterMock,
-        buildingFinderMock);
+        buildingFinderMock,
+        new DefaultResolutionModelValidator());
   }
 
   private static InferenceModelCardConf roofObstacleConf() {

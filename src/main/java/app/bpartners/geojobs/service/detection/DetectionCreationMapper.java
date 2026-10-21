@@ -53,6 +53,7 @@ public class DetectionCreationMapper {
   private final GeoServerConfiguration geoServerConfiguration;
   private final GeometryConverter geometryConverter;
   private final BuildingFinder buildingFinder;
+  private final DefaultResolutionModelValidator defaultResolutionModelValidator;
 
   public Detection apply(
       CreateDetection createDetection,
@@ -82,7 +83,8 @@ public class DetectionCreationMapper {
             createDetection.getGeoServerProperties(),
             providedGeoJson,
             domainProvidedGeoJsonZone,
-            detectableObjectConfigurations);
+            detectableObjectConfigurations,
+            modelNames);
     var finalGeoServerProperties = geoServerSelection.geoServerProperties();
     var detection =
         Detection.builder()
@@ -169,7 +171,8 @@ public class DetectionCreationMapper {
       GeoServerProperties geoServerProperties,
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone,
       List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone,
-      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      List<ModelName> modelNames) {
     if (geoJsonZone != null
         && !multiPolygonGeoJsonZone.isEmpty()
         && (geoServerProperties == null
@@ -190,6 +193,7 @@ public class DetectionCreationMapper {
                               + latitude));
       String layer = mapLayer.name();
       var precisionLevelInCm = mapLayer.precisionLevelInCm();
+      defaultResolutionModelValidator.accept(modelNames, precisionLevelInCm, layer);
       var requestedConfigurations =
           requestedConfigurationsAt(detectableObjectConfigurations, precisionLevelInCm, layer);
 
@@ -204,6 +208,10 @@ public class DetectionCreationMapper {
     if (providedPrecisionLevelInCm == null) {
       return new GeoServerSelection(geoServerProperties, detectableObjectConfigurations);
     }
+    defaultResolutionModelValidator.accept(
+        modelNames,
+        providedPrecisionLevelInCm,
+        geoServerProperties.getGeoServerParameter().getLayers());
     return new GeoServerSelection(
         geoServerProperties,
         requestedConfigurationsAt(
