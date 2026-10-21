@@ -17,6 +17,7 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -57,6 +58,8 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.detection.inference.InferenceModelCardConf;
 import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
+import app.bpartners.geojobs.service.geodata.MapLayerResolver;
+import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
@@ -65,6 +68,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -101,6 +105,7 @@ class DetectionControllerIT extends FacadeIT {
   @Autowired FileWriter fileWriter;
   @MockBean CustomBucketComponent customBucketComponent;
   @MockBean InferenceModelCardConf inferenceModelCardConf;
+  @MockBean MapLayerResolver mapLayerResolver;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
@@ -116,6 +121,11 @@ class DetectionControllerIT extends FacadeIT {
     when(inferenceModelCardConf.getMappings())
         .thenReturn(
             List.of(new ModelCardMapping(DetectableType.TOITURE_REVETEMENT, "toiture", 21, 5.0)));
+    when(mapLayerResolver.apply(anyDouble(), anyDouble()))
+        .thenReturn(
+            Optional.of(
+                new GeodataMapLayer(
+                    "id", "grandlyon:ortho_2018", 2018, "GEOSERVER", null, null, 5)));
   }
 
   private Detection detectionWithoutZdj(String tilingJobId) {
