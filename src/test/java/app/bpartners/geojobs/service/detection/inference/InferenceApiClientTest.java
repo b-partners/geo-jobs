@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.detection.inference;
 
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.CHANGE_DETECTION;
+import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.CLASSIFICATION;
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.OBJECT_DETECTION;
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.SEMANTIC_SEGMENTATION;
 import static app.bpartners.geojobs.service.detection.inference.InferenceApiClient.API_KEY_HEADER;
@@ -36,7 +37,9 @@ class InferenceApiClientTest {
         {"modelCardId":"cimetiere-tombe-v1.0","problemType":"OBJECT_DETECTION",
          "imagesRequired":1,"maskRequired":false},
         {"modelCardId":"bp-toiture-mutation-v1.0","problemType":"CHANGE_DETECTION",
-         "imagesRequired":2,"maskRequired":true,"runnable":false}
+         "imagesRequired":2,"maskRequired":true,"runnable":false},
+        {"modelCardId":"signalisation-state-binary-dedup-raw","problemType":"CLASSIFICATION",
+         "imagesRequired":1,"maskRequired":false,"objectsRequired":true,"runnable":true}
       ]
       """;
   private static final String INFERENCE_JSON =
@@ -60,7 +63,7 @@ class InferenceApiClientTest {
 
     var modelCards = subject.getModelCards();
 
-    assertEquals(3, modelCards.size());
+    assertEquals(4, modelCards.size());
     var damages = modelCards.get(0);
     assertEquals("damages-ignore-index-c4", damages.modelCardId());
     assertEquals(SEMANTIC_SEGMENTATION, damages.problemType());
@@ -71,6 +74,7 @@ class InferenceApiClientTest {
     assertTrue(modelCards.get(1).isRunnable());
     assertEquals(CHANGE_DETECTION, modelCards.get(2).problemType());
     assertFalse(modelCards.get(2).isRunnable());
+    assertEquals(CLASSIFICATION, modelCards.get(3).problemType());
     server.verify();
   }
 
