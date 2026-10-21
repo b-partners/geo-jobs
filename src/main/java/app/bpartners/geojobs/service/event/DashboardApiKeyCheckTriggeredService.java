@@ -47,7 +47,6 @@ public class DashboardApiKeyCheckTriggeredService
     try {
       check(event);
     } catch (RuntimeException e) {
-      // a failed check must not kill its lane
       log.error(FAILURE_LOG_PREFIX + "Unable to check {}", event.getCommunityAuthorizationId(), e);
     }
     triggerNext(event);
