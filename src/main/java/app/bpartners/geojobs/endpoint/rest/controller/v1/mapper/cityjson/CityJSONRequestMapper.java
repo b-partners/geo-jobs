@@ -85,6 +85,7 @@ public class CityJSONRequestMapper {
         .status(
             CityJSONRequestStatusMapper.toGenericStatusRest(
                 cityJSONRequest.getStatus(), cityJSONRequest.getMessage()))
+        .warnings(cityJSONRequest.getWarnings())
         .delimitationObjectType(
             toRestDelimitationObjectType(cityJSONRequest.getDelimitationObjectType()))
         .delimitationType(cityJSONRequest.getDelimitationType())

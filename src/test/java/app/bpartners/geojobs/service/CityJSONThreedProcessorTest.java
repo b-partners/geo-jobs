@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -82,14 +83,29 @@ class CityJSONThreedProcessorTest {
   }
 
   @Test
-  void partial_generation_status_does_not_throw() {
-    var partialLrg =
+  void degraded_generation_status_does_not_throw() {
+    var degradedLrg =
         Lrg.builder()
-            .status(GenerationStatus.PARTIAL)
+            .status(GenerationStatus.DEGRADED)
             .message("1 roof panel(s) had no lidar coverage")
             .build();
 
-    assertDoesNotThrow(() -> CityJSONThreedProcessor.checkGenerationStatus(partialLrg));
+    assertDoesNotThrow(() -> CityJSONThreedProcessor.checkGenerationStatus(degradedLrg));
+  }
+
+  @Test
+  void no_lidar_generation_status_throws_as_no_lidar_data_found() {
+    var noLidarLrg =
+        Lrg.builder()
+            .status(GenerationStatus.NO_LIDAR)
+            .message("No lidar point covers the requested footprint")
+            .build();
+
+    var exception =
+        assertThrows(
+            ThreedApiException.class,
+            () -> CityJSONThreedProcessor.checkGenerationStatus(noLidarLrg));
+    assertTrue(exception.isNoLidarDataFound());
   }
 
   @Test

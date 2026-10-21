@@ -76,11 +76,22 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
+    succeedCityJsonRequest(request, cityJsonList, null, null);
+  }
+
+  /**
+   * Same as above, but also records why the generation is degraded (threed's DEGRADED status): the
+   * request still finishes successfully, it just carries a message and warnings for the client to
+   * see, instead of silently discarding them.
+   */
+  private void succeedCityJsonRequest(
+      CityJSONRequest request, List<CityJSON> cityJsonList, String message, List<String> warnings) {
     var updated =
         request.toBuilder()
             .status(FINISHED)
             .step(GEOMETRY_CONSTRUCTION)
-            .message(null)
+            .message(message)
+            .warnings(warnings)
             .cityJsons(cityJsonList)
             .build();
     entityManager.clear();
@@ -157,8 +168,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
 
   private void processByThreed(CityJSONRequest request) {
     try {
-      var cityJsons = cityJSONThreedProcessor.apply(request);
-      succeedCityJsonRequest(request, cityJsons);
+      var result = cityJSONThreedProcessor.applyWithDiagnostics(request);
+      succeedCityJsonRequest(
+          request, result.cityJsons(), result.degradedMessage(), result.warnings());
     } catch (ThreedApiException e) {
       log.error(
           "Unable to process Lidar by threed for request {}, error {}",

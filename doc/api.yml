@@ -3838,6 +3838,14 @@ components:
           $ref: '#/components/schemas/Status'
         step:
           $ref: '#/components/schemas/ThreeDRequestStep'
+        warnings:
+          type: array
+          description: >
+            Known, non-fatal reasons the generation is degraded (e.g. GROUND_ONLY_PANELS,
+            LOW_PANEL_LIDAR_DENSITY, LOW_GLOBAL_LIDAR_DENSITY), present once the request is
+            finished and threed reported it as degraded for at least one building.
+          items:
+            type: string
         cityJsonFileUrls:
           type: array
           items:
