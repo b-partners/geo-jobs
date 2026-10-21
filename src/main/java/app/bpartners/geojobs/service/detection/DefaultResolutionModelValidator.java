@@ -17,8 +17,8 @@ public class DefaultResolutionModelValidator {
   private static final Set<ModelName> MODELS_REQUIRING_DEFAULT_RESOLUTION = Set.of(TOITURE);
 
   public void accept(List<ModelName> modelNames, Integer precisionLevelInCm, String layer) {
-    if (precisionLevelInCm == null
-        || precisionLevelInCm.doubleValue() == ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM) {
+    if (precisionLevelInCm != null
+        && precisionLevelInCm.doubleValue() == ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM) {
       return;
     }
     var restrictedModelNames =

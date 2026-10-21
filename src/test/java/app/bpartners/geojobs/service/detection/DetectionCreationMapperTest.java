@@ -266,6 +266,58 @@ class DetectionCreationMapperTest {
   }
 
   @Test
+  void refuses_toiture_model_on_provided_layer_whose_precision_cannot_be_deduced() {
+    givenLayerWithPrecision(5);
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                subject.apply(
+                    polygonDetection(TOITURE, providedGeoServerProperties("other-layer", null)),
+                    randomUUID().toString(),
+                    null,
+                    false,
+                    null));
+
+    assertEquals(
+        "Cannot process detection : image resolution must be 5 cm. Current layer = other-layer"
+            + " (precisionLevelInCm = null). Model = BP_TOITURE",
+        exception.getMessage());
+  }
+
+  @Test
+  void refuses_toiture_model_on_provided_layer_without_any_imagery_layer_at_position() {
+    when(mapLayerResolverMock.apply(anyDouble(), anyDouble())).thenReturn(Optional.empty());
+
+    assertThrows(
+        ApiException.class,
+        () ->
+            subject.apply(
+                polygonDetection(TOITURE, providedGeoServerProperties("layer", null)),
+                randomUUID().toString(),
+                null,
+                false,
+                null));
+  }
+
+  @Test
+  void accepts_toiture_model_on_provided_layer_whose_deduced_precision_is_5_cm() {
+    givenLayerWithPrecision(5);
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
+
+    var actual =
+        subject.apply(
+            polygonDetection(TOITURE, providedGeoServerProperties("layer", null)),
+            randomUUID().toString(),
+            null,
+            false,
+            null);
+
+    assertEquals(5.0, actual.spatialResolutionInCm());
+  }
+
+  @Test
   void accepts_toiture_model_on_provided_5_cm_geo_server_properties() {
     when(modelCardResolverMock.supportedSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
 

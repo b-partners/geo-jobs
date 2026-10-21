@@ -206,6 +206,12 @@ public class DetectionCreationMapper {
         providedOrDeducedPrecisionLevelInCm(
             geoServerProperties, geoJsonZone, multiPolygonGeoJsonZone);
     if (providedPrecisionLevelInCm == null) {
+      if (geoServerProperties != null
+          && geoServerProperties.getGeoServerParameter() != null
+          && geoServerProperties.getGeoServerParameter().getLayers() != null) {
+        defaultResolutionModelValidator.accept(
+            modelNames, null, geoServerProperties.getGeoServerParameter().getLayers());
+      }
       return new GeoServerSelection(geoServerProperties, detectableObjectConfigurations);
     }
     defaultResolutionModelValidator.accept(
