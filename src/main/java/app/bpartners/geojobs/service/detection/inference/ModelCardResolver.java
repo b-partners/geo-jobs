@@ -30,7 +30,7 @@ public class ModelCardResolver {
   public ModelCardResolver(
       InferenceModelCardConf conf,
       ModelCardRegistry registry,
-      @Value("${detection.inference.api.enabled:true}") boolean inferenceApiEnabled) {
+      @Value("${detection.inference.api.enabled}") boolean inferenceApiEnabled) {
     this.conf = conf;
     this.registry = registry;
     this.inferenceApiEnabled = inferenceApiEnabled;
