@@ -8,7 +8,11 @@ public class ThreedApiException extends RuntimeException {
   private final HttpStatusCode statusCode;
   private final String apiError;
 
-  /** The {@code type} of the RFC 7807 Problem returned by threed, e.g. "NO_LIDAR_DATA_FOUND". */
+  /**
+   * A short error code identifying the failure, e.g. "NO_LIDAR_DATA_FOUND". Either the {@code type}
+   * of an RFC 7807 Problem returned by threed for a genuine HTTP error, or synthesized locally when
+   * threed reports the same situation inline as a 200 response with {@code status=NO_LIDAR}.
+   */
   private final String apiErrorType;
 
   public ThreedApiException(

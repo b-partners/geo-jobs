@@ -30,6 +30,7 @@ import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
+import app.bpartners.geojobs.service.ThreedGenerationResult;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
@@ -90,6 +91,7 @@ class CityJSONRequestCreatedServiceTest {
     when(cityJSONRequestBuilderMock.message(any())).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.cityJsons(List.of(cityJSONMock)))
         .thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.warnings(any())).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.build()).thenReturn(cityJSONRequestMock);
     when(cityJSONRequestMock.toBuilder()).thenReturn(cityJSONRequestBuilderMock);
     when(communityAuthorizationMock.isIntegrationTestUsage()).thenReturn(true);
@@ -173,6 +175,7 @@ class CityJSONRequestCreatedServiceTest {
     when(builderMock.step(step)).thenReturn(builderMock);
     when(builderMock.message(any())).thenReturn(builderMock);
     when(builderMock.cityJsons(any())).thenReturn(builderMock);
+    when(builderMock.warnings(any())).thenReturn(builderMock);
     when(builderMock.build()).thenReturn(request);
 
     var event =
@@ -206,7 +209,7 @@ class CityJSONRequestCreatedServiceTest {
     var request = mock(CityJSONRequest.class);
     when(request.getDelimitationObjectType())
         .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
-    when(cityJSONThreedProcessorMock.apply(request))
+    when(cityJSONThreedProcessorMock.applyWithDiagnostics(request))
         .thenThrow(new IllegalStateException("no delimitation"));
 
     var builder = runWithRequest(subject, request, FAILED, GEOMETRY_CONSTRUCTION, true);
@@ -219,7 +222,7 @@ class CityJSONRequestCreatedServiceTest {
     var request = mock(CityJSONRequest.class);
     when(request.getDelimitationObjectType())
         .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
-    when(cityJSONThreedProcessorMock.apply(request))
+    when(cityJSONThreedProcessorMock.applyWithDiagnostics(request))
         .thenThrow(
             new ThreedApiException(
                 HttpStatus.UNPROCESSABLE_ENTITY,
@@ -236,18 +239,38 @@ class CityJSONRequestCreatedServiceTest {
   void default_lidar_processor_type_routes_to_threed() {
     var request = mock(CityJSONRequest.class);
     when(request.getLidarProcessorType()).thenReturn(DEFAULT);
-    when(cityJSONThreedProcessorMock.apply(request)).thenReturn(List.of(mock(CityJSON.class)));
+    when(cityJSONThreedProcessorMock.applyWithDiagnostics(request))
+        .thenReturn(new ThreedGenerationResult(List.of(mock(CityJSON.class)), null, null));
 
     var builder = runWithRequest(subject, request, FINISHED, GEOMETRY_CONSTRUCTION, false);
 
     verify(builder).message(null);
+    verify(builder).warnings(null);
+  }
+
+  @Test
+  void degraded_generation_from_threed_still_succeeds_with_message_and_warnings() {
+    var request = mock(CityJSONRequest.class);
+    when(request.getLidarProcessorType()).thenReturn(DEFAULT);
+    when(cityJSONThreedProcessorMock.applyWithDiagnostics(request))
+        .thenReturn(
+            new ThreedGenerationResult(
+                List.of(mock(CityJSON.class)),
+                "1 roof panel(s) had no lidar coverage",
+                List.of("GROUND_ONLY_PANELS")));
+
+    var builder = runWithRequest(subject, request, FINISHED, GEOMETRY_CONSTRUCTION, false);
+
+    verify(builder).message("1 roof panel(s) had no lidar coverage");
+    verify(builder).warnings(List.of("GROUND_ONLY_PANELS"));
   }
 
   @Test
   void fail_process_by_threed_for_default_lidar_processor_type_stores_message() {
     var request = mock(CityJSONRequest.class);
     when(request.getLidarProcessorType()).thenReturn(DEFAULT);
-    when(cityJSONThreedProcessorMock.apply(request)).thenThrow(new RuntimeException("boom"));
+    when(cityJSONThreedProcessorMock.applyWithDiagnostics(request))
+        .thenThrow(new RuntimeException("boom"));
 
     var builder = runWithRequest(subject, request, FAILED, GEOMETRY_CONSTRUCTION, true);
 

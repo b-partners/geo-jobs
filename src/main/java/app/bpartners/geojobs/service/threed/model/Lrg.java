@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.threed.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,4 +26,8 @@ public class Lrg {
 
   @JsonProperty("message")
   private String message;
+
+  /** Known, non-fatal reasons the generation is degraded, e.g. "GROUND_ONLY_PANELS". */
+  @JsonProperty("warnings")
+  private List<String> warnings;
 }

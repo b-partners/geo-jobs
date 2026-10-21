@@ -34,8 +34,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +86,15 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
+    return applyWithDiagnostics(request).cityJsons();
+  }
+
+  /**
+   * Same generation as {@link #apply}, plus the message and warnings threed reported for any
+   * DEGRADED building, so the caller can surface them to its own API clients instead of discarding
+   * them.
+   */
+  public ThreedGenerationResult applyWithDiagnostics(CityJSONRequest request) {
     var apiKey = getApiKey(request.getCommunityOwnerId());
     var id = request.getId();
     var delimitationType = getDelimitationType(request);
@@ -104,37 +115,64 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
 
     cityJsonGenerationResponses.forEach(CityJSONThreedProcessor::checkGenerationStatus);
 
-    return cityJsonGenerationResponses.stream()
-        .map(
-            reponse -> {
-              var bucketFileKey = randomUUID() + JSON_EXTENSION;
-              var cityjsonFile = cityJSONDownloader.download(reponse.getFileUrl());
-              cityjsonFile.deleteOnExit();
+    var cityJsons =
+        cityJsonGenerationResponses.stream()
+            .map(response -> downloadAndStore(request, response))
+            .toList();
 
-              var textured = textureComputer.applyTexture(request, cityjsonFile);
+    var degraded =
+        cityJsonGenerationResponses.stream()
+            .filter(response -> response.getStatus() == GenerationStatus.DEGRADED)
+            .toList();
+    var degradedMessage =
+        degraded.isEmpty()
+            ? null
+            : degraded.stream()
+                .map(Lrg::getMessage)
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
+    var warnings =
+        degraded.stream()
+            .map(Lrg::getWarnings)
+            .filter(Objects::nonNull)
+            .flatMap(List::stream)
+            .distinct()
+            .toList();
 
-              bucketComponent.upload(textured, bucketFileKey);
+    return new ThreedGenerationResult(cityJsons, degradedMessage, warnings);
+  }
 
-              var cityJsonId = randomUUID().toString();
-              return CityJSON.builder()
-                  .id(cityJsonId)
-                  .request(request)
-                  .s3FileKey(bucketFileKey)
-                  .build();
-            })
-        .toList();
+  private CityJSON downloadAndStore(CityJSONRequest request, Lrg response) {
+    var bucketFileKey = randomUUID() + JSON_EXTENSION;
+    var cityjsonFile = cityJSONDownloader.download(response.getFileUrl());
+    cityjsonFile.deleteOnExit();
+
+    var textured = textureComputer.applyTexture(request, cityjsonFile);
+
+    bucketComponent.upload(textured, bucketFileKey);
+
+    var cityJsonId = randomUUID().toString();
+    return CityJSON.builder().id(cityJsonId).request(request).s3FileKey(bucketFileKey).build();
   }
 
   /**
-   * threed can report a PARTIAL generation (e.g. some roof panels had no lidar coverage and were
-   * rendered as ground only): the fileUrl is still usable, only log it. FAILED has no usable
-   * fileUrl to download, so it must not be treated as success.
+   * threed can report a DEGRADED generation (e.g. some roof panels had no lidar coverage and were
+   * rendered as ground only): the fileUrl is still usable, only log it. NO_LIDAR and FAILED have no
+   * usable fileUrl to download, so they must not be treated as success; NO_LIDAR is reported the
+   * same way the former HTTP 422 was, so callers keep mapping it to UNAVAILABLE.
    */
   static void checkGenerationStatus(Lrg response) {
-    if (response.getStatus() == GenerationStatus.PARTIAL) {
-      log.warn("Threed generation partially succeeded: {}", response.getMessage());
-    } else if (response.getStatus() == GenerationStatus.FAILED) {
-      throw new ThreedApiException("Threed generation failed: " + response.getMessage(), null);
+    switch (response.getStatus()) {
+      case NORMAL -> {}
+      case DEGRADED -> log.warn("Threed generation partially succeeded: {}", response.getMessage());
+      case NO_LIDAR ->
+          throw new ThreedApiException(
+              HttpStatus.OK,
+              "NO_LIDAR_DATA_FOUND",
+              response.getMessage(),
+              "Threed generation found no lidar coverage: " + response.getMessage());
+      case FAILED ->
+          throw new ThreedApiException("Threed generation failed: " + response.getMessage(), null);
     }
   }
 
