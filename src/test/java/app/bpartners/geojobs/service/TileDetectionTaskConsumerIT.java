@@ -88,7 +88,12 @@ class TileDetectionTaskConsumerIT {
           new ModelCardResolver(mock(), mock()));
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
-          objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
+          objectMapper,
+          restTemplateMock,
+          "dummyUrl",
+          customBucketComponentMock,
+          mock(),
+          new ModelCardResolver(mock(), mock()));
   DetectionFileObjectRepository detectionObjectHistoryRepositoryMock = mock();
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection =
       new TileCoordinatesPolygonIntersection(geometryPixelProjector, geometryConverter);

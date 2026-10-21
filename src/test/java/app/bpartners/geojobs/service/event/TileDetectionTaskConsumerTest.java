@@ -132,7 +132,7 @@ class TileDetectionTaskConsumerTest {
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
     when(maskRetrieverMock.apply(tileMock, roofMultiPolygonMock)).thenReturn(maskFileMock);
-    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
+    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),
@@ -228,7 +228,7 @@ class TileDetectionTaskConsumerTest {
     assertDoesNotThrow(() -> subject.accept(tileDetectionTask));
 
     verify(objectDetectorMock, never()).apply(any(), any(), any());
-    verify(roofCoveringDetectorMock, never()).apply(any(), any());
+    verify(roofCoveringDetectorMock, never()).apply(any(), any(), any());
     verify(detectionMapperMock, never()).toDetectedTile(any(), any(), any(), any(), any());
     verify(machineDetectedTileRepositoryMock, never()).save(any());
   }
@@ -296,7 +296,7 @@ class TileDetectionTaskConsumerTest {
     when(maskRetrieverMock.apply(tileMock, roofMultiPolygonMock)).thenReturn(maskFileMock);
     when(geometryConverterMock.readGeometryFromString(eq("roofGeometryActualInstanceStringValue")))
         .thenReturn(roofMultiPolygonMock);
-    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
+    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),
@@ -374,7 +374,7 @@ class TileDetectionTaskConsumerTest {
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
     when(maskRetrieverMock.apply(tileMock, roofMultiPolygonMock)).thenReturn(maskFileMock);
-    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
+    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),
@@ -442,7 +442,7 @@ class TileDetectionTaskConsumerTest {
     when(objectDetectorMock.apply(any(), any(), any())).thenReturn(detectionResponseMock);
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
-    when(roofCoveringDetectorMock.apply(any(Tile.class), eq(null)))
+    when(roofCoveringDetectorMock.apply(any(Tile.class), eq(null), any()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),

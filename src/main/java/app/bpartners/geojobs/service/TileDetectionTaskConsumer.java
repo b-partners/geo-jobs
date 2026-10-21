@@ -173,7 +173,8 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                 tile.toBuilder()
                     .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
                     .build(),
-                mask);
+                mask,
+                tileDetectionTask.getSpatialResolutionInCm());
     var machineDetectedTile =
         detectionMapper.toDetectedTile(
             detectionResponse,

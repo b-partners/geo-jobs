@@ -194,14 +194,14 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         detectionResponseAggregator.apply(v2Responses));
   }
 
-  private static int tileZoom(Tile tile) {
+  static int tileZoom(Tile tile) {
     var coordinates = tile.getCoordinates();
     return coordinates == null || coordinates.getZ() == null
         ? ModelCardResolver.DEFAULT_TILING_ZOOM
         : coordinates.getZ();
   }
 
-  private static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
+  static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
     if (tileSize == null) {
       return false;
     }
@@ -212,7 +212,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return tileSize.width == expectedWidth && tileSize.height == expectedHeight;
   }
 
-  private static Dimension readImageSize(File imageFile) {
+  static Dimension readImageSize(File imageFile) {
     try (var input = ImageIO.createImageInputStream(imageFile)) {
       var readers = ImageIO.getImageReaders(input);
       if (!readers.hasNext()) {
