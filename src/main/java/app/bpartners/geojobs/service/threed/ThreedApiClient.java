@@ -80,10 +80,12 @@ public class ThreedApiClient {
   private ThreedApiException mapHttpError(HttpStatusCodeException e) {
     String body = e.getResponseBodyAsString();
     String apiError = null;
+    String apiErrorType = null;
     try {
       if (!body.isBlank()) {
         var parsed = objectMapper.readValue(body, Problem.class);
         apiError = parsed.getDetail();
+        apiErrorType = parsed.getType();
       }
     } catch (Exception parseEx) {
       log.debug("Unable to parse response : {}", parseEx.getMessage());
@@ -93,6 +95,6 @@ public class ThreedApiClient {
         String.format(
             "Threed API error (HTTP %s) : %s",
             e.getStatusCode(), apiError != null ? apiError : body);
-    return new ThreedApiException(e.getStatusCode(), apiError, message);
+    return new ThreedApiException(e.getStatusCode(), apiErrorType, apiError, message);
   }
 }

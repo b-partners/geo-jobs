@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.lidar.LidarProcessorType.SAFE_MODE;
 import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.UNAVAILABLE;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.GEOMETRY_CONSTRUCTION;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -31,12 +32,14 @@ import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
 
 class CityJSONRequestCreatedServiceTest {
   CityJSONRequestRepository cityJSONRequestRepositoryMock = mock();
@@ -209,6 +212,24 @@ class CityJSONRequestCreatedServiceTest {
     var builder = runWithRequest(subject, request, FAILED, GEOMETRY_CONSTRUCTION, true);
 
     verify(builder).message("no delimitation");
+  }
+
+  @Test
+  void fail_process_by_threed_with_no_lidar_data_maps_to_unavailable() {
+    var request = mock(CityJSONRequest.class);
+    when(request.getDelimitationObjectType())
+        .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
+    when(cityJSONThreedProcessorMock.apply(request))
+        .thenThrow(
+            new ThreedApiException(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "NO_LIDAR_DATA_FOUND",
+                "No lidar data found",
+                "Threed API error (HTTP 422) : No lidar data found"));
+
+    var builder = runWithRequest(subject, request, UNAVAILABLE, GEOMETRY_CONSTRUCTION, true);
+
+    verify(builder).message("Threed API error (HTTP 422) : No lidar data found");
   }
 
   @Test

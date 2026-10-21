@@ -21,8 +21,11 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.threed.ThreedApiClient;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
 import app.bpartners.geojobs.service.threed.model.DelimitationType;
+import app.bpartners.geojobs.service.threed.model.GenerationStatus;
+import app.bpartners.geojobs.service.threed.model.Lrg;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -99,6 +102,8 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
                         apiKey))
             .toList();
 
+    cityJsonGenerationResponses.forEach(CityJSONThreedProcessor::checkGenerationStatus);
+
     return cityJsonGenerationResponses.stream()
         .map(
             reponse -> {
@@ -118,6 +123,19 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
                   .build();
             })
         .toList();
+  }
+
+  /**
+   * threed can report a PARTIAL generation (e.g. some roof panels had no lidar coverage and were
+   * rendered as ground only): the fileUrl is still usable, only log it. FAILED has no usable
+   * fileUrl to download, so it must not be treated as success.
+   */
+  static void checkGenerationStatus(Lrg response) {
+    if (response.getStatus() == GenerationStatus.PARTIAL) {
+      log.warn("Threed generation partially succeeded: {}", response.getMessage());
+    } else if (response.getStatus() == GenerationStatus.FAILED) {
+      throw new ThreedApiException("Threed generation failed: " + response.getMessage(), null);
+    }
   }
 
   private Set<String> retrieveGeometriesWithPresignedURL(CityJSONRequest request) {
