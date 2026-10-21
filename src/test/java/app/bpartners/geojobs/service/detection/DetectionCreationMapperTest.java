@@ -18,7 +18,6 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectableObjectTypeMapper;
@@ -170,7 +169,9 @@ class DetectionCreationMapperTest {
   }
 
   @Test
-  void does_not_check_provided_geo_server_properties_without_precision() {
+  void does_not_check_provided_geo_server_properties_without_precision_on_an_unknown_layer() {
+    givenLayerWithPrecision(20);
+
     var actual =
         subject.apply(
             pointDetection(providedGeoServerProperties(null)),
@@ -180,8 +181,46 @@ class DetectionCreationMapperTest {
             null);
 
     assertFalse(actual.getDetectableObjectConfigurations().isEmpty());
-    verifyNoInteractions(mapLayerResolverMock);
+    assertNull(actual.spatialResolutionInCm());
     verify(modelCardResolverMock, never()).supportedSpatialResolutionsInCm(any());
+  }
+
+  @Test
+  void deduces_the_missing_precision_of_provided_geo_server_properties_from_the_same_layer() {
+    givenLayerWithPrecision(20);
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 20.0)));
+
+    var actual =
+        subject.apply(
+            pointDetection(providedGeoServerProperties("layer", null)),
+            randomUUID().toString(),
+            null,
+            false,
+            null);
+
+    assertEquals(20.0, actual.spatialResolutionInCm());
+    verify(modelCardResolverMock).supportedSpatialResolutionsInCm(any());
+  }
+
+  @Test
+  void refuses_provided_geo_server_properties_whose_deduced_precision_is_not_supported() {
+    givenLayerWithPrecision(20);
+    when(modelCardResolverMock.supportedSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                subject.apply(
+                    pointDetection(providedGeoServerProperties("layer", null)),
+                    randomUUID().toString(),
+                    null,
+                    false,
+                    null));
+
+    assertTrue(exception.getMessage().contains("image resolution must be 5 cm"));
+    assertTrue(exception.getMessage().contains("precisionLevelInCm = 20"));
   }
 
   @Test
@@ -268,11 +307,14 @@ class DetectionCreationMapperTest {
   }
 
   private static GeoServerProperties providedGeoServerProperties(Integer precisionLevelInCm) {
+    return providedGeoServerProperties("provided-layer", precisionLevelInCm);
+  }
+
+  private static GeoServerProperties providedGeoServerProperties(
+      String layer, Integer precisionLevelInCm) {
     return new GeoServerProperties()
         .geoServerParameter(
-            new GeoServerParameter()
-                .layers("provided-layer")
-                .precisionLevelInCm(precisionLevelInCm));
+            new GeoServerParameter().layers(layer).precisionLevelInCm(precisionLevelInCm));
   }
 
   private CreateDetection roofObstaclePointDetection() {

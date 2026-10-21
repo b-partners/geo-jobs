@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
+import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.validator.FeatureTypeChecker;
@@ -198,9 +199,8 @@ public class DetectionCreationMapper {
           requestedConfigurations);
     }
     var providedPrecisionLevelInCm =
-        geoServerProperties == null || geoServerProperties.getGeoServerParameter() == null
-            ? null
-            : geoServerProperties.getGeoServerParameter().getPrecisionLevelInCm();
+        providedOrDeducedPrecisionLevelInCm(
+            geoServerProperties, geoJsonZone, multiPolygonGeoJsonZone);
     if (providedPrecisionLevelInCm == null) {
       return new GeoServerSelection(geoServerProperties, detectableObjectConfigurations);
     }
@@ -210,6 +210,31 @@ public class DetectionCreationMapper {
             detectableObjectConfigurations,
             providedPrecisionLevelInCm,
             geoServerProperties.getGeoServerParameter().getLayers()));
+  }
+
+  private Integer providedOrDeducedPrecisionLevelInCm(
+      GeoServerProperties geoServerProperties,
+      List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone,
+      List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone) {
+    if (geoServerProperties == null || geoServerProperties.getGeoServerParameter() == null) {
+      return null;
+    }
+    var parameter = geoServerProperties.getGeoServerParameter();
+    if (parameter.getPrecisionLevelInCm() != null) {
+      return parameter.getPrecisionLevelInCm();
+    }
+    if (parameter.getLayers() == null || geoJsonZone == null || multiPolygonGeoJsonZone.isEmpty()) {
+      return null;
+    }
+    var firstPoint = retrieveFirstPoint(geoJsonZone);
+    var deducedPrecisionLevelInCm =
+        mapLayerResolver
+            .apply(firstPoint.get(0).doubleValue(), firstPoint.get(1).doubleValue())
+            .filter(mapLayer -> parameter.getLayers().equals(mapLayer.name()))
+            .map(GeodataMapLayer::precisionLevelInCm)
+            .orElse(null);
+    parameter.setPrecisionLevelInCm(deducedPrecisionLevelInCm);
+    return deducedPrecisionLevelInCm;
   }
 
   private List<DetectableObjectConfiguration> requestedConfigurationsAt(
