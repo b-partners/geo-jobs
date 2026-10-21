@@ -22,6 +22,7 @@ import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Set;
@@ -158,6 +159,18 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     try {
       var cityJsons = cityJSONThreedProcessor.apply(request);
       succeedCityJsonRequest(request, cityJsons);
+    } catch (ThreedApiException e) {
+      log.error(
+          "Unable to process Lidar by threed for request {}, error {}",
+          request.getId(),
+          e.getMessage(),
+          e);
+      if (e.isNoLidarDataFound()) {
+        updateStatus(request, UNAVAILABLE, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      } else {
+        updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      }
+      throw e;
     } catch (Exception e) {
       log.error(
           "Unable to process Lidar by threed for request {}, error {}",

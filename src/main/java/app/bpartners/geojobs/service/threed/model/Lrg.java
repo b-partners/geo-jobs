@@ -22,4 +22,7 @@ public class Lrg {
 
   @JsonProperty("delimitationType")
   private DelimitationType delimitationType;
+
+  @JsonProperty("message")
+  private String message;
 }

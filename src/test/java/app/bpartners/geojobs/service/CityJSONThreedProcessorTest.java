@@ -3,7 +3,9 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.USER_DEFINED_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType.BUILDING_ROOF;
 import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +19,8 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.threed.ThreedApiClient;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
+import app.bpartners.geojobs.service.threed.model.GenerationStatus;
 import app.bpartners.geojobs.service.threed.model.Lrg;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -75,5 +79,24 @@ class CityJSONThreedProcessorTest {
                 .build());
 
     assertNotNull(actual);
+  }
+
+  @Test
+  void partial_generation_status_does_not_throw() {
+    var partialLrg =
+        Lrg.builder()
+            .status(GenerationStatus.PARTIAL)
+            .message("1 roof panel(s) had no lidar coverage")
+            .build();
+
+    assertDoesNotThrow(() -> CityJSONThreedProcessor.checkGenerationStatus(partialLrg));
+  }
+
+  @Test
+  void failed_generation_status_throws() {
+    var failedLrg = Lrg.builder().status(GenerationStatus.FAILED).message("boom").build();
+
+    assertThrows(
+        ThreedApiException.class, () -> CityJSONThreedProcessor.checkGenerationStatus(failedLrg));
   }
 }
