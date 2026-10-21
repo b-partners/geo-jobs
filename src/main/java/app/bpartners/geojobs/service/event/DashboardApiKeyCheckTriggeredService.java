@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered.LANES;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
@@ -27,18 +29,52 @@ public class DashboardApiKeyCheckTriggeredService
   private final UserAccountsApi userAccountsApi;
   private final String adminApiKey;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
+  private final EventProducer<DashboardApiKeyCheckTriggered> eventProducer;
 
   public DashboardApiKeyCheckTriggeredService(
       UserAccountsApi userAccountsApi,
       @Value("${admin.api.key}") String adminApiKey,
-      CommunityAuthorizationRepository communityAuthorizationRepository) {
+      CommunityAuthorizationRepository communityAuthorizationRepository,
+      EventProducer<DashboardApiKeyCheckTriggered> eventProducer) {
     this.userAccountsApi = userAccountsApi;
     this.adminApiKey = adminApiKey;
     this.communityAuthorizationRepository = communityAuthorizationRepository;
+    this.eventProducer = eventProducer;
   }
 
   @Override
   public void accept(DashboardApiKeyCheckTriggered event) {
+    try {
+      check(event);
+    } catch (RuntimeException e) {
+      // a failed check must not kill its lane
+      log.error(FAILURE_LOG_PREFIX + "Unable to check {}", event.getCommunityAuthorizationId(), e);
+    }
+    triggerNext(event);
+  }
+
+  private void triggerNext(DashboardApiKeyCheckTriggered event) {
+    if (event.getIndex() == null) {
+      return;
+    }
+    var ids = communityAuthorizationRepository.findAllIdsByIntegrationTestUsageFalse();
+    for (int next = event.getIndex() + LANES; next < ids.size(); next += LANES) {
+      var authorization = communityAuthorizationRepository.findById(ids.get(next));
+      if (authorization.isPresent()) {
+        try {
+          eventProducer.accept(
+              List.of(DashboardApiKeyCheckTriggered.of(authorization.get(), next)));
+        } catch (RuntimeException e) {
+          log.error(FAILURE_LOG_PREFIX + "Unable to trigger next check at index {}", next, e);
+          throw e;
+        }
+        return;
+      }
+    }
+    log.info("End of lane after index {}", event.getIndex());
+  }
+
+  private void check(DashboardApiKeyCheckTriggered event) {
     var userEmail = event.getEmail();
     var userId = event.getCommunityAuthorizationId();
     List<String> collectedErrors = new ArrayList<>();
