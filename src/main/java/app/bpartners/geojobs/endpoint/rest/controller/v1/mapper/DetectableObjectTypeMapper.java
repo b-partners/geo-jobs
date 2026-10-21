@@ -124,6 +124,7 @@ public class DetectableObjectTypeMapper {
       case POINTILLE -> null;
       case FLECHE_DIRECTIONNELLE -> FLECHE_DIRECTIONNELLE;
       case PLACE_STANDARD -> PLACE_STANDARD;
+      case NOT_BUILDING -> null;
     };
   }
 

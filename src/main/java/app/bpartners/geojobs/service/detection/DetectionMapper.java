@@ -87,6 +87,7 @@ public class DetectionMapper {
   public static final String POOL_STRING_VALUE = "POOL";
   public static final String BATI_STRING_VALUE = "BATI";
   public static final String SIDEWALK_STRING_VALUE = "SIDEWALK";
+  public static final String NOT_BUILDING_STRING_VALUE = "NOT_BUILDING";
 
   private final TileValidator tileValidator;
 
@@ -186,6 +187,7 @@ public class DetectionMapper {
       case HUMIDITE_CLAIR_AUTRES_STRING_VALUE -> DetectableType.HUMIDITE_CLAIR;
       case HUMIDITE_INTENSE_AUTRES_STRING_VALUE -> DetectableType.HUMIDITE_INTENSE;
       case PLACE_STANDARD_STRING_VALUE -> DetectableType.PLACE_STANDARD;
+      case NOT_BUILDING_STRING_VALUE -> DetectableType.NOT_BUILDING;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }

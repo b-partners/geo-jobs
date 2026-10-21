@@ -151,6 +151,7 @@ public class DetectionTaskMapper {
       case POINTILLE -> null;
       case FLECHE_DIRECTIONNELLE -> FLECHE_DIRECTIONNELLE;
       case TOMBE_NON_GEOMETRIQUE -> TOMBE_NON_GEOMETRIQUE;
+      case NOT_BUILDING -> null;
     };
   }
 }
