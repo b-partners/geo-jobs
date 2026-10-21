@@ -80,9 +80,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   /**
-   * Same as above, but also records why the generation is degraded (threed's DEGRADED status):
-   * the request still finishes successfully, it just carries a message and warnings for the client
-   * to see, instead of silently discarding them.
+   * Same as above, but also records why the generation is degraded (threed's DEGRADED status): the
+   * request still finishes successfully, it just carries a message and warnings for the client to
+   * see, instead of silently discarding them.
    */
   private void succeedCityJsonRequest(
       CityJSONRequest request, List<CityJSON> cityJsonList, String message, List<String> warnings) {
