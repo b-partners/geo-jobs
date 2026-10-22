@@ -13,6 +13,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.inference.DeployedModelCard;
 import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
@@ -32,6 +33,8 @@ import java.util.Optional;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
@@ -161,6 +164,38 @@ class RoofCoveringDetectorTest {
                 Map.of("0", region("background", 0, 50), "1", region("roof_x", 0, 5))));
 
     assertNull(subject.apply(tileAtZoom(21), tileMaskFile(), 5.0));
+  }
+
+  @SneakyThrows
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "roof_ardoise",
+        "roof_asphalte_bitume",
+        "roof_bac_acier",
+        "roof_beton_brut",
+        "roof_fibro_ciment",
+        "roof_gravier",
+        "roof_membrane_synthetique",
+        "roof_tole_ondulee",
+        "roof_tuiles",
+        "roof_zinc"
+      })
+  void map_every_class_of_the_toiture_revetements_model_card(String modelClass) {
+    mockInference(tileImageFile());
+    when(inferenceApiClientMock.infer(any(InferenceRequest.class)))
+        .thenReturn(inferenceResponse(Map.of("0", region(modelClass, 0, 10))));
+
+    var actual = subject.apply(tileAtZoom(21), tileMaskFile(), 5.0);
+
+    assertNotNull(actual);
+    assertEquals(RoofCoveringType.valueOf(modelClass.toUpperCase()), actual.primary().coating());
+    assertNull(actual.secondary());
+  }
+
+  @Test
+  void roof_covering_type_has_exactly_the_classes_of_the_toiture_revetements_model_card() {
+    assertEquals(10, RoofCoveringType.values().length);
   }
 
   @SneakyThrows
