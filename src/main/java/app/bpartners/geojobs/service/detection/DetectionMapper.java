@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -125,6 +126,7 @@ public class DetectionMapper {
           machineDetectedObjects.addAll(
               regions.stream()
                   .map(region -> toDetectedObject(region, detectedTileId, tileCoordinates.getZ()))
+                  .filter(Objects::nonNull)
                   .toList());
         });
 
@@ -144,6 +146,11 @@ public class DetectionMapper {
       DetectionResponseV2.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
+    var detectableType = toDetectableType(label);
+    if (detectableType == null) {
+      log.warn("Ignoring region with unknown label {}", label);
+      return null;
+    }
     Double confidence = null;
     try {
       if (regionAttributes.containsKey(REGION_CONFIDENCE_PROPERTY)) {
@@ -162,7 +169,7 @@ public class DetectionMapper {
             DetectableObjectType.builder()
                 .id(randomUUID().toString())
                 .objectId(objectId)
-                .detectableType(toDetectableType(label))
+                .detectableType(detectableType)
                 .build())
         .feature(toFeature(polygon, zoom))
         .computedConfidence(confidence)
@@ -170,6 +177,9 @@ public class DetectionMapper {
   }
 
   private DetectableType toDetectableType(String label) {
+    if (label == null) {
+      return null;
+    }
     return switch (label.toUpperCase()) {
       case ROOF_STRING_VALUE, TOITURE_REVETEMENT_STRING_VALUE -> DetectableType.TOITURE_REVETEMENT;
       case SOLAR_PANEL_STRING_VALUE, PV_STRING_VALUE, PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
@@ -217,7 +227,7 @@ public class DetectionMapper {
       case HUMIDITE_INTENSE_AUTRES_STRING_VALUE -> DetectableType.HUMIDITE_INTENSE;
       case PLACE_STANDARD_STRING_VALUE -> DetectableType.PLACE_STANDARD;
       case NOT_BUILDING_STRING_VALUE -> DetectableType.NOT_BUILDING;
-      default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
+      default -> null;
     };
   }
 

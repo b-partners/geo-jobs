@@ -133,6 +133,42 @@ class DetectionMapperTest {
   }
 
   @Test
+  void ignore_regions_with_unknown_label_instead_of_failing() {
+    var tile =
+        Tile.builder()
+            .id("tile_id")
+            .coordinates(new TileCoordinates().x(5000).y(2000).z(20))
+            .build();
+    var response =
+        DetectionResponseV2.builder()
+            .images(
+                Map.of(
+                    "filename",
+                    DetectionResponseV2.ImageData.builder()
+                        .regions(
+                            Map.of(
+                                "known",
+                                DetectionResponseV2.ImageData.Region.builder()
+                                    .regionAttributes(Map.of("label", "PISCINE"))
+                                    .shapeAttributes(shapes())
+                                    .build(),
+                                "unknown",
+                                DetectionResponseV2.ImageData.Region.builder()
+                                    .regionAttributes(Map.of("label", "not_a_known_label"))
+                                    .shapeAttributes(shapes())
+                                    .build()))
+                        .build()))
+            .build();
+
+    var actual = subject.toDetectedTile(response, tile, "parcel", "zdj", "parcelJob");
+
+    assertEquals(1, actual.getDetectedObjects().size());
+    assertEquals(
+        PISCINE,
+        actual.getDetectedObjects().getFirst().getDetectedObjectType().getDetectableType());
+  }
+
+  @Test
   void map_annotation_to_human_detected_object() {
     var zoom = 20;
     var tileId = randomUUID().toString();
