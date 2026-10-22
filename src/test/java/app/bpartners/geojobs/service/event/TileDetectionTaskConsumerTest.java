@@ -397,6 +397,94 @@ class TileDetectionTaskConsumerTest {
   }
 
   @Test
+  void compute_roof_covering_for_revetement_obstacle_detection_without_toiture_model() {
+    var detectableObjectConfigurations = List.of(mock(DetectableObjectConfiguration.class));
+    var zoneDetectionJobId = randomUUID().toString();
+    var parcelId = randomUUID().toString();
+    var parcelJobId = randomUUID().toString();
+    var tileMock = mock(Tile.class);
+    var detectionMock = mock(Detection.class);
+    var featureMock = mock(Feature.class);
+    var featureGeometryMock = mock(FeatureGeometry.class);
+    var featureMultiPolygonMock = mock(MultiPolygon.class);
+    var roofMultiPolygonMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
+    var maskFileMock = mock(File.class);
+    var detectionResponseMock = mock(DetectionResponseV2.class);
+    var machineDetectedTileMock = mock(MachineDetectedTile.class);
+    var providedFeatureMockDomain = mock(app.bpartners.geojobs.repository.model.Feature.class);
+    var roofDelimitationMockDomain = mock(app.bpartners.geojobs.repository.model.Feature.class);
+    var roofFeatureGeometryMock =
+        mock(app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.class);
+    var tileDetectionTask =
+        TileDetectionTask.builder()
+            .parcelId(parcelId)
+            .zoneDetectionJobId(zoneDetectionJobId)
+            .detectableObjectConfigurations(detectableObjectConfigurations)
+            .tile(tileMock)
+            .jobId(parcelJobId)
+            .build();
+    var tileBuilderMock = mock(Tile.TileBuilder.class);
+    when(tileBuilderMock.detectionE2Id(any())).thenReturn(tileBuilderMock);
+    when(tileBuilderMock.build()).thenReturn(tileMock);
+    when(tileMock.toBuilder()).thenReturn(tileBuilderMock);
+    when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
+    when(roofDelimitationMockDomain.getGeometry()).thenReturn(mock());
+    when(geometryConverterMock.apply(featureMultiPolygonMock.getCoordinates()))
+        .thenReturn(roofMultiPolygonMock);
+    when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
+    when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
+    when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
+    when(detectionMock.hasRevetementObstacleModelName()).thenReturn(true);
+    when(detectionMock.hasToitureModelName()).thenReturn(false);
+    when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
+    when(roofFeatureGeometryMock.getActualInstanceStringValue())
+        .thenReturn("roofGeometryActualInstanceStringValue");
+    var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
+    when(roofDelimitationMockDomain.getGeometry()).thenReturn(roofFeatureGeometryMock);
+    when(roofMultiPolygonMock.contains(eq(multiPolygonFromTileMock))).thenReturn(true);
+    when(multiPolygonFromTileMock.intersection(roofMultiPolygonMock))
+        .thenReturn(roofMultiPolygonMock);
+    when(detectionMock.getFeatureWithDelimitations())
+        .thenReturn(
+            List.of(
+                new FeatureWithDelimitation(
+                    providedFeatureMockDomain, List.of(roofDelimitationMockDomain))));
+    when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
+        .thenReturn(Optional.of(detectionMock));
+    when(geometryConverterMock.getMultiPolygonFromTile(0, 0, 20))
+        .thenReturn(multiPolygonFromTileMock);
+    when(geometryConverterMock.readGeometryFromString(eq("roofGeometryActualInstanceStringValue")))
+        .thenReturn(roofMultiPolygonMock);
+    when(roofMultiPolygonMock.intersection(any())).thenReturn(roofMultiPolygonMock);
+    when(machineDetectedTileRepositoryMock.save(any())).thenReturn(machineDetectedTileMock);
+    when(objectDetectorMock.apply(any(), any(), any())).thenReturn(detectionResponseMock);
+    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
+        .thenReturn(new MachineDetectedTile());
+    when(maskRetrieverMock.apply(tileMock, roofMultiPolygonMock)).thenReturn(maskFileMock);
+    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any()))
+        .thenReturn(
+            new RoofCoveringDetector.RoofCoveringDetectionResponse(
+                new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),
+                new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000L)));
+
+    var savedTile = new MachineDetectedTile();
+    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
+        .thenReturn(savedTile);
+
+    assertDoesNotThrow(() -> subject.accept(tileDetectionTask));
+
+    verify(roofCoveringDetectorMock).apply(any(Tile.class), eq(maskFileMock), any());
+    var detectedTileCaptor = ArgumentCaptor.forClass(MachineDetectedTile.class);
+    verify(machineDetectedTileRepositoryMock).save(detectedTileCaptor.capture());
+    var actualTile = detectedTileCaptor.getValue();
+    assertEquals(RoofCoveringType.ROOF_ARDOISE, actualTile.getPrimaryRoofCoveringType());
+    assertEquals(1100L, actualTile.getPrimaryRoofCoveringArea());
+    assertEquals(RoofCoveringType.ROOF_TUILES, actualTile.getSecondaryRoofCoveringType());
+    assertEquals(1000L, actualTile.getSecondaryRoofCoveringArea());
+  }
+
+  @Test
   void mask_null_when_detection_not_toiture() {
     var detectableObjectConfigurations = List.of(mock(DetectableObjectConfiguration.class));
     var zoneDetectionJobId = randomUUID().toString();

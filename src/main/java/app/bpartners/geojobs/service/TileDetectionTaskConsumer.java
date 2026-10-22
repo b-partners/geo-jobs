@@ -165,16 +165,12 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
 
     var roofCoveringResponse =
-        detection != null
-                && detection.hasRevetementObstacleModelName()
-                && !detection.hasToitureModelName()
-            ? null
-            : roofCoveringDetector.apply(
-                tile.toBuilder()
-                    .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
-                    .build(),
-                mask,
-                tileDetectionTask.getSpatialResolutionInCm());
+        roofCoveringDetector.apply(
+            tile.toBuilder()
+                .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
+                .build(),
+            mask,
+            tileDetectionTask.getSpatialResolutionInCm());
     var machineDetectedTile =
         detectionMapper.toDetectedTile(
             detectionResponse,
