@@ -94,9 +94,15 @@ class DetectionMapperTest {
     "roof_membrane_synthetique,BATI_AUTRES",
     "roof_tole_ondulee,BATI_AUTRES",
     "roof_tuiles,BATI_TUILES",
-    "roof_zinc,BATI_AUTRES"
+    "roof_zinc,BATI_AUTRES",
+    "zinc,BATI_AUTRES",
+    "tole_ondulee,BATI_AUTRES",
+    "bac_acier,BATI_AUTRES",
+    "asphalte_bitume,BATI_AUTRES",
+    "fibre_ciment,BATI_AUTRES",
+    "beton_brut,BATI_BETON"
   })
-  void map_every_toiture_revetements_model_class_to_a_detectable_type(
+  void map_every_toiture_revetements_and_revets_fp_model_class_to_a_detectable_type(
       String modelClass, DetectableType expected) {
     var tile =
         Tile.builder()

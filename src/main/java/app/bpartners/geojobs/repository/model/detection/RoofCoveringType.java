@@ -29,6 +29,14 @@ public enum RoofCoveringType {
     this.kHumidite = kHumidite;
   }
 
+  public static RoofCoveringType fromModelLabel(String label) {
+    var normalized = label == null ? "" : label.toUpperCase();
+    if (normalized.equals("FIBRE_CIMENT")) {
+      return ROOF_FIBRO_CIMENT;
+    }
+    return fromString(normalized.startsWith("ROOF_") ? normalized : "ROOF_" + normalized);
+  }
+
   // Used for mapping
   @JsonCreator
   public static RoofCoveringType fromString(String value) {

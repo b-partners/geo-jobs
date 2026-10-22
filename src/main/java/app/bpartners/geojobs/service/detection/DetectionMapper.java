@@ -86,6 +86,12 @@ public class DetectionMapper {
   public static final String ROOF_MEMBRANE_SYNTHETIQUE_STRING_VALUE = "ROOF_MEMBRANE_SYNTHETIQUE";
   public static final String ROOF_TOLE_ONDULEE_STRING_VALUE = "ROOF_TOLE_ONDULEE";
   public static final String ROOF_ZINC_STRING_VALUE = "ROOF_ZINC";
+  public static final String ZINC_STRING_VALUE = "ZINC";
+  public static final String TOLE_ONDULEE_STRING_VALUE = "TOLE_ONDULEE";
+  public static final String BAC_ACIER_STRING_VALUE = "BAC_ACIER";
+  public static final String ASPHALTE_BITUME_STRING_VALUE = "ASPHALTE_BITUME";
+  public static final String FIBRE_CIMENT_STRING_VALUE = "FIBRE_CIMENT";
+  public static final String BETON_BRUT_STRING_VALUE = "BETON_BRUT";
 
   public static final String SOLAR_PANEL_STRING_VALUE = "SOLAR_PANEL";
   public static final String PV_STRING_VALUE = "PV";
@@ -173,17 +179,24 @@ public class DetectionMapper {
       case POOL_STRING_VALUE, PISCINE_STRING_VALUE -> DetectableType.PISCINE;
       case BATI_STRING_VALUE -> DetectableType.BATI;
       case BATI_TUILES_STRING_VALUE, ROOF_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
-      case BATI_BETON_STRING_VALUE, ROOF_BETON_BRUT_STRING_VALUE -> DetectableType.BATI_BETON;
+      case BATI_BETON_STRING_VALUE, ROOF_BETON_BRUT_STRING_VALUE, BETON_BRUT_STRING_VALUE ->
+          DetectableType.BATI_BETON;
       case BATI_ARDOISE_STRING_VALUE, ROOF_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
       case BATI_AUTRES_STRING_VALUE,
-          ROOF_AUTRES_STRING_VALUE,
-          ROOF_ASPHALTE_BITUME_STRING_VALUE,
-          ROOF_BAC_ACIER_STRING_VALUE,
-          ROOF_FIBRO_CIMENT_STRING_VALUE,
-          ROOF_GRAVIER_STRING_VALUE,
-          ROOF_MEMBRANE_SYNTHETIQUE_STRING_VALUE,
-          ROOF_TOLE_ONDULEE_STRING_VALUE,
-          ROOF_ZINC_STRING_VALUE -> DetectableType.BATI_AUTRES;
+              ROOF_AUTRES_STRING_VALUE,
+              ROOF_ASPHALTE_BITUME_STRING_VALUE,
+              ROOF_BAC_ACIER_STRING_VALUE,
+              ROOF_FIBRO_CIMENT_STRING_VALUE,
+              ROOF_GRAVIER_STRING_VALUE,
+              ROOF_MEMBRANE_SYNTHETIQUE_STRING_VALUE,
+              ROOF_TOLE_ONDULEE_STRING_VALUE,
+              ROOF_ZINC_STRING_VALUE,
+              ZINC_STRING_VALUE,
+              TOLE_ONDULEE_STRING_VALUE,
+              BAC_ACIER_STRING_VALUE,
+              ASPHALTE_BITUME_STRING_VALUE,
+              FIBRE_CIMENT_STRING_VALUE ->
+          DetectableType.BATI_AUTRES;
       case LINE_STRING_VALUE -> DetectableType.LINE;
       case TROTTOIR_STRING_VALUE, SIDEWALK_STRING_VALUE -> DetectableType.TROTTOIR;
       case PARKING_STRING_VALUE -> DetectableType.PARKING;

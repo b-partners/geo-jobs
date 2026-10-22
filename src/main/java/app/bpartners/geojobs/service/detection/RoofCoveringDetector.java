@@ -165,7 +165,7 @@ public class RoofCoveringDetector {
 
   private static RoofCoveringType toCoating(String label) {
     try {
-      return RoofCoveringType.fromString(label);
+      return RoofCoveringType.fromModelLabel(label);
     } catch (IllegalArgumentException e) {
       log.warn("Ignoring unknown roof covering label {}", label);
       return null;

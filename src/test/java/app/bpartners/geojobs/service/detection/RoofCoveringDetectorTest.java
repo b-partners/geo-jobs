@@ -34,6 +34,7 @@ import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.io.ClassPathResource;
@@ -191,6 +192,29 @@ class RoofCoveringDetectorTest {
     assertNotNull(actual);
     assertEquals(RoofCoveringType.valueOf(modelClass.toUpperCase()), actual.primary().coating());
     assertNull(actual.secondary());
+  }
+
+  @SneakyThrows
+  @ParameterizedTest
+  @CsvSource({
+    "roof_tuiles,ROOF_TUILES",
+    "roof_ardoise,ROOF_ARDOISE",
+    "zinc,ROOF_ZINC",
+    "tole_ondulee,ROOF_TOLE_ONDULEE",
+    "bac_acier,ROOF_BAC_ACIER",
+    "asphalte_bitume,ROOF_ASPHALTE_BITUME",
+    "fibre_ciment,ROOF_FIBRO_CIMENT",
+    "beton_brut,ROOF_BETON_BRUT"
+  })
+  void map_every_class_of_the_revets_fp_model_card(String modelClass, RoofCoveringType expected) {
+    mockInference(tileImageFile());
+    when(inferenceApiClientMock.infer(any(InferenceRequest.class)))
+        .thenReturn(inferenceResponse(Map.of("0", region(modelClass, 0, 10))));
+
+    var actual = subject.apply(tileAtZoom(19), tileMaskFile(), 20.0);
+
+    assertNotNull(actual);
+    assertEquals(expected, actual.primary().coating());
   }
 
   @Test
