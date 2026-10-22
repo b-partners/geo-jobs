@@ -83,6 +83,19 @@ info:
       Expected result can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/prod/examples/detection/toiture_and_vegetation_example_response.json).
     - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
     
+    ### Detection on revetement and obstacles at 20 cm precision providing geojson polygon geometry
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_revetement_obstacle_polygon_payload_example.json).
+    Especially, note that `detectableObjectModelList` property must contain the `BP_REVETEMENT_OBSTACLE` model, which supports imagery layers of 5 cm and 20 cm.
+    Do not provide `geoServerProperties`: imagery layer, and so its precision, is automatically selected from the zone location, here a zone covered by 20 cm imagery.
+    Also, `geoJsonDelimitationType` property must be set as `USER_DEFINED_DELIMITATION` to use the provided polygon directly as the zone.
+    Provide your zone directly through the `geoJsonZone` property using polygon geometry.
+    In case you need to get images and its detections result for each detected feature, set `needsImageOutput` property to `true`.
+    2. Track the progress of your detection through `GET /detections/{id}`.
+    Once detection is on step POST_PROCESSING with status progression FINISHED and status health SUCCEEDED : 
+    - Images result, if needed, can be obtained through each feature inside `geoJsonZone` where `original_image_url` allow to retrieve the feature's image and `vgg_url` detection results to be displayed on obtained image.
+    - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
+    
     # 3D request examples
     
     ### Request 3D city models from textual, human-readable, addresses
@@ -861,6 +874,8 @@ paths:
                 $ref: '#/components/examples/DetectionRoofFromExcelAddresses'
               parcelGeoJsonZone:
                 $ref: '#/components/examples/DetectionParcelGeoJsonZone'
+              revetementObstacleGeoJsonPolygon20cm:
+                $ref: '#/components/examples/DetectionRevetementObstacleGeoJsonPolygon20cm'
       responses:
         200:
           description: Detection created or launched
@@ -1820,6 +1835,25 @@ components:
               type: "Point"
               coordinates: [ 3.068299423393144, 50.63012080308718 ]
         geoJsonOutput: "GEO_JSON"
+    DetectionRevetementObstacleGeoJsonPolygon20cm:
+      summary: Revetement and obstacle detection at 20 cm precision over a GeoJSON polygon zone
+      description: |
+        No `geoServerProperties` is provided: imagery layer is automatically selected from the zone location.
+        This example targets a zone whose available imagery is at 20 cm, a precision supported by `BP_REVETEMENT_OBSTACLE` along with 5 cm.
+      value:
+        emailReceiver: "your.email@mail.com"
+        zoneName: "your.zone.name"
+        detectableObjectModelList:
+          - modelName: "BP_REVETEMENT_OBSTACLE"
+        geoJsonZone:
+          - type: "Feature"
+            properties: { }
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ 2.4119102672653323, 47.064610035601 ], [ 2.411931509304379, 47.064534070630415 ], [ 2.4120377194994185, 47.06454854015698 ], [ 2.4120164774604107, 47.06462450510693 ], [ 2.4119102672653323, 47.064610035601 ] ]
+        geoJsonDelimitationType: "USER_DEFINED_DELIMITATION"
+        needsImageOutput: true
     DetectionSyncRoofGeoJsonPolygon:
       summary: Synchronous roof detection over a GeoJSON polygon zone
       value:
