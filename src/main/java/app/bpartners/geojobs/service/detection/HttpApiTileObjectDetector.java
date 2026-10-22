@@ -126,6 +126,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     var resolution =
         modelCardResolver.resolve(
             detectableObjectConfigurations,
+            tileDetectionTask.getSpatialResolutionInCm(),
             tileZoom(tile),
             modelCard -> supportsTileSize(modelCard, tileSize));
     var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
@@ -149,6 +150,20 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     lambdaTypes.addAll(resolution.unsupportedTypes());
     var lambdaConfigurations = lambdaConfigurations(detectableObjectConfigurations, lambdaTypes);
     if (!lambdaConfigurations.isEmpty()) {
+      var spatialResolutionInCm = tileDetectionTask.getSpatialResolutionInCm();
+      if (spatialResolutionInCm != null
+          && spatialResolutionInCm != ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM) {
+        throw new IllegalStateException(
+            "Detection lambdas only support a spatial resolution of "
+                + ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM
+                + " cm, but "
+                + lambdaTypes
+                + " cannot be detected by inference model cards at "
+                + spatialResolutionInCm
+                + " cm (tile size "
+                + tileSize
+                + ")");
+      }
       if (modelCardResolver.isInferenceApiEnabled()) {
         if (!resolution.unmappedTypes().isEmpty()) {
           log.warn(
@@ -179,14 +194,14 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         detectionResponseAggregator.apply(v2Responses));
   }
 
-  private static int tileZoom(Tile tile) {
+  static int tileZoom(Tile tile) {
     var coordinates = tile.getCoordinates();
     return coordinates == null || coordinates.getZ() == null
         ? ModelCardResolver.DEFAULT_TILING_ZOOM
         : coordinates.getZ();
   }
 
-  private static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
+  static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
     if (tileSize == null) {
       return false;
     }
@@ -197,7 +212,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return tileSize.width == expectedWidth && tileSize.height == expectedHeight;
   }
 
-  private static Dimension readImageSize(File imageFile) {
+  static Dimension readImageSize(File imageFile) {
     try (var input = ImageIO.createImageInputStream(imageFile)) {
       var readers = ImageIO.getImageReaders(input);
       if (!readers.hasNext()) {

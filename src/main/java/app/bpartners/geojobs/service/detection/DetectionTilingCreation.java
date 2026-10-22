@@ -30,7 +30,10 @@ public class DetectionTilingCreation
     var createJob = zoneTilingJobMapper.from(detection);
     var job = zoneTilingJobMapper.toDomain(createJob, detection.isSynchronous());
     var imageZooms =
-        modelCardResolver.tilingZoomLevels(detection.getDetectableObjectConfigurations()).stream()
+        modelCardResolver
+            .tilingZoomLevels(
+                detection.getDetectableObjectConfigurations(), detection.spatialResolutionInCm())
+            .stream()
             .map(ArcgisImageZoom::fromZoomLevel)
             .toList();
     var tilingTasks = zoneTilingJobService.getTilingTasks(createJob, job.getId(), imageZooms);

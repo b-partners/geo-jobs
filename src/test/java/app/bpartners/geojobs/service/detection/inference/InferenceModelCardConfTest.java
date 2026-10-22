@@ -101,6 +101,31 @@ class InferenceModelCardConfTest {
     assertEquals(2, subject.getMappings().size());
   }
 
+  @Test
+  void accepts_same_type_mapped_for_several_spatial_resolutions() {
+    givenConf(
+        """
+[
+  {"objectType": "OBSTACLE", "modelCardId": "obstacles5", "zoomLevel": 20, "spatialResolution": 5},
+  {"objectType": "OBSTACLE", "modelCardId": "obstacles10", "zoomLevel": 19, "spatialResolution": 10},
+  {"objectType": "OBSTACLE", "modelCardId": "obstacles20", "zoomLevel": 18, "spatialResolution": 20}
+]""");
+
+    assertEquals(3, subject.getMappings().size());
+  }
+
+  @Test
+  void rejects_same_type_mapped_twice_for_the_same_spatial_resolution() {
+    givenConf(
+        """
+[
+  {"objectType": "OBSTACLE", "modelCardId": "obstacles", "zoomLevel": 20, "spatialResolution": 5},
+  {"objectType": "OBSTACLE", "modelCardId": "obstacles-v2", "zoomLevel": 20, "spatialResolution": 5}
+]""");
+
+    assertThrows(IllegalStateException.class, () -> subject.getMappings());
+  }
+
   private void givenConf(String content) {
     when(bucketComponent.download(any(String.class))).thenReturn(confFile(content));
   }

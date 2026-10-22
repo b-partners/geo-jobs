@@ -88,7 +88,12 @@ class TileDetectionTaskConsumerIT {
           new ModelCardResolver(mock(), mock()));
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
-          objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
+          objectMapper,
+          restTemplateMock,
+          "dummyUrl",
+          customBucketComponentMock,
+          mock(),
+          new ModelCardResolver(mock(), mock()));
   DetectionFileObjectRepository detectionObjectHistoryRepositoryMock = mock();
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection =
       new TileCoordinatesPolygonIntersection(geometryPixelProjector, geometryConverter);
@@ -133,7 +138,8 @@ class TileDetectionTaskConsumerIT {
     var detectionMock = mock(Detection.class);
 
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
+    when(detectionMock.spatialResolutionInCm()).thenReturn(null);
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(createDetectableObjectConfigurations(detectionIdentifier, detectionJobId));
     when(detectionMock.getFeatureWithDelimitations())
