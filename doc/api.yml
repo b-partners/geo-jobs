@@ -3846,6 +3846,7 @@ components:
           description: |
             Detectable object models that can run on the location, according to the precision of its imagery layer.
             A model is listed when all the object types it detects are supported at that precision.
+            Unless the API key has the admin role, only the models it is authorized to use are listed.
           items:
             $ref: '#/components/schemas/DetectableObjectModel'
     LidarCoverage:
