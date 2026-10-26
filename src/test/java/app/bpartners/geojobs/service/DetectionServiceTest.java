@@ -57,6 +57,7 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.detection.*;
+import app.bpartners.geojobs.service.detection.DefaultResolutionModelValidator;
 import app.bpartners.geojobs.service.detection.DetectionCreationMapper;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
@@ -228,7 +229,8 @@ class DetectionServiceTest {
                   new ModelCardResolver(mock(), mock()),
                   geoServerConfiguration,
                   geometryConverterMock,
-                  buildingFinderMock),
+                  buildingFinderMock,
+                  new DefaultResolutionModelValidator()),
               fileWriterMock,
               detectionRoofSlopeValidatorMock,
               featureVggRequestedServiceMock));

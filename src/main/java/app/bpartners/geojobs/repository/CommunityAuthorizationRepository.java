@@ -36,4 +36,9 @@ public interface CommunityAuthorizationRepository
   Optional<CommunityAuthorization> findByDashboardApiKey(@Param("key") String actualKey);
 
   List<CommunityAuthorization> findAllByIntegrationTestUsageFalse();
+
+  @Query(
+      "SELECT c.id FROM community_authorization c WHERE c.integrationTestUsage = false ORDER BY"
+          + " c.id")
+  List<String> findAllIdsByIntegrationTestUsageFalse();
 }

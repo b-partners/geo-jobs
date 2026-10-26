@@ -90,6 +90,7 @@ public enum ObjectType {
               HUMIDITE_CLAIR,
               HUMIDITE_INTENSE,
               VELUX,
+              LUMINEUX,
               BATI_TUILES,
               BATI_BETON,
               BATI_ARDOISE,

@@ -25,10 +25,12 @@ class DetectionImageZoomResolverTest {
 
   @BeforeEach
   void setUp() {
-    when(modelCardResolverMock.tilingZoomOf(TOITURE_REVETEMENT)).thenReturn(21);
-    when(modelCardResolverMock.tilingZoomOf(USURE)).thenReturn(21);
-    when(modelCardResolverMock.tilingZoomOf(ARBRE)).thenReturn(20);
-    when(modelCardResolverMock.tilingZoomOf(PISCINE)).thenReturn(22);
+    when(modelCardResolverMock.tilingZoomOf(TOITURE_REVETEMENT, null)).thenReturn(21);
+    when(modelCardResolverMock.tilingZoomOf(USURE, null)).thenReturn(21);
+    when(modelCardResolverMock.tilingZoomOf(ARBRE, null)).thenReturn(20);
+    when(modelCardResolverMock.tilingZoomOf(PISCINE, null)).thenReturn(22);
+    when(modelCardResolverMock.tilingZoomOf(PISCINE, 20.0)).thenReturn(18);
+    when(modelCardResolverMock.tilingZoomOf(ARBRE, 20.0)).thenReturn(20);
   }
 
   @Test
@@ -54,6 +56,14 @@ class DetectionImageZoomResolverTest {
   }
 
   @Test
+  void uses_the_zoom_mapped_for_the_spatial_resolution_of_the_detection() {
+    var detection = detection(false, ARBRE, PISCINE);
+    when(detection.spatialResolutionInCm()).thenReturn(20.0);
+
+    assertEquals(20, subject.apply(detection));
+  }
+
+  @Test
   void toiture_zoom_is_the_highest_zoom_of_every_toiture_type() {
     assertEquals(21, subject.toitureZoom());
   }
@@ -76,7 +86,8 @@ class DetectionImageZoomResolverTest {
 
   private Detection detection(boolean toiture, DetectableType... types) {
     var detection = mock(Detection.class);
-    when(detection.hasToitureModelName()).thenReturn(toiture);
+    when(detection.hasRoofBasedModelName()).thenReturn(toiture);
+    when(detection.spatialResolutionInCm()).thenReturn(null);
     when(detection.getDetectableObjectConfigurations())
         .thenReturn(
             Arrays.stream(types)

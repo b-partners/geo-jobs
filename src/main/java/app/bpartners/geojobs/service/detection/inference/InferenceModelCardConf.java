@@ -42,6 +42,7 @@ public class InferenceModelCardConf {
 
   private static void validate(List<ModelCardMapping> mappings) {
     var firstMappingByModelCardId = new HashMap<String, ModelCardMapping>();
+    var firstMappingByTypeAndResolution = new HashMap<List<Object>, ModelCardMapping>();
     for (var mapping : mappings) {
       if (mapping.zoomLevel() == null || mapping.zoomLevel() <= 0) {
         throw new IllegalStateException("Invalid zoomLevel in inference conf: " + mapping);
@@ -58,6 +59,20 @@ public class InferenceModelCardConf {
                 + mapping.modelCardId()
                 + " is mapped with different zoomLevel or spatialResolution: "
                 + first
+                + " and "
+                + mapping);
+      }
+      var duplicate =
+          firstMappingByTypeAndResolution.putIfAbsent(
+              List.of(mapping.objectType(), mapping.spatialResolution()), mapping);
+      if (duplicate != null) {
+        throw new IllegalStateException(
+            "Object type "
+                + mapping.objectType()
+                + " is mapped several times for spatialResolution "
+                + mapping.spatialResolution()
+                + ": "
+                + duplicate
                 + " and "
                 + mapping);
       }

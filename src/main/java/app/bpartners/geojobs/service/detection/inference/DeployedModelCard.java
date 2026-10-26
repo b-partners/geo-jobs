@@ -16,7 +16,8 @@ public record DeployedModelCard(
     SEMANTIC_SEGMENTATION,
     CHANGE_DETECTION,
     INSTANCE_SEGMENTATION,
-    OBJECT_DETECTION
+    OBJECT_DETECTION,
+    CLASSIFICATION
   }
 
   public boolean isRunnable() {

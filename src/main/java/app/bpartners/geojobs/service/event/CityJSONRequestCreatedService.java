@@ -17,10 +17,12 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
+import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
+import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +48,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
+  private final CityJSONThreedProcessor cityJSONThreedProcessor;
 
   // TODO: refactor
   public void accept(CityJSONRequestCreated created, boolean isSync) {
@@ -73,11 +76,22 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
+    succeedCityJsonRequest(request, cityJsonList, null, null);
+  }
+
+  /**
+   * Same as above, but also records why the generation is degraded (threed's DEGRADED status): the
+   * request still finishes successfully, it just carries a message and warnings for the client to
+   * see, instead of silently discarding them.
+   */
+  private void succeedCityJsonRequest(
+      CityJSONRequest request, List<CityJSON> cityJsonList, String message, List<String> warnings) {
     var updated =
         request.toBuilder()
             .status(FINISHED)
             .step(GEOMETRY_CONSTRUCTION)
-            .message(null)
+            .message(message)
+            .warnings(warnings)
             .cityJsons(cityJsonList)
             .build();
     entityManager.clear();
@@ -144,12 +158,40 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void processCityJSONFacade(CityJSONRequest request, boolean isSync) {
-    var generationType = getType(request);
-    if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
-      processByInternalMethod(request);
+    if (CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE.equals(
+        request.getDelimitationObjectType())) {
+      processByThreed(request);
       return;
     }
     processFullAutomaticFacade(request, isSync);
+  }
+
+  private void processByThreed(CityJSONRequest request) {
+    try {
+      var result = cityJSONThreedProcessor.applyWithDiagnostics(request);
+      succeedCityJsonRequest(
+          request, result.cityJsons(), result.degradedMessage(), result.warnings());
+    } catch (ThreedApiException e) {
+      log.error(
+          "Unable to process Lidar by threed for request {}, error {}",
+          request.getId(),
+          e.getMessage(),
+          e);
+      if (e.isNoLidarDataFound()) {
+        updateStatus(request, UNAVAILABLE, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      } else {
+        updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      }
+      throw e;
+    } catch (Exception e) {
+      log.error(
+          "Unable to process Lidar by threed for request {}, error {}",
+          request.getId(),
+          e.getMessage(),
+          e);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
+      throw e;
+    }
   }
 
   private void processByInternalMethod(CityJSONRequest request) {
@@ -175,7 +217,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
     var processorType = request.getLidarProcessorType();
     switch (processorType) {
-      case DEFAULT -> processByInternalMethod(request);
+      case DEFAULT -> processByThreed(request);
       case SAFE_MODE -> processFullAutomaticBySafeMode(request);
       case null, default -> processFullAutomaticBy3DBag(request);
     }

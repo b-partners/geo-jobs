@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.ciytjsonprocessor.conf;
+package app.bpartners.geojobs.service.threed.conf;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +12,11 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @RequiredArgsConstructor
 @EnableConfigurationProperties
-public class CityJsonProcessorApiClientConfig {
-  private final CityJsonProcessorApiProperties properties;
+public class ThreedApiClientConfig {
+  private final ThreedApiProperties properties;
 
-  @Bean("cityJsonProcessorRestTemplate")
-  public RestTemplate rooferRestTemplate() {
+  @Bean("threedRestTemplate")
+  public RestTemplate threedRestTemplate() {
     var factory = new SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(properties.getConnectTimeoutMs());
     factory.setReadTimeout(properties.getReadTimeoutMs());

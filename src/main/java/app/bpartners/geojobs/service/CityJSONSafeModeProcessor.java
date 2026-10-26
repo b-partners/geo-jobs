@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CityJSONSafeModeProcessor implements Function<CityJSONRequest, List<CityJSON>> {
   private final CityJSON3DBagRooferProcessor rooferProcessor;
-  private final CityJSONInternalProcessor internalProcessor;
+  private final CityJSONThreedProcessor internalProcessor;
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
   @Override

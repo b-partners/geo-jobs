@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller.v1.mapper;
 import app.bpartners.geojobs.endpoint.rest.model.AreaCoverage;
 import app.bpartners.geojobs.endpoint.rest.model.CoverageImageryLayer;
 import app.bpartners.geojobs.endpoint.rest.model.CoverageType;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoPosition;
 import app.bpartners.geojobs.endpoint.rest.model.ImageryCoverage;
 import app.bpartners.geojobs.endpoint.rest.model.LidarCoverage;
@@ -49,7 +50,11 @@ public class CoverageRestMapper {
     return new ImageryCoverage()
         .covered(imagery.covered())
         .hd(imagery.hd())
-        .layer(imagery.layer() == null ? null : toRest(imagery.layer()));
+        .layer(imagery.layer() == null ? null : toRest(imagery.layer()))
+        .supportedDetectableModels(
+            imagery.supportedModels().stream()
+                .map(modelName -> new DetectableObjectModel().modelName(modelName))
+                .toList());
   }
 
   private static CoverageImageryLayer toRest(ImageryLayer layer) {

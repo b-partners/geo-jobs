@@ -7,6 +7,7 @@ info:
     
     # Versioning
     This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
+    - [v1.4.0 (2026-10-26)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-4-0-api.yml)
     - [v1.3.6 (2026-09-17)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-6-api.yml)
     - [v1.3.5 (2026-05-12)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-5-api.yml)
     - [v1.3.4 (2026-03-31)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-4-api.yml)
@@ -82,6 +83,21 @@ info:
     - Images result, if needed, can be obtained through each feature inside `geoJsonZone` where `original_image_url` allow to retrieve the feature's image and `vgg_url` detection results to be displayed on obtained image.
       Expected result can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/prod/examples/detection/toiture_and_vegetation_example_response.json).
     - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
+    
+    ### Detection on revetement and obstacles at 20 cm precision providing geojson polygon geometry
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_revetement_obstacle_polygon_payload_example.json).
+    Especially, note that `detectableObjectModelList` property must contain the `BP_REVETEMENT_OBSTACLE` model, which supports imagery layers of 5 cm and 20 cm.
+    Do not provide `geoServerProperties`: imagery layer, and so its precision, is automatically selected from the zone location, here a zone covered by 20 cm imagery.
+    Also, `geoJsonDelimitationType` property must be set as `USER_DEFINED_DELIMITATION` to use the provided polygon directly as the zone.
+    Provide your zone directly through the `geoJsonZone` property using polygon geometry.
+    In case you need to get images and its detections result for each detected feature, set `needsImageOutput` property to `true`.
+    2. Track the progress of your detection through `GET /detections/{id}`.
+    Once detection is on step POST_PROCESSING with status progression FINISHED and status health SUCCEEDED : 
+    - Images result, if needed, can be obtained through each feature inside `geoJsonZone` where `original_image_url` allow to retrieve the feature's image and `vgg_url` detection results to be displayed on obtained image.
+    - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
+    Expected API result example is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_revetement_obstacle_polygon_api_response_example.json).
+    Expected VGG example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/vgg/revetement_obstacle_polygon_20cm.json).
     
     # 3D request examples
     
@@ -833,6 +849,8 @@ paths:
                   $ref: '#/components/examples/DetectionRoofGeoJsonMultiPolygonResponse'
                 parcelGeoJsonZoneResult:
                   $ref: '#/components/examples/DetectionParcelGeoJsonZoneResponse'
+                revetementObstacleGeoJsonPolygon20cmResult:
+                  $ref: '#/components/examples/DetectionRevetementObstacleGeoJsonPolygon20cmResponse'
     post:
       tags:
         - Detection
@@ -861,6 +879,8 @@ paths:
                 $ref: '#/components/examples/DetectionRoofFromExcelAddresses'
               parcelGeoJsonZone:
                 $ref: '#/components/examples/DetectionParcelGeoJsonZone'
+              revetementObstacleGeoJsonPolygon20cm:
+                $ref: '#/components/examples/DetectionRevetementObstacleGeoJsonPolygon20cm'
       responses:
         200:
           description: Detection created or launched
@@ -873,6 +893,8 @@ paths:
                   $ref: '#/components/examples/DetectionRoofGeoJsonMultiPolygonResponse'
                 parcelGeoJsonZoneResult:
                   $ref: '#/components/examples/DetectionParcelGeoJsonZoneResponse'
+                revetementObstacleGeoJsonPolygon20cmResult:
+                  $ref: '#/components/examples/DetectionRevetementObstacleGeoJsonPolygon20cmResponse'
   '/detections/{id}/vgg':
     post:
       tags:
@@ -1820,6 +1842,25 @@ components:
               type: "Point"
               coordinates: [ 3.068299423393144, 50.63012080308718 ]
         geoJsonOutput: "GEO_JSON"
+    DetectionRevetementObstacleGeoJsonPolygon20cm:
+      summary: Revetement and obstacle detection at 20 cm precision over a GeoJSON polygon zone
+      description: |
+        No `geoServerProperties` is provided: imagery layer is automatically selected from the zone location.
+        This example targets a zone whose available imagery is at 20 cm, a precision supported by `BP_REVETEMENT_OBSTACLE` along with 5 cm.
+      value:
+        emailReceiver: "your.email@mail.com"
+        zoneName: "your.zone.name"
+        detectableObjectModelList:
+          - modelName: "BP_REVETEMENT_OBSTACLE"
+        geoJsonZone:
+          - type: "Feature"
+            properties: { }
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ 2.4119102672653323, 47.064610035601 ], [ 2.411931509304379, 47.064534070630415 ], [ 2.4120377194994185, 47.06454854015698 ], [ 2.4120164774604107, 47.06462450510693 ], [ 2.4119102672653323, 47.064610035601 ] ]
+        geoJsonDelimitationType: "USER_DEFINED_DELIMITATION"
+        needsImageOutput: true
     DetectionSyncRoofGeoJsonPolygon:
       summary: Synchronous roof detection over a GeoJSON polygon zone
       value:
@@ -2047,6 +2088,137 @@ components:
           "needsImageOutput": true,
           "toNotify": false
         }
+    DetectionRevetementObstacleGeoJsonPolygon20cmResponse:
+      summary: Detection result for the revetement and obstacle example at 20 cm precision
+      value:
+          {
+            "id": "<your-id>",
+            "step": {
+              "name": "MACHINE_DETECTION",
+              "status": {
+                "progression": "FINISHED",
+                "health": "SUCCEEDED",
+                "message": null,
+                "creationDatetime": "2026-01-01T00:00:00.00Z"
+              },
+              "statistics": [],
+              "updatedAt": "2026-01-01T00:00:00.00Z"
+            },
+            "geoJsonUrl": null,
+            "shapeUrl": null,
+            "excelUrl": null,
+            "imageUrl": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/image/revetement_obstacle_polygon_20cm.jpg",
+            "imageProperties": {
+              "width": 1024,
+              "height": 1024
+            },
+            "imageTileInfoOrigin": {
+              "size": {
+                "width": 1024,
+                "height": 1024
+              },
+              "coordinates": {
+                "x": 265656,
+                "y": 184267,
+                "z": 19
+              }
+            },
+            "pdfUrl": null,
+            "vggUrl": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/vgg/revetement_obstacle_polygon_20cm.json",
+            "addresses": [],
+            "roofDelimiter": {
+              "roofSlopeInDegree": null,
+              "roofHeightInMeter": null,
+              "polygon": [
+                [
+                  2.4119102672653323,
+                  47.064610035601
+                ],
+                [
+                  2.411931509304379,
+                  47.064534070630415
+                ],
+                [
+                  2.4120377194994185,
+                  47.06454854015698
+                ],
+                [
+                  2.4120164774604107,
+                  47.06462450510693
+                ],
+                [
+                  2.4119102672653323,
+                  47.064610035601
+                ]
+              ]
+            },
+            "creationDatetime": "2026-01-01T00:00:00.00Z",
+            "emailReceiver": "your.email@mail.com",
+            "zoneName": "your.zone.name",
+            "geoServerProperties": {
+              "geoServerUrl": "https://<geoserver-host>/geoserver/cite/wms",
+              "geoServerParameter": {
+                "service": "WMS",
+                "request": "GetMap",
+                "layers": "FLUX_IGN_2025_20CM",
+                "precisionLevelInCm": 20,
+                "styles": "",
+                "format": "image/jpeg",
+                "transparent": true,
+                "version": "1.3.0",
+                "width": 1024,
+                "height": 1024,
+                "srs": "EPSG:3857"
+              }
+            },
+            "detectableObjectModelList": [
+              {
+                "modelName": "BP_REVETEMENT_OBSTACLE"
+              }
+            ],
+            "geoJsonZone": [
+              {
+                "type": "Feature",
+                "geometry": {
+                  "coordinates": [
+                    [
+                      [
+                        2.4119102672653323,
+                        47.064610035601
+                      ],
+                      [
+                        2.411931509304379,
+                        47.064534070630415
+                      ],
+                      [
+                        2.4120377194994185,
+                        47.06454854015698
+                      ],
+                      [
+                        2.4120164774604107,
+                        47.06462450510693
+                      ],
+                      [
+                        2.4119102672653323,
+                        47.064610035601
+                      ]
+                    ]
+                  ],
+                  "type": "Polygon"
+                },
+                "properties": {
+                  "feature_id": "<random-uuid>",
+                  "vgg_file_url": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/vgg/revetement_obstacle_polygon_20cm.json",
+                  "original_image_url": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/image/revetement_obstacle_polygon_20cm.jpg",
+                  "zoom": 20
+                }
+              }
+            ],
+            "geoJsonDelimitationType": "USER_DEFINED_DELIMITATION",
+            "geoJsonOutput": "ZIP",
+            "needsImageOutput": true,
+            "toNotify": false
+          }
     DetectionSyncRoofGeoJsonPolygonResponse:
       summary: Synchronous detection result for the roof GeoJSON polygon example
       value:
@@ -3084,6 +3256,7 @@ components:
         - HUMIDITE
         - RISQUE_FEU
         - VELUX
+        - LUMINEUX
         - BATI_TUILES
         - BATI_BETON
         - BATI_ARDOISE
@@ -3436,6 +3609,7 @@ components:
           - **BP_TAMPONS** : Tampons de voiries, avaloirs, tampons hydroliques
           - **BP_CIMETIERE** : Cimetière, espace arboré, espace vert, tombe simple, tombe double, tombe non géométrique
           - **BP_STATIONNEMENT** : Parking, Place standard
+          - **BP_REVETEMENT_OBSTACLE** : Obstacle, cheminee, velux, panneau photovoltaique, lumineux. Supports imagery layers of 5 cm and 20 cm
       enum:
         - BP_TOITURE
         - BP_LOM
@@ -3450,6 +3624,7 @@ components:
         - BP_TAMPONS
         - BP_CIMETIERE
         - BP_STATIONNEMENT
+        - BP_REVETEMENT_OBSTACLE
     CreateDetectionDebugMode:
       allOf:
         - $ref: '#/components/schemas/CreateDetection'
@@ -3666,6 +3841,13 @@ components:
           description: True when the layer precision is 5 cm
         layer:
           $ref: '#/components/schemas/CoverageImageryLayer'
+        supportedDetectableModels:
+          type: array
+          description: |
+            Detectable object models that can run on the location, according to the precision of its imagery layer.
+            A model is listed when all the object types it detects are supported at that precision.
+          items:
+            $ref: '#/components/schemas/DetectableObjectModel'
     LidarCoverage:
       type: object
       properties:
@@ -3835,6 +4017,14 @@ components:
           $ref: '#/components/schemas/Status'
         step:
           $ref: '#/components/schemas/ThreeDRequestStep'
+        warnings:
+          type: array
+          description: >
+            Known, non-fatal reasons the generation is degraded (e.g. GROUND_ONLY_PANELS,
+            LOW_PANEL_LIDAR_DENSITY, LOW_GLOBAL_LIDAR_DENSITY), present once the request is
+            finished and threed reported it as degraded for at least one building.
+          items:
+            type: string
         cityJsonFileUrls:
           type: array
           items:
