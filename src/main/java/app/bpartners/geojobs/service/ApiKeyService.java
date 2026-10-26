@@ -34,6 +34,11 @@ public class ApiKeyService {
           communityAuthorizationRepository.findByEmail(auth.getEmail());
       if (optionalCommunityAuthorization.isPresent()) {
         var communityAuthorization = optionalCommunityAuthorization.get();
+        if (auth.getDashboardApiKey() != null
+            && !auth.getDashboardApiKey().equals(communityAuthorization.getDashboardApiKey())) {
+          communityAuthorization.setDashboardApiKey(auth.getDashboardApiKey());
+          communityAuthorizationRepository.save(communityAuthorization);
+        }
         return List.of(
             new ApiKey(
                 communityAuthorization.getMostRecentApiKey().getKeyValue(),
