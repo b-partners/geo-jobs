@@ -4,6 +4,7 @@ import app.bpartners.geojobs.endpoint.rest.V1RestController;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.CoverageRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.AreaCoverage;
 import app.bpartners.geojobs.endpoint.rest.model.CoverageType;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityModelCoverageFilter;
 import app.bpartners.geojobs.service.coverage.AreaCoverageService;
 import app.bpartners.geojobs.service.coverage.CoverageLocationResolver;
 import java.util.List;
@@ -17,6 +18,7 @@ public class CoverageController {
   private final CoverageLocationResolver locationResolver;
   private final AreaCoverageService service;
   private final CoverageRestMapper mapper;
+  private final CommunityModelCoverageFilter modelCoverageFilter;
 
   @GetMapping("/coverage")
   public AreaCoverage getAreaCoverage(
@@ -25,6 +27,7 @@ public class CoverageController {
       @RequestParam(value = "latitude", required = false) Double latitude,
       @RequestParam(value = "types", required = false) List<CoverageType> types) {
     var location = locationResolver.resolve(address, longitude, latitude);
-    return mapper.toRest(service.check(location, mapper.toDomain(types)));
+    var coverage = service.check(location, mapper.toDomain(types));
+    return mapper.toRest(modelCoverageFilter.restrictToAuthorizedModels(coverage));
   }
 }

@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import app.bpartners.geojobs.endpoint.rest.controller.v1.CoverageController;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.CoverageRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.ModelName;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityModelCoverageFilter;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.coverage.AreaCoverageService;
 import app.bpartners.geojobs.service.coverage.Coverage2D;
@@ -31,12 +33,16 @@ class CoverageControllerTest {
   static final CoverageLocation LOCATION = new CoverageLocation(2.35, 48.85);
   CoverageLocationResolver locationResolverMock = mock();
   AreaCoverageService serviceMock = mock();
+  CommunityModelCoverageFilter modelCoverageFilterMock = mock();
   CoverageController subject =
-      new CoverageController(locationResolverMock, serviceMock, new CoverageRestMapper());
+      new CoverageController(
+          locationResolverMock, serviceMock, new CoverageRestMapper(), modelCoverageFilterMock);
   MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
+    when(modelCoverageFilterMock.restrictToAuthorizedModels(any()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
     mockMvc = MockMvcBuilders.standaloneSetup(subject).build();
   }
 
