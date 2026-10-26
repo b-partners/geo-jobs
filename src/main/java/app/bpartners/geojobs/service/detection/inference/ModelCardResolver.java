@@ -4,6 +4,7 @@ import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -52,10 +53,15 @@ public class ModelCardResolver {
 
   public Set<Double> supportedSpatialResolutionsInCm(
       List<DetectableObjectConfiguration> objectConfigurations) {
+    return supportedSpatialResolutionsInCmOfTypes(
+        objectConfigurations.stream().map(DetectableObjectConfiguration::getObjectType).toList());
+  }
+
+  public Set<Double> supportedSpatialResolutionsInCmOfTypes(Collection<DetectableType> types) {
     var mappingsByType = mappingsByType();
     Set<Double> supported = null;
-    for (var configuration : objectConfigurations) {
-      var typeResolutions = resolutionsOf(mappingsByType, configuration.getObjectType());
+    for (var type : types) {
+      var typeResolutions = resolutionsOf(mappingsByType, type);
       if (supported == null) {
         supported = new LinkedHashSet<>(typeResolutions);
       } else {

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
 import app.bpartners.geojobs.service.geodata.GeodataMapLayerClient;
@@ -33,16 +34,19 @@ class AreaCoverageServiceTest {
   GeodataMapLayerClient mapLayerClientMock = mock();
   GeodataLidarApiClient lidarApiClientMock = mock();
   LidarFileChecker lidarFileCheckerMock = mock();
+  SupportedModelResolver supportedModelResolverMock = mock();
   AreaCoverageService subject =
       new AreaCoverageService(
           new MapLayerResolver(mapLayerClientMock, mock()),
           lidarApiClientMock,
           lidarFileCheckerMock,
-          new CoverageConf(5));
+          new CoverageConf(5),
+          supportedModelResolverMock);
 
   @BeforeEach
   void setUp() {
     when(lidarFileCheckerMock.check(any())).thenReturn(LidarFileStatus.VALID);
+    when(supportedModelResolverMock.supportedModels(5)).thenReturn(List.of(ModelName.TOITURE));
   }
 
   private static MapLayerActual actualWithPrecision(Integer precisionInCm) {
@@ -59,7 +63,12 @@ class AreaCoverageServiceTest {
     var actual = subject.check2D(2.3, 48.5);
 
     assertEquals(
-        new Coverage2D(true, true, new ImageryLayer("layer", 2024, "GEOSERVER", 5)), actual);
+        new Coverage2D(
+            true,
+            true,
+            new ImageryLayer("layer", 2024, "GEOSERVER", 5),
+            List.of(ModelName.TOITURE)),
+        actual);
   }
 
   @Test

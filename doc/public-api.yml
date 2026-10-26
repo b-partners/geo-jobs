@@ -7,7 +7,8 @@ info:
     
     # Versioning
     This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
-    - [v1.3.6 (2026-09-17)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-6-api.yml) *(current)*
+    - [v1.4.0 (2026-10-26)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-4-0-api.yml) *(current)*
+    - [v1.3.6 (2026-09-17)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-6-api.yml)
     - [v1.3.5 (2026-05-12)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-5-api.yml)
     - [v1.3.4 (2026-03-31)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-4-api.yml)
     - [v1.3.3 (2026-03-11)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/version/v1-3-3-api.yml)
@@ -127,13 +128,14 @@ info:
     3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
     Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_file_example.json).
 
-  version: '1.3.6'
+  version: '1.4.0'
 
 servers:
   - url: 'https://api.birdia.fr'
 tags:
   - name: Usage
   - name: Image
+  - name: Coverage
   - name: Detection
   - name: ThreeD
     description: Refers to 3D resources such as roof/building 3D model
@@ -617,6 +619,67 @@ paths:
               examples:
                 3DResponseWithStatusSucceeded:
                   $ref: '#/components/examples/ThreeDResponseWithProcessingStatusExample'
+  '/coverage':
+    get:
+      tags:
+        - Coverage
+      operationId: getAreaCoverage
+      summary: Check whether an address or a point is covered by HD imagery and by lidar data
+      description: |
+        Tells whether the location can be processed, either from 2D imagery or from lidar data (3D).
+        Provide either a textual address, or point coordinates (longitude and latitude), but not both.
+
+        - **Imagery**: the location is covered when at least one imagery layer is reachable, and `hd` when the
+          best reachable layer has a 5 cm precision, the only precision supported by detection models.
+        - **Lidar**: the location is covered when lidar files are available for it and their header can be read.
+
+        When geodata providers cannot be reached, the response is a `504` and never a "not covered" result.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: query
+          name: address
+          required: false
+          description: Address to check, resolved into a point
+          schema:
+            type: string
+        - in: query
+          name: longitude
+          required: false
+          schema:
+            type: number
+        - in: query
+          name: latitude
+          required: false
+          schema:
+            type: number
+        - in: query
+          name: types
+          required: false
+          description: Coverage types to check, both when none provided
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CoverageType'
+      responses:
+        200:
+          description: Coverage of the location, only for the requested types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaCoverage'
+        400:
+          $ref: '#/components/responses/400'
+        403:
+          $ref: '#/components/responses/403'
+        504:
+          description: Geodata providers are unreachable, coverage cannot be determined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestException'
   '/keys':
     delete:
       tags:
@@ -1685,6 +1748,19 @@ components:
         cityJsonFileUrls: null
         delimitationObjectType: "BUILDING_ROOF"
         delimitationType: "PARCEL_FREE_DELIMITATION"
+  responses:
+    400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestException'
+    403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotAuthorizedException'
   parameters:
     IdentifierParameter:
       in: path
@@ -2124,6 +2200,81 @@ components:
           $ref: '#/components/schemas/GeoPosition'
         zoomLevel:
           $ref: '#/components/schemas/ImageZoomLevel'
+    CoverageType:
+      type: string
+      enum:
+        - IMAGERY
+        - LIDAR
+    CoverageImageryLayer:
+      type: object
+      properties:
+        name:
+          type: string
+        year:
+          type: integer
+        source:
+          type: string
+        precisionInCm:
+          type: integer
+    ImageryCoverage:
+      type: object
+      properties:
+        covered:
+          type: boolean
+        hd:
+          type: boolean
+          description: True when the layer precision is 5 cm
+        layer:
+          $ref: '#/components/schemas/CoverageImageryLayer'
+        supportedDetectableModels:
+          type: array
+          description: |
+            Detectable object models that can run on the location, according to the precision of its imagery layer.
+            A model is listed when all the object types it detects are supported at that precision.
+          items:
+            $ref: '#/components/schemas/DetectableObjectModel'
+    LidarCoverage:
+      type: object
+      properties:
+        covered:
+          type: boolean
+        region:
+          type: string
+          description: Region the lidar data comes from, e.g. FRANCE, SWITZERLAND or WALLONIA
+        crs:
+          type: string
+          description: EPSG code of the coordinate reference system local to the region
+        fileCount:
+          type: integer
+          description: Number of lidar files found for the location
+    AreaCoverage:
+      type: object
+      properties:
+        position:
+          $ref: '#/components/schemas/GeoPosition'
+        imagery:
+          $ref: '#/components/schemas/ImageryCoverage'
+        lidar:
+          $ref: '#/components/schemas/LidarCoverage'
+    RestException:
+      type: object
+      properties:
+        type:
+          type: string
+        message:
+          type: string
+    BadRequestException:
+      allOf:
+        - $ref: '#/components/schemas/RestException'
+      example:
+        type: BadRequestException
+        message: Bad request
+    NotAuthorizedException:
+      allOf:
+        - $ref: '#/components/schemas/RestException'
+      example:
+        type: NotAuthorizedException
+        message: Not authorized
     GeoPosition:
       type: object
       properties:

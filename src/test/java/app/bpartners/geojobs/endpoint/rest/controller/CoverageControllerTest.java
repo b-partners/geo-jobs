@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.CoverageController;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.CoverageRestMapper;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.coverage.AreaCoverageService;
 import app.bpartners.geojobs.service.coverage.Coverage2D;
@@ -42,7 +43,12 @@ class CoverageControllerTest {
   @SneakyThrows
   @Test
   void get_coverage_ok() {
-    var imagery = new Coverage2D(true, true, new ImageryLayer("layer", 2024, "GEOSERVER", 5));
+    var imagery =
+        new Coverage2D(
+            true,
+            true,
+            new ImageryLayer("layer", 2024, "GEOSERVER", 5),
+            List.of(ModelName.TOITURE, ModelName.REVETEMENT_OBSTACLE));
     var lidar = new Coverage3D(true, "FRANCE", "EPSG:2154", 2, 1, 1);
     when(locationResolverMock.resolve(null, 2.35, 48.85)).thenReturn(LOCATION);
     when(serviceMock.check(LOCATION, Set.of()))
@@ -57,6 +63,8 @@ class CoverageControllerTest {
         .andExpect(jsonPath("$.imagery.hd").value(true))
         .andExpect(jsonPath("$.imagery.layer.name").value("layer"))
         .andExpect(jsonPath("$.imagery.layer.precisionInCm").value(5))
+        .andExpect(jsonPath("$.imagery.supportedDetectableModels.length()").value(2))
+        .andExpect(jsonPath("$.imagery.supportedDetectableModels[0].modelName").value("BP_TOITURE"))
         .andExpect(jsonPath("$.lidar.covered").value(true))
         .andExpect(jsonPath("$.lidar.region").value("FRANCE"))
         .andExpect(jsonPath("$.lidar.fileCount").value(2));

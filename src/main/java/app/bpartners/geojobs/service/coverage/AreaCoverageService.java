@@ -27,6 +27,7 @@ public class AreaCoverageService {
   private final GeodataLidarApiClient lidarApiClient;
   private final LidarFileChecker lidarFileChecker;
   private final CoverageConf conf;
+  private final SupportedModelResolver supportedModelResolver;
 
   public LocationCoverage check(CoverageLocation location, Set<CoverageType> types) {
     var all = types == null || types.isEmpty();
@@ -116,6 +117,9 @@ public class AreaCoverageService {
     var precision = layer.precisionLevelInCm();
     var hd = precision != null && precision <= conf.getHdMaxPrecisionInCm();
     return new Coverage2D(
-        true, hd, new ImageryLayer(layer.name(), layer.year(), layer.source(), precision));
+        true,
+        hd,
+        new ImageryLayer(layer.name(), layer.year(), layer.source(), precision),
+        supportedModelResolver.supportedModels(precision));
   }
 }
