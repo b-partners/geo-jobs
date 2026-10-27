@@ -9,7 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
@@ -37,7 +37,7 @@ class TileDetectionTaskConsumerTest {
   GeometryConverter geometryConverterMock = mock();
   DetectionMaskFromTileRetriever maskRetrieverMock = mock();
   RoofCoveringDetector roofCoveringDetectorMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   DetectionFileObjectRepository detectionObjectHistoryRepositoryMock = mock();
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersectionMock = mock();
   FilePolygonDrawer filePolygonDrawerMock = mock();

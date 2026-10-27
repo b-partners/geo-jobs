@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.ImageProperties;
 import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class DetectionFromStepMapper
     implements BiFunction<
         app.bpartners.geojobs.repository.model.detection.Detection, DetectionStep, Detection> {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final DetectionFeaturesResultImageRetriever featuresImageRetriever;
   private final DetectionImageAttributeRetriever imageAttributeRetriever;
   private final DetectionVggAttributeRetriever vggAttributeRetriever;

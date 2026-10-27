@@ -10,7 +10,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -34,7 +34,7 @@ import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
 
 class DetectionSavedServiceTest {
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
   DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =

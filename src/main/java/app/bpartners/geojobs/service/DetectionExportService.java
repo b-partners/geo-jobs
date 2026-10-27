@@ -4,7 +4,7 @@ import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.domain.Pageable.unpaged;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectionExportAttribute;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import java.time.LocalDate;
@@ -18,7 +18,7 @@ public class DetectionExportService {
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
   private final DetectionConverter detectionConverter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   public String requestDetectionExport(
       String communityOwnerIdentifier,

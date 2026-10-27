@@ -19,7 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -59,7 +59,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   private static final String ZONE_DETECTION_JOB_ID = "zoneDetectionJobId";
   GeoJsonConversionTaskRepository geoJsonConversionTaskRepositoryMock = mock();
   GeoJsonConversionJobRepository geoJsonConversionJobRepositoryMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();

@@ -12,7 +12,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 class CityJSONThreedProcessorTest {
-  private final BucketComponent bucketComponentMock = mock();
+  private final CustomBucketComponent bucketComponentMock = mock();
   private final ThreedApiClient apiClientMock = mock();
   private final CityJsonTextureComputer textureComputerMock = mock();
   private final CityJSONThreedProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();

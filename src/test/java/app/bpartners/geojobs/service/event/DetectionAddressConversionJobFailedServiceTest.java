@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobFailed;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository;
@@ -30,7 +30,7 @@ class DetectionAddressConversionJobFailedServiceTest {
   DetectionAddressConversionTaskRepository taskRepositoryMock = mock();
   Mailer mailerMock = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionAddressConversionTaskToCsvConverter taskToCsvConverterMock = mock();
   ExcelAddressWriter excelAddressWriterMock = mock();

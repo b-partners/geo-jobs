@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
@@ -38,7 +38,7 @@ import org.springframework.core.io.ClassPathResource;
 class ZipGeoJsonAssemblerTest {
   GeoJsonConversionTaskRepository geoJsonConversionTaskRepositoryMock = mock();
   GeoJsonConversionJobRepository geoJsonConversionJobRepositoryMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionService detectionServiceMock = mock();

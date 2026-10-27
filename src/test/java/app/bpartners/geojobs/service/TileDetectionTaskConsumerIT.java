@@ -12,7 +12,6 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
@@ -69,7 +68,6 @@ class TileDetectionTaskConsumerIT {
   FileWriter fileWriterMock = mock();
   ObjectMapper objectMapperMock = mock();
   DetectionMapper detectionMapper = new DetectionMapper(tileValidator);
-  BucketComponent bucketComponentMock = mock();
   HttpApiTileObjectDetector objectsDetector =
       new HttpApiTileObjectDetector(
           objectMapper,
@@ -80,7 +78,6 @@ class TileDetectionTaskConsumerIT {
           detectionResponseAggregatorV1,
           detectionResponseV1ToV2Mapper,
           detectionFileObjectRepositoryMock,
-          bucketComponentMock,
           fileWriterMock,
           objectMapperMock,
           new RestTemplate(),
@@ -111,7 +108,7 @@ class TileDetectionTaskConsumerIT {
           maskRetriever,
           roofCoveringDetector,
           detectionObjectHistoryRepositoryMock,
-          bucketComponentMock,
+          customBucketComponentMock,
           tileCoordinatesPolygonIntersection,
           filePolygonDrawer,
           detectedTileVggExtractor,
@@ -152,6 +149,7 @@ class TileDetectionTaskConsumerIT {
         .thenReturn(Optional.of(detectionMock));
     when(bucketConfMock.getBucketName()).thenReturn(DUMMY_BUCKET_NAME);
     when(customBucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
+    when(customBucketComponentMock.download(TILE_BUCKET_PATCH)).thenReturn(tileImageOriginalFile);
     when(customBucketComponentMock.download(DUMMY_BUCKET_NAME, TILE_BUCKET_PATCH))
         .thenReturn(tileImageOriginalFile);
     when(tileObjectDetectorConfMock.getTileDetectionApiUrls()).thenReturn(tileDetectionApiUrls());

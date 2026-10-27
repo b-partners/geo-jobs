@@ -130,7 +130,7 @@ public class SynchronousDetectionService
       firstCallableVoidList.add(imageRequestCallableVoidList);
     }
     firstCallableVoidList.add(machineDetectionProcessCallableVoidList);
-    workers.invokeAll(firstCallableVoidList);
+    workers.apply(firstCallableVoidList);
     log.info(
         "Machine detection and image request finished in {} seconds for detection(e2Id={},"
             + " imagesCount={})",
@@ -180,7 +180,7 @@ public class SynchronousDetectionService
       secondVoidCallable.add(featureVggRequestedCallableVoid);
     }
     secondVoidCallable.add(geoJsonRequestedCallableVoid);
-    workers.invokeAll(secondVoidCallable);
+    workers.apply(secondVoidCallable);
     log.info(
         "GeoJSON conversion request and VGG computation done in {} seconds for detection(e2Id={})",
         Duration.between(vggRequestAndGeoJsonEventTriggerStart, now()).toSeconds(),

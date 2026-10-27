@@ -31,6 +31,7 @@ Globals:
         AWS_EVENT_STACK_3_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/3/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_4_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/4/sqs/mailbox-queue-url}}'
         
+        
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/downloader/url}}'
@@ -69,6 +70,8 @@ Globals:
         INFERENCE_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/url}}'
         INFERENCE_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/key}}'
         DETECTION_INFERENCE_API_ENABLED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/detection/inference/api/enabled}}'
+    
+        
 Parameters:
   Env:
     Type: String
@@ -86,7 +89,7 @@ Resources:
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: BUFFERED
-
+        
 
   WorkerFunction1:
     Type: AWS::Serverless::Function
@@ -158,7 +161,7 @@ Resources:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
       Value: !GetAtt FrontalFunctionUrl.FunctionUrl
-
+  
 Outputs:
   ApiUrl:
     Description: Url to access the frontal function
