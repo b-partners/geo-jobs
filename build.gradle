@@ -104,6 +104,12 @@ test {
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     useJUnitPlatform()
     finalizedBy jacocoTestCoverageVerification
+    testLogging {
+        events "failed"
+        exceptionFormat = "full"
+        showStackTraces = true
+        showCauses = true
+    }
 }
 
 jacocoTestCoverageVerification {

@@ -23,7 +23,7 @@ Resources:
       VisibilityTimeout: 901 #note(sqs-visibility): WorkerFunction2.Timeout + 1
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue2.Arn
-        maxReceiveCount: 5
+        maxReceiveCount: 9
       SqsManagedSseEnabled: false
 
   MailboxQueue3:
@@ -33,7 +33,7 @@ Resources:
       VisibilityTimeout: 901 #note(sqs-visibility): WorkerFunction3.Timeout + 1
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue3.Arn
-        maxReceiveCount: 5
+        maxReceiveCount: 9
       SqsManagedSseEnabled: false
 
   MailboxQueue4:
@@ -43,7 +43,7 @@ Resources:
       VisibilityTimeout: 901 #note(sqs-visibility): WorkerFunction4.Timeout + 1
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue4.Arn
-        maxReceiveCount: 5
+        maxReceiveCount: 9
       SqsManagedSseEnabled: false
 
   DeadLetterQueue1:
