@@ -24,12 +24,13 @@ Globals:
       Variables:
         ENV: !Ref Env
         AWS_S3_BUCKET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/s3/bucket-name}}'
-        AWS_SES_SOURCE: !Sub '{{resolve:ssm:/geo-jobs/${Env}/ses/source}}'
+        AWS_SES_SOURCE: lou@birdia.fr
         AWS_EVENTBRIDGE_BUS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/eventbridge/bus-name}}'
         AWS_EVENT_STACK_1_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_3_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/3/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_4_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/4/sqs/mailbox-queue-url}}'
+        
         
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
@@ -69,6 +70,8 @@ Globals:
         INFERENCE_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/url}}'
         INFERENCE_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/key}}'
         DETECTION_INFERENCE_API_ENABLED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/detection/inference/api/enabled}}'
+    
+        
 Parameters:
   Env:
     Type: String
@@ -86,7 +89,7 @@ Resources:
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: BUFFERED
-
+        
 
   WorkerFunction1:
     Type: AWS::Serverless::Function
@@ -140,10 +143,6 @@ Resources:
       MemorySize: 2048
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      SnapStart:
-        ApplyOn: None
-      EphemeralStorage:
-        Size: 1024
       Events:
         AllEvents:
           Type: SQS
@@ -158,7 +157,7 @@ Resources:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
       Value: !GetAtt FrontalFunctionUrl.FunctionUrl
-
+  
 Outputs:
   ApiUrl:
     Description: Url to access the frontal function
