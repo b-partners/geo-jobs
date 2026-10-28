@@ -19,7 +19,6 @@ import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
-import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
@@ -47,7 +46,6 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
-  private final CityJsonTextureComputer textureComputer;
   private final CityJSONThreedProcessor cityJSONThreedProcessor;
 
   // TODO: refactor
@@ -111,9 +109,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     log.info("PointsExtractionResult={}", result.data().values());
     var file = cityJsonProcessor.apply(filename, result);
 
-    var texturedFile = textureComputer.applyTexture(request, file);
-
-    bucketComponent.upload(texturedFile, fileKey);
+    bucketComponent.upload(file, fileKey);
 
     return CityJSON.builder().id(filename).request(request).s3FileKey(fileKey).build();
   }
