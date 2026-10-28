@@ -3929,32 +3929,6 @@ components:
         knn:
           type: integer
 
-    ThreeDTextureInfo:
-      type: object
-      required:
-        - zoom
-        - imageUri
-        - imageWidth
-        - imageHeight
-        - tileX
-        - tileY
-        - tileImageSizePx
-      properties:
-        tileX:
-          type: integer
-        tileY:
-          type: integer
-        tileImageSizePx:
-          type: integer
-        imageWidth:
-          type: integer
-        imageHeight:
-          type: integer
-        zoom:
-          type: integer
-        imageUri:
-          type: string
-
     DelimitationObjectType:
       type: string
       description: |
@@ -3974,8 +3948,6 @@ components:
       properties:
         id:
           type: string
-        threeDTextureInfo:
-          $ref: "#/components/schemas/ThreeDTextureInfo"
     CityJSONRequestStatus:
       deprecated: true
       type: string

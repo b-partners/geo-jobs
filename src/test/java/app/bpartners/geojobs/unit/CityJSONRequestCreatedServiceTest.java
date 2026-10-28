@@ -30,7 +30,6 @@ import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import app.bpartners.geojobs.service.ThreedGenerationResult;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
-import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
@@ -53,7 +52,6 @@ class CityJSONRequestCreatedServiceTest {
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();
   CityJSONSafeModeProcessor cityJSONSafeModeProcessor = mock();
-  CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
   CityJSONThreedProcessor cityJSONThreedProcessorMock = mock();
 
   CityJSONRequestCreatedService subject =
@@ -68,7 +66,6 @@ class CityJSONRequestCreatedServiceTest {
           communityAuthorizationRepositoryMock,
           cityJson3DBagRooferProcessorMock,
           cityJSONSafeModeProcessor,
-          textureComputerMock,
           cityJSONThreedProcessorMock);
 
   @BeforeEach
@@ -103,8 +100,6 @@ class CityJSONRequestCreatedServiceTest {
         .thenReturn(List.of(cityJSONMock));
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(textureComputerMock.applyTexture(any(), any()))
-        .thenAnswer(invocation -> invocation.getArgument(1));
 
     assertDoesNotThrow(
         () ->
