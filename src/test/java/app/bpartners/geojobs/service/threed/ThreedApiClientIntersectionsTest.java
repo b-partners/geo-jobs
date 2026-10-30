@@ -18,6 +18,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateRoofIntersections;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,6 +80,14 @@ class ThreedApiClientIntersectionsTest {
 
     assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, actual.getStatusCode());
     assertEquals("No lidar under the zone", actual.getApiError());
+  }
+
+  @Test
+  void should_refuse_an_id_that_is_a_path() {
+    assertThrows(
+        BadRequestException.class,
+        () -> subject.computeIntersections("../lrg/x", createRoofIntersections()));
+    server.verify();
   }
 
   static CreateRoofIntersections createRoofIntersections() {

@@ -4,6 +4,7 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateRoofIntersections;
 import app.bpartners.geojobs.endpoint.rest.model.RoofIntersections;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
 import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
@@ -12,6 +13,7 @@ import app.bpartners.geojobs.service.threed.model.Problem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,7 +34,8 @@ public class ThreedApiClient {
   private final ThreedApiProperties properties;
   private static final String PREFIX_PATH = "/lrg";
   private static final String SUFFIX_PATH = "/feature-file";
-  private static final String INTERSECTIONS_PATH = "intersections";
+  private static final String INTERSECTIONS_PATH = "/intersections/";
+  private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9_-]{1,128}");
   private static final String API_KEY_QUERY_PARAM = "geojobs-apikey";
 
   public ThreedApiClient(
@@ -87,13 +90,15 @@ public class ThreedApiClient {
     return uri;
   }
 
+  /** The id is the client's own and ends up in threed's path: it can not be a path itself. */
   @SneakyThrows
   private URI buildIntersectionsUri(String id) {
+    if (id == null || !SAFE_ID.matcher(id).matches()) {
+      throw new BadRequestException(
+          "Id must be 1 to 128 letters, digits, '-' or '_' but was: " + id);
+    }
     var uri =
-        fromUri(new URI(properties.getBaseUrl()))
-            .pathSegment(INTERSECTIONS_PATH, id)
-            .build()
-            .toUri();
+        fromUri(new URI(properties.getBaseUrl())).path(INTERSECTIONS_PATH + id).build().toUri();
     log.info("Uri={}", uri);
     return uri;
   }
