@@ -12,7 +12,9 @@ import app.bpartners.geojobs.service.threed.model.Lrg;
 import app.bpartners.geojobs.service.threed.model.Problem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Component
@@ -32,11 +35,12 @@ public class ThreedApiClient {
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
   private final ThreedApiProperties properties;
-  private static final String PREFIX_PATH = "/lrg";
-  private static final String SUFFIX_PATH = "/feature-file";
+  private static final String PREFIX_PATH = "lrg";
+  private static final String SUFFIX_PATH = "feature-file";
   private static final String INTERSECTIONS_PATH = "/intersections/";
   private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9_-]{1,128}");
   private static final String API_KEY_QUERY_PARAM = "geojobs-apikey";
+  private static final String THREED_API_KEY_QUERY_PARAM = "apiKey";
 
   public ThreedApiClient(
       @Qualifier("threedRestTemplate") RestTemplate restTemplate,
@@ -78,16 +82,17 @@ public class ThreedApiClient {
 
   @SneakyThrows
   private URI buildGenerateUri(String id, String apiKey) {
-    var baseUri = new URI(properties.getBaseUrl());
-    var builder = fromUri(baseUri).pathSegment(PREFIX_PATH, id, SUFFIX_PATH);
+    var builder =
+        fromUri(new URI(properties.getBaseUrl())).pathSegment(PREFIX_PATH, "{id}", SUFFIX_PATH);
+    var variables = new HashMap<String, Object>();
+    variables.put("id", id);
 
     if (apiKey != null) {
-      builder = builder.queryParam(API_KEY_QUERY_PARAM, apiKey);
+      builder = builder.queryParam(API_KEY_QUERY_PARAM, "{geojobsApiKey}");
+      variables.put("geojobsApiKey", apiKey);
     }
 
-    var uri = builder.build().toUri();
-    log.info("Uri={}", uri);
-    return uri;
+    return withThreedApiKey(builder, variables);
   }
 
   /** The id is the client's own and ends up in threed's path: it can not be a path itself. */
@@ -97,10 +102,23 @@ public class ThreedApiClient {
       throw new BadRequestException(
           "Id must be 1 to 128 letters, digits, '-' or '_' but was: " + id);
     }
-    var uri =
-        fromUri(new URI(properties.getBaseUrl())).path(INTERSECTIONS_PATH + id).build().toUri();
-    log.info("Uri={}", uri);
-    return uri;
+    return withThreedApiKey(
+        fromUri(new URI(properties.getBaseUrl())).path(INTERSECTIONS_PATH + id), Map.of());
+  }
+
+  /**
+   * threed refuses any computing call without its api key. Every value goes through a template
+   * variable so it is encoded, and only the path is logged so that no key ends up in the logs.
+   */
+  private URI withThreedApiKey(UriComponentsBuilder builder, Map<String, Object> variables) {
+    log.info("Uri={}", builder.buildAndExpand(variables).getPath());
+    var withApiKey = new HashMap<>(variables);
+    withApiKey.put("threedApiKey", properties.getApiKey());
+    return builder
+        .queryParam(THREED_API_KEY_QUERY_PARAM, "{threedApiKey}")
+        .encode()
+        .buildAndExpand(withApiKey)
+        .toUri();
   }
 
   private ThreedApiException mapHttpError(HttpStatusCodeException e) {

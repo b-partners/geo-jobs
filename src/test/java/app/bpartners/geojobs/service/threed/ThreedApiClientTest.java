@@ -21,6 +21,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
+import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,17 +30,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-class ThreedApiClientIntersectionsTest {
+class ThreedApiClientTest {
   private static final String BASE_URL = "https://threed.example.com";
+  private static final String API_KEY = "threed-key";
   private final RestTemplate restTemplate = new RestTemplate();
   private final MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
   private final ThreedApiClient subject =
-      new ThreedApiClient(restTemplate, new ThreedApiProperties(BASE_URL), new ObjectMapper());
+      new ThreedApiClient(
+          restTemplate, new ThreedApiProperties(BASE_URL, API_KEY), new ObjectMapper());
 
   @Test
   void should_put_the_zone_and_read_the_intersections() {
     server
-        .expect(requestTo(BASE_URL + "/intersections/zone-1"))
+        .expect(requestTo(BASE_URL + "/intersections/zone-1?apiKey=" + API_KEY))
         .andExpect(method(PUT))
         .andExpect(
             content()
@@ -64,7 +67,7 @@ class ThreedApiClientIntersectionsTest {
   @Test
   void should_map_threed_errors() {
     server
-        .expect(requestTo(BASE_URL + "/intersections/zone-1"))
+        .expect(requestTo(BASE_URL + "/intersections/zone-1?apiKey=" + API_KEY))
         .andRespond(
             withStatus(HttpStatus.UNPROCESSABLE_ENTITY)
                 .contentType(APPLICATION_JSON)
@@ -80,6 +83,38 @@ class ThreedApiClientIntersectionsTest {
 
     assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, actual.getStatusCode());
     assertEquals("No lidar under the zone", actual.getApiError());
+  }
+
+  @Test
+  void should_send_the_threed_api_key_on_lrg() {
+    server
+        .expect(
+            requestTo(
+                BASE_URL
+                    + "/lrg/building-1/feature-file?geojobs-apikey=geojobs-key&apiKey="
+                    + API_KEY))
+        .andExpect(method(PUT))
+        .andRespond(withSuccess("{}", APPLICATION_JSON));
+
+    subject.generate("building-1", CreateLrgFromFeatureFileUrl.builder().build(), "geojobs-key");
+
+    server.verify();
+  }
+
+  @Test
+  void should_encode_the_threed_api_key() {
+    var restTemplate = new RestTemplate();
+    var server = MockRestServiceServer.bindTo(restTemplate).build();
+    var subject =
+        new ThreedApiClient(
+            restTemplate, new ThreedApiProperties(BASE_URL, "a&b=c d"), new ObjectMapper());
+    server
+        .expect(requestTo(BASE_URL + "/lrg/building-1/feature-file?apiKey=a%26b%3Dc%20d"))
+        .andRespond(withSuccess("{}", APPLICATION_JSON));
+
+    subject.generate("building-1", CreateLrgFromFeatureFileUrl.builder().build());
+
+    server.verify();
   }
 
   @Test
