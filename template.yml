@@ -61,8 +61,6 @@ Globals:
         LIDAR_INDEX_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/lidar/index/api/url}}'
         THREED_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/threed/api/url}}'
         THREED_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/threed/api/key}}'
-        CACHER_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/key}}'
-        CACHER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/url}}'
         MUTATION_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/mutation-detector/api/url}}'
         GEODATA_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geodata/api/url}}'
         GEODATA_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geodata/api/key}}'
