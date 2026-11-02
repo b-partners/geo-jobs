@@ -102,6 +102,18 @@ class InferenceModelCardConfTest {
   }
 
   @Test
+  void accepts_same_model_card_mapped_for_several_spatial_resolutions() {
+    givenConf(
+        """
+[
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 20}
+]""");
+
+    assertEquals(2, subject.getMappings().size());
+  }
+
+  @Test
   void accepts_same_type_mapped_for_several_spatial_resolutions() {
     givenConf(
         """
