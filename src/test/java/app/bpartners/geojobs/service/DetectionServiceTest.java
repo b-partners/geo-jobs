@@ -230,7 +230,7 @@ class DetectionServiceTest {
                   geoServerConfiguration,
                   geometryConverterMock,
                   buildingFinderMock,
-                  new DefaultResolutionModelValidator()),
+                  new DefaultResolutionModelValidator(false)),
               fileWriterMock,
               detectionRoofSlopeValidatorMock,
               featureVggRequestedServiceMock));

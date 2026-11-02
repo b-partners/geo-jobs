@@ -73,7 +73,7 @@ class DetectionCreationMapperTest {
           geoServerConfigurationMock,
           geometryConverterMock,
           buildingFinderMock,
-          new DefaultResolutionModelValidator());
+          new DefaultResolutionModelValidator(false));
 
   @Test
   void map_detection_with_detectable_object_model_list_ok() {
@@ -478,7 +478,7 @@ class DetectionCreationMapperTest {
         geoServerConfigurationMock,
         geometryConverterMock,
         buildingFinderMock,
-        new DefaultResolutionModelValidator());
+        new DefaultResolutionModelValidator(false));
   }
 
   private static InferenceModelCardConf roofObstacleConf() {
