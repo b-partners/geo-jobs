@@ -67,6 +67,7 @@ Globals:
         INFERENCE_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/url}}'
         INFERENCE_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/key}}'
         DETECTION_INFERENCE_API_ENABLED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/detection/inference/api/enabled}}'
+        DETECTION_TOITURE_20CM_ENABLED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/detection/toiture/20cm/enabled}}'
 Parameters:
   Env:
     Type: String

@@ -102,6 +102,42 @@ class InferenceModelCardConfTest {
   }
 
   @Test
+  void accepts_same_model_card_mapped_for_several_spatial_resolutions() {
+    givenConf(
+        """
+[
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 20}
+]""");
+
+    assertEquals(2, subject.getMappings().size());
+  }
+
+  @Test
+  void loads_inference_spatial_resolution() {
+    givenConf(
+        """
+[
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 20,
+   "inferenceSpatialResolution": 5}
+]""");
+
+    assertEquals(5.0, subject.getMappings().getFirst().inferenceSpatialResolution());
+  }
+
+  @Test
+  void rejects_non_positive_inference_spatial_resolution() {
+    givenConf(
+        """
+[
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 20,
+   "inferenceSpatialResolution": 0}
+]""");
+
+    assertThrows(IllegalStateException.class, () -> subject.getMappings());
+  }
+
+  @Test
   void accepts_same_type_mapped_for_several_spatial_resolutions() {
     givenConf(
         """

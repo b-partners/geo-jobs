@@ -46,6 +46,11 @@ public class DetectionCreationMapper {
   private static final Set<DetectableType> TYPES_COVERED_BY_OBSTACLE_AT_DEFAULT_RESOLUTION =
       Set.of(DetectableType.LUMINEUX);
 
+  private static final Set<String> TOITURE_TYPE_NAMES =
+      DetectableObjectTypeMapper.detectableObjectTypeForToitureModel().stream()
+          .map(DetectableObjectType::name)
+          .collect(Collectors.toUnmodifiableSet());
+
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
   private final MapLayerResolver mapLayerResolver;
@@ -195,7 +200,8 @@ public class DetectionCreationMapper {
       var precisionLevelInCm = mapLayer.precisionLevelInCm();
       defaultResolutionModelValidator.accept(modelNames, precisionLevelInCm, layer);
       var requestedConfigurations =
-          requestedConfigurationsAt(detectableObjectConfigurations, precisionLevelInCm, layer);
+          requestedConfigurationsAt(
+              detectableObjectConfigurations, precisionLevelInCm, layer, modelNames);
 
       // TODO: save other layers to be used in failure case
       return new GeoServerSelection(
@@ -223,7 +229,8 @@ public class DetectionCreationMapper {
         requestedConfigurationsAt(
             detectableObjectConfigurations,
             providedPrecisionLevelInCm,
-            geoServerProperties.getGeoServerParameter().getLayers()));
+            geoServerProperties.getGeoServerParameter().getLayers(),
+            modelNames));
   }
 
   private Integer providedOrDeducedPrecisionLevelInCm(
@@ -254,7 +261,8 @@ public class DetectionCreationMapper {
   private List<DetectableObjectConfiguration> requestedConfigurationsAt(
       List<DetectableObjectConfiguration> detectableObjectConfigurations,
       Integer precisionLevelInCm,
-      String layer) {
+      String layer,
+      List<ModelName> modelNames) {
     var requestedConfigurations =
         precisionLevelInCm != null
                 && precisionLevelInCm.doubleValue()
@@ -265,7 +273,8 @@ public class DetectionCreationMapper {
                         !TYPES_COVERED_BY_OBSTACLE_AT_DEFAULT_RESOLUTION.contains(
                             configuration.getObjectType()))
                 .toList()
-            : detectableObjectConfigurations;
+            : withoutToitureTypesMissingAt(
+                detectableObjectConfigurations, precisionLevelInCm, layer, modelNames);
     var supportedResolutions =
         modelCardResolver.supportedSpatialResolutionsInCm(requestedConfigurations);
     if (precisionLevelInCm == null
@@ -277,6 +286,38 @@ public class DetectionCreationMapper {
               describeRequiredResolution(supportedResolutions), layer, precisionLevelInCm));
     }
     return requestedConfigurations;
+  }
+
+  private List<DetectableObjectConfiguration> withoutToitureTypesMissingAt(
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      Integer precisionLevelInCm,
+      String layer,
+      List<ModelName> modelNames) {
+    if (precisionLevelInCm == null || !modelNames.contains(TOITURE)) {
+      return detectableObjectConfigurations;
+    }
+    var skippedTypes =
+        detectableObjectConfigurations.stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .filter(type -> TOITURE_TYPE_NAMES.contains(type.name()))
+            .filter(
+                type ->
+                    !modelCardResolver
+                        .supportedSpatialResolutionsInCmOfTypes(List.of(type))
+                        .contains(precisionLevelInCm.doubleValue()))
+            .toList();
+    if (skippedTypes.isEmpty()) {
+      return detectableObjectConfigurations;
+    }
+    log.warn(
+        "Layer {} has a precision of {} cm, skipping object types without any model at this"
+            + " precision: {}",
+        layer,
+        precisionLevelInCm,
+        skippedTypes);
+    return detectableObjectConfigurations.stream()
+        .filter(configuration -> !skippedTypes.contains(configuration.getObjectType()))
+        .toList();
   }
 
   private record GeoServerSelection(

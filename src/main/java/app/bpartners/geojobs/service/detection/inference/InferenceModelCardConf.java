@@ -41,7 +41,7 @@ public class InferenceModelCardConf {
   }
 
   private static void validate(List<ModelCardMapping> mappings) {
-    var firstMappingByModelCardId = new HashMap<String, ModelCardMapping>();
+    var firstMappingByModelCardAndResolution = new HashMap<List<Object>, ModelCardMapping>();
     var firstMappingByTypeAndResolution = new HashMap<List<Object>, ModelCardMapping>();
     for (var mapping : mappings) {
       if (mapping.zoomLevel() == null || mapping.zoomLevel() <= 0) {
@@ -50,14 +50,19 @@ public class InferenceModelCardConf {
       if (mapping.spatialResolution() == null || mapping.spatialResolution() <= 0) {
         throw new IllegalStateException("Invalid spatialResolution in inference conf: " + mapping);
       }
-      var first = firstMappingByModelCardId.putIfAbsent(mapping.modelCardId(), mapping);
-      if (first != null
-          && (!first.zoomLevel().equals(mapping.zoomLevel())
-              || !first.spatialResolution().equals(mapping.spatialResolution()))) {
+      if (mapping.inferenceSpatialResolution() != null
+          && mapping.inferenceSpatialResolution() <= 0) {
+        throw new IllegalStateException(
+            "Invalid inferenceSpatialResolution in inference conf: " + mapping);
+      }
+      var first =
+          firstMappingByModelCardAndResolution.putIfAbsent(
+              List.of(mapping.modelCardId(), mapping.spatialResolution()), mapping);
+      if (first != null && !first.zoomLevel().equals(mapping.zoomLevel())) {
         throw new IllegalStateException(
             "Model card "
                 + mapping.modelCardId()
-                + " is mapped with different zoomLevel or spatialResolution: "
+                + " is mapped with different zoomLevel for the same spatialResolution: "
                 + first
                 + " and "
                 + mapping);

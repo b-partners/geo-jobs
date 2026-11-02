@@ -78,6 +78,20 @@ class ModelCardResolverTest {
   }
 
   @Test
+  void sends_the_forced_inference_spatial_resolution_instead_of_the_mapped_one() {
+    when(conf.getMappings())
+        .thenReturn(
+            List.of(
+                new ModelCardMapping(HUMIDITE, "damages", DAMAGES_ZOOM, 5.0),
+                new ModelCardMapping(HUMIDITE, "damages", DAMAGES_ZOOM, 20.0, 5.0)));
+
+    var at20cm = subject.resolve(configs(HUMIDITE), 20.0, DAMAGES_ZOOM, ANY).modelCards();
+
+    assertEquals(1, at20cm.size());
+    assertEquals(5.0, at20cm.getFirst().spatialResolution());
+  }
+
+  @Test
   void resolves_only_the_model_cards_of_the_tile_zoom() {
     var configs = configs(TOMBE, HUMIDITE, USURE);
 

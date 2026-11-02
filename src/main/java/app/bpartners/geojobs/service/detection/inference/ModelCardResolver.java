@@ -13,11 +13,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class ModelCardResolver {
   public static final int DEFAULT_TILING_ZOOM = ArcgisImageZoom.HOUSES_0.getZoomLevel();
   public static final double DEFAULT_SPATIAL_RESOLUTION_IN_CM = 5.0;
@@ -113,9 +115,18 @@ public class ModelCardResolver {
       var modelCard =
           modelCardsById.computeIfAbsent(mapping.modelCardId(), id -> findRunnable(objectType, id));
       if (compatible.test(modelCard)) {
+        if (mapping.isInferenceSpatialResolutionForced()
+            && !usableModelCardsById.containsKey(mapping.modelCardId())) {
+          log.warn(
+              "Model card {} is run on {} cm imagery but declared as {} cm to the inference API",
+              mapping.modelCardId(),
+              mapping.spatialResolution(),
+              mapping.inferenceSpatialResolution());
+        }
         usableModelCardsById.putIfAbsent(
             mapping.modelCardId(),
-            new ResolvedModelCard(modelCard, mapping.zoomLevel(), mapping.spatialResolution()));
+            new ResolvedModelCard(
+                modelCard, mapping.zoomLevel(), mapping.spatialResolutionSentToInference()));
       } else {
         unsupportedTypes.add(objectType);
       }
