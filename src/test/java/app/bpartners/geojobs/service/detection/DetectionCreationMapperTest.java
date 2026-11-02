@@ -378,6 +378,30 @@ class DetectionCreationMapperTest {
   }
 
   @Test
+  void toiture_model_on_a_20_cm_layer_keeps_only_the_types_mapped_at_20_cm_when_enabled() {
+    var realSubject =
+        subjectWith(new ModelCardResolver(roofObstacleConf(), mock(ModelCardRegistry.class)), true);
+    givenLayerWithPrecision(20);
+
+    var actual =
+        realSubject.apply(toiturePointDetection(), randomUUID().toString(), null, false, null);
+
+    assertEquals(Set.of(OBSTACLE, CHEMINEE, VELUX, PANNEAU_PHOTOVOLTAIQUE), typesOf(actual));
+  }
+
+  @Test
+  void toiture_model_keeps_every_type_on_a_5_cm_layer_when_enabled() {
+    var realSubject =
+        subjectWith(new ModelCardResolver(roofObstacleConf(), mock(ModelCardRegistry.class)), true);
+    givenLayerWithPrecision(5);
+
+    var actual =
+        realSubject.apply(toiturePointDetection(), randomUUID().toString(), null, false, null);
+
+    assertTrue(typesOf(actual).containsAll(Set.of(TOITURE_REVETEMENT, USURE, MOISISSURE)));
+  }
+
+  @Test
   void toiture_model_requires_a_5_cm_layer() {
     var realSubject =
         subjectWith(new ModelCardResolver(roofObstacleConf(), mock(ModelCardRegistry.class)));
@@ -470,6 +494,11 @@ class DetectionCreationMapperTest {
   }
 
   private DetectionCreationMapper subjectWith(ModelCardResolver resolver) {
+    return subjectWith(resolver, false);
+  }
+
+  private DetectionCreationMapper subjectWith(
+      ModelCardResolver resolver, boolean toiture20CmEnabled) {
     return new DetectionCreationMapper(
         detectableObjectTypeMapper,
         featureTypeChecker,
@@ -478,7 +507,7 @@ class DetectionCreationMapperTest {
         geoServerConfigurationMock,
         geometryConverterMock,
         buildingFinderMock,
-        new DefaultResolutionModelValidator(false));
+        new DefaultResolutionModelValidator(toiture20CmEnabled));
   }
 
   private static InferenceModelCardConf roofObstacleConf() {
