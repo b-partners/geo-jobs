@@ -50,6 +50,11 @@ public class InferenceModelCardConf {
       if (mapping.spatialResolution() == null || mapping.spatialResolution() <= 0) {
         throw new IllegalStateException("Invalid spatialResolution in inference conf: " + mapping);
       }
+      if (mapping.inferenceSpatialResolution() != null
+          && mapping.inferenceSpatialResolution() <= 0) {
+        throw new IllegalStateException(
+            "Invalid inferenceSpatialResolution in inference conf: " + mapping);
+      }
       var first =
           firstMappingByModelCardAndResolution.putIfAbsent(
               List.of(mapping.modelCardId(), mapping.spatialResolution()), mapping);
