@@ -4,9 +4,9 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
-import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
 import app.bpartners.geojobs.service.dashboard.component.Register2d;
@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DetectionTrackingRegister implements Consumer<Detection> {
   private final AnalysisProjectApi analysisProjectApi;
+  private final AnalysisProjectBilling analysisProjectBilling;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
 
@@ -32,15 +33,26 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
           detection.getDashboardRegistrationDatetime());
       return;
     }
-    analysisProjectApi.register2d(
-        getApiKey(detection),
-        projectKeyOf(detection),
-        new Register2d(
-            detection.getEndToEndId(),
-            detection.getZoneName(),
-            "non supportée",
-            now(),
-            new DetectionInitiator("non supporté", detection.getEmailReceiver(), "non supporté")));
+    var community =
+        communityAuthorizationRepository.findById(detection.getCommunityOwnerId()).orElseThrow();
+    var registered =
+        analysisProjectBilling.register(
+            community,
+            "Detection " + detection.getId(),
+            apiKey ->
+                analysisProjectApi.register2d(
+                    apiKey,
+                    projectKeyOf(detection),
+                    new Register2d(
+                        detection.getEndToEndId(),
+                        detection.getZoneName(),
+                        "non supportée",
+                        now(),
+                        new DetectionInitiator(
+                            "non supporté", detection.getEmailReceiver(), "non supporté"))));
+    if (!registered) {
+      return;
+    }
 
     var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
 
@@ -48,20 +60,19 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
         actualDetection.toBuilder().dashboardRegistrationDatetime(now()).build());
   }
 
-  private String projectKeyOf(Detection detection) {
-    var detectionKey = "detection:" + detection.getId();
+  public static boolean isIndividual(Detection detection) {
     var convertedAddresses = detection.getConvertedAddresses();
     if (convertedAddresses != null && convertedAddresses.size() > 1) {
-      return detectionKey;
+      return false;
     }
-    return AnalysisProjectKeys.ofIndividual(detection.getDomainProvidedGeoJsonZone())
-        .orElse(detectionKey);
+    return AnalysisProjectKeys.isIndividual(detection.getDomainProvidedGeoJsonZone());
   }
 
-  private String getApiKey(Detection detection) {
-    return communityAuthorizationRepository
-        .findById(detection.getCommunityOwnerId())
-        .map(CommunityAuthorization::getDashboardApiKey)
-        .orElseThrow();
+  public static String projectKeyOf(Detection detection) {
+    var detectionKey = "detection:" + detection.getId();
+    if (!isIndividual(detection)) {
+      return detectionKey;
+    }
+    return AnalysisProjectKeys.of(detection.getDomainProvidedGeoJsonZone()).orElse(detectionKey);
   }
 }

@@ -13,6 +13,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
@@ -23,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 class DetectionTrackingRegistrationRequestedServiceTest {
   AnalysisProjectApi analysisProjectApiMock = mock();
@@ -30,7 +34,10 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   DetectionTrackingRegister detectionTrackingRegister =
       new DetectionTrackingRegister(
-          analysisProjectApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
+          analysisProjectApiMock,
+          new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock),
+          communityAuthorizationRepositoryMock,
+          detectionRepositoryMock);
   DetectionTrackingRegistrationRequestedService subject =
       new DetectionTrackingRegistrationRequestedService(
           detectionTrackingRegister, detectionRepositoryMock);
@@ -165,6 +172,49 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   @Test
+  void insufficient_credits_are_swallowed_and_detection_stays_unregistered() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+    when(analysisProjectApiMock.register2d(any(), any(), any()))
+        .thenThrow(
+            HttpClientErrorException.create(
+                HttpStatus.PAYMENT_REQUIRED, "error", HttpHeaders.EMPTY, new byte[0], null));
+
+    assertDoesNotThrow(
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+
+    verify(detectionRepositoryMock, never()).save(any());
+  }
+
+  @Test
+  void other_client_errors_are_rethrown_to_be_retried() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+    when(analysisProjectApiMock.register2d(any(), any(), any()))
+        .thenThrow(
+            HttpClientErrorException.create(
+                HttpStatus.FORBIDDEN, "error", HttpHeaders.EMPTY, new byte[0], null));
+
+    assertThrows(
+        HttpClientErrorException.class,
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    verify(detectionRepositoryMock, never()).save(any());
+  }
+
+  @Test
+  void skip_community_not_billed_on_dashboard() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(communityAuthorizationRepositoryMock.findById(detectionMock.getCommunityOwnerId()))
+        .thenReturn(Optional.of(CommunityAuthorization.builder().build()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock, never()).register2d(any(), any(), any());
+    verify(detectionRepositoryMock, never()).save(any());
+  }
+
+  @Test
   void register_detection_fail_on_api_failure() {
     var detectionIdentifier = randomUUID().toString();
     var detectionMock = mock(Detection.class);
@@ -174,7 +224,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(communityAuthorizationRepositoryMock.findById(any()))
-        .thenReturn(Optional.of(CommunityAuthorization.builder().apiKey(apiKey).build()));
+        .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
     when(analysisProjectApiMock.register2d(any(), any(), any())).thenThrow(new RuntimeException());
 
     assertThrows(
