@@ -109,6 +109,13 @@ class AnalysisProjectKeysTest {
   }
 
   @Test
+  void geometry_presence_does_not_depend_on_the_number_of_features() {
+    assertTrue(AnalysisProjectKeys.hasGeometry(List.of(polygon(SQUARE), polygon(SQUARE))));
+    assertFalse(AnalysisProjectKeys.hasGeometry(List.of(Feature.builder().build())));
+    assertFalse(AnalysisProjectKeys.hasGeometry(null));
+  }
+
+  @Test
   void multi_polygon_feature_stays_individual() {
     var multiPolygon =
         feature("{\"type\":\"MultiPolygon\",\"coordinates\":[" + SQUARE + "," + SQUARE + "]}");

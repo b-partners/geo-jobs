@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.model.exception.PaymentRequiredException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ThreeDCreditGuard;
@@ -81,6 +82,18 @@ class ThreeDCreditGuardTest {
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
     assertThrows(RuntimeException.class, () -> subject.accept(bulkRequest));
+  }
+
+  @Test
+  void pan_by_pan_request_is_individual_whatever_its_number_of_pans() {
+    var panByPanRequest =
+        bulkRequest.toBuilder()
+            .delimitationObjectType(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE)
+            .build();
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
+
+    assertDoesNotThrow(() -> subject.accept(panByPanRequest));
   }
 
   @Test

@@ -16,6 +16,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ThreeDTrackingRegister;
@@ -93,6 +94,31 @@ class ThreeDTrackingRegisterTest {
 
     verify(analysisProjectApiMock)
         .register3d(eq(dashboardApiKey), eq("city-json:" + requestId), any());
+  }
+
+  @Test
+  void register_3d_pan_by_pan_as_a_single_geometry() {
+    var otherPan =
+        Feature.builder()
+            .geometry(
+                Feature.FeatureGeometry.builder()
+                    .actualInstanceStringValue(
+                        "{\"type\":\"Polygon\",\"coordinates\":[[[2.01,48.0],[2.011,48.0],"
+                            + "[2.011,48.001],[2.01,48.001],[2.01,48.0]]]}")
+                    .build())
+            .build();
+    var pans = List.of(polygonFeature(), otherPan);
+    givenRequest(
+        requestBuilder()
+            .delimitationObjectType(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE)
+            .delimitations(pans)
+            .build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+
+    subject.accept(requestId, communityOwnerId);
+
+    verify(analysisProjectApiMock)
+        .register3d(eq(dashboardApiKey), eq(AnalysisProjectKeys.of(pans).orElseThrow()), any());
   }
 
   @Test

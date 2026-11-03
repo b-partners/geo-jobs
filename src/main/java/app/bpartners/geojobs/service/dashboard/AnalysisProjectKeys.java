@@ -55,6 +55,13 @@ public final class AnalysisProjectKeys {
             == 1;
   }
 
+  public static boolean hasGeometry(List<Feature> features) {
+    return features != null
+        && features.stream()
+            .filter(Objects::nonNull)
+            .anyMatch(feature -> feature.getGeometry() != null);
+  }
+
   public static Optional<String> ofIndividual(List<Feature> features) {
     return isIndividual(features) ? of(features) : Optional.empty();
   }

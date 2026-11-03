@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.service.ThreeDTrackingRegister.isBilledOnDashboard;
+import static app.bpartners.geojobs.service.ThreeDTrackingRegister.isIndividual;
 import static app.bpartners.geojobs.service.ThreeDTrackingRegister.projectKeyOf;
 
 import app.bpartners.geojobs.model.exception.PaymentRequiredException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
-import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class ThreeDCreditGuard {
     try {
       project = analysisProjectApi.get(community.getDashboardApiKey(), projectKeyOf(request));
     } catch (RuntimeException e) {
-      if (!AnalysisProjectKeys.isIndividual(request.getRequestDelimitations())) {
+      if (!isIndividual(request)) {
         throw e;
       }
       log.warn("Unable to check credits before 3D request {}", request.getId(), e);

@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -56,9 +57,20 @@ public class ThreeDTrackingRegister {
     cityJSONRequestRepository.markDashboardRegistered(request.getId(), now());
   }
 
+  public static boolean isIndividual(CityJSONRequest request) {
+    var delimitations = request.getRequestDelimitations();
+    if (BUILDING_ROOF_SEGMENT_FACE.equals(request.getDelimitationObjectType())) {
+      return AnalysisProjectKeys.hasGeometry(delimitations);
+    }
+    return AnalysisProjectKeys.isIndividual(delimitations);
+  }
+
   public static String projectKeyOf(CityJSONRequest request) {
-    return AnalysisProjectKeys.ofIndividual(request.getRequestDelimitations())
-        .orElse("city-json:" + request.getId());
+    var requestKey = "city-json:" + request.getId();
+    if (!isIndividual(request)) {
+      return requestKey;
+    }
+    return AnalysisProjectKeys.of(request.getRequestDelimitations()).orElse(requestKey);
   }
 
   public static boolean isBilledOnDashboard(CommunityAuthorization community) {
