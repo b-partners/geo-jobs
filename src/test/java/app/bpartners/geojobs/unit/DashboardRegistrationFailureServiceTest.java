@@ -41,8 +41,9 @@ class DashboardRegistrationFailureServiceTest {
   HTMLTemplateParser htmlTemplateParserMock = mock();
   DashboardRegistrationFailureService subject =
       new DashboardRegistrationFailureService(
-          repositoryMock, eventProducerMock, mailerMock, htmlTemplateParserMock);
+          repositoryMock, eventProducerMock, mailerMock, htmlTemplateParserMock, ADMIN_EMAIL);
 
+  static final String ADMIN_EMAIL = "admin@email.com";
   final String subjectId = randomUUID().toString();
   final String communityOwnerId = randomUUID().toString();
 
@@ -87,7 +88,7 @@ class DashboardRegistrationFailureServiceTest {
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
     verify(mailerMock).accept(emailCaptor.capture());
     var email = emailCaptor.getValue();
-    assertEquals("tech@birdia.fr", email.to().getAddress());
+    assertEquals(ADMIN_EMAIL, email.to().getAddress());
     assertEquals("<html>body</html>", email.htmlBody());
     assertTrue(email.subject().contains("DETECTION_2D"));
   }

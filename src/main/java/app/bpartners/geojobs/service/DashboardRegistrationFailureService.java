@@ -21,24 +21,36 @@ import app.bpartners.geojobs.template.HTMLTemplateParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.InternetAddress;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class DashboardRegistrationFailureService {
-  private static final String ADMIN_EMAIL = "tech@birdia.fr";
   private static final String TEMPLATE = "dashboard_registration_failed";
   private static final ObjectMapper PAYLOAD_MAPPER = objectMapper().findAndRegisterModules();
   private final DashboardRegistrationFailureRepository repository;
   private final EventProducer eventProducer;
   private final Mailer mailer;
   private final HTMLTemplateParser htmlTemplateParser;
+  private final String adminEmail;
   private final String env = System.getenv("ENV");
+
+  public DashboardRegistrationFailureService(
+      DashboardRegistrationFailureRepository repository,
+      EventProducer eventProducer,
+      Mailer mailer,
+      HTMLTemplateParser htmlTemplateParser,
+      @Value("${admin.email}") String adminEmail) {
+    this.repository = repository;
+    this.eventProducer = eventProducer;
+    this.mailer = mailer;
+    this.htmlTemplateParser = htmlTemplateParser;
+    this.adminEmail = adminEmail;
+  }
 
   @Transactional
   public DashboardRegistrationFailure record(
@@ -121,7 +133,7 @@ public class DashboardRegistrationFailureService {
       context.setVariable("env", env);
       mailer.accept(
           new Email(
-              new InternetAddress(ADMIN_EMAIL),
+              new InternetAddress(adminEmail),
               List.of(),
               List.of(),
               "[geo-jobs/"
