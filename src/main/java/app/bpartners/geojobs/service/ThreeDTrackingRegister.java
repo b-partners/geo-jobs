@@ -1,8 +1,10 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE;
+import static app.bpartners.geojobs.repository.model.dashboard.DashboardRegistrationType.THREE_D_3D;
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class ThreeDTrackingRegister {
   private final AnalysisProjectApi analysisProjectApi;
   private final AnalysisProjectBilling analysisProjectBilling;
+  private final DashboardRegistrationFailureService dashboardRegistrationFailureService;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
@@ -37,12 +40,21 @@ public class ThreeDTrackingRegister {
       return;
     }
     var community = communityAuthorizationRepository.findById(communityOwnerId).orElseThrow();
-    var registered =
-        analysisProjectBilling.register(
-            community,
-            "3D request " + request.getId(),
-            apiKey ->
-                analysisProjectApi.register3d(apiKey, projectKeyOf(request), new Register3d(null)));
+    var projectKey = projectKeyOf(request);
+    var register3d = new Register3d(null);
+    boolean registered;
+    try {
+      registered =
+          analysisProjectBilling.register(
+              community,
+              "3D request " + request.getId(),
+              apiKey -> analysisProjectApi.register3d(apiKey, projectKey, register3d));
+    } catch (DashboardUnavailableException e) {
+      dashboardRegistrationFailureService.record(
+          THREE_D_3D, request.getId(), communityOwnerId, projectKey, register3d, e);
+      return;
+    }
+    dashboardRegistrationFailureService.markReprocessed(THREE_D_3D, request.getId());
     if (registered) {
       cityJSONRequestRepository.markDashboardRegistered(request.getId(), now());
     }

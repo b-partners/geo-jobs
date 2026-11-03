@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.dashboard.DashboardRegistrationType.DETECTION_2D;
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class DetectionTrackingRegister implements Consumer<Detection> {
   private final AnalysisProjectApi analysisProjectApi;
   private final AnalysisProjectBilling analysisProjectBilling;
+  private final DashboardRegistrationFailureService dashboardRegistrationFailureService;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
 
@@ -35,21 +38,32 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
     }
     var community =
         communityAuthorizationRepository.findById(detection.getCommunityOwnerId()).orElseThrow();
-    var registered =
-        analysisProjectBilling.register(
-            community,
-            "Detection " + detection.getId(),
-            apiKey ->
-                analysisProjectApi.register2d(
-                    apiKey,
-                    projectKeyOf(detection),
-                    new Register2d(
-                        detection.getEndToEndId(),
-                        detection.getZoneName(),
-                        "non supportée",
-                        now(),
-                        new DetectionInitiator(
-                            "non supporté", detection.getEmailReceiver(), "non supporté"))));
+    var projectKey = projectKeyOf(detection);
+    var register2d =
+        new Register2d(
+            detection.getEndToEndId(),
+            detection.getZoneName(),
+            "non supportée",
+            now(),
+            new DetectionInitiator("non supporté", detection.getEmailReceiver(), "non supporté"));
+    boolean registered;
+    try {
+      registered =
+          analysisProjectBilling.register(
+              community,
+              "Detection " + detection.getId(),
+              apiKey -> analysisProjectApi.register2d(apiKey, projectKey, register2d));
+    } catch (DashboardUnavailableException e) {
+      dashboardRegistrationFailureService.record(
+          DETECTION_2D,
+          detection.getId(),
+          detection.getCommunityOwnerId(),
+          projectKey,
+          register2d,
+          e);
+      return;
+    }
+    dashboardRegistrationFailureService.markReprocessed(DETECTION_2D, detection.getId());
     if (!registered) {
       return;
     }

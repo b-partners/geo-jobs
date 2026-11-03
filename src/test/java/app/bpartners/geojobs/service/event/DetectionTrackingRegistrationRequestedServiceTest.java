@@ -6,11 +6,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationRequested;
+import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.dashboard.DashboardRegistrationType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DashboardRegistrationFailureService;
 import app.bpartners.geojobs.service.DetectionTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
@@ -27,15 +30,18 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 class DetectionTrackingRegistrationRequestedServiceTest {
   AnalysisProjectApi analysisProjectApiMock = mock();
+  DashboardRegistrationFailureService dashboardRegistrationFailureServiceMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionTrackingRegister detectionTrackingRegister =
       new DetectionTrackingRegister(
           analysisProjectApiMock,
           new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock),
+          dashboardRegistrationFailureServiceMock,
           communityAuthorizationRepositoryMock,
           detectionRepositoryMock);
   DetectionTrackingRegistrationRequestedService subject =
@@ -184,6 +190,41 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
 
     verify(detectionRepositoryMock, never()).save(any());
+  }
+
+  @Test
+  void unreachable_dashboard_persists_the_registration_and_keeps_detection_unregistered() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(analysisProjectApiMock.register2d(any(), any(), any()))
+        .thenThrow(new ResourceAccessException("connection refused"));
+
+    assertDoesNotThrow(
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+
+    var communityOwnerId = detectionMock.getCommunityOwnerId();
+    verify(dashboardRegistrationFailureServiceMock)
+        .record(
+            eq(DashboardRegistrationType.DETECTION_2D),
+            eq(detectionIdentifier),
+            eq(communityOwnerId),
+            eq("detection:" + detectionIdentifier),
+            any(Register2d.class),
+            any(DashboardUnavailableException.class));
+    verify(detectionRepositoryMock, never()).save(any());
+  }
+
+  @Test
+  void successful_registration_closes_the_pending_failure() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(dashboardRegistrationFailureServiceMock)
+        .markReprocessed(DashboardRegistrationType.DETECTION_2D, detectionIdentifier);
+    verify(dashboardRegistrationFailureServiceMock, never())
+        .record(any(), any(), any(), any(), any(), any());
   }
 
   @Test

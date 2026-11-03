@@ -12,6 +12,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -19,6 +20,8 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.dashboard.DashboardRegistrationType;
+import app.bpartners.geojobs.service.DashboardRegistrationFailureService;
 import app.bpartners.geojobs.service.ThreeDTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
@@ -32,6 +35,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 class ThreeDTrackingRegisterTest {
   static final String POLYGON =
@@ -39,12 +44,14 @@ class ThreeDTrackingRegisterTest {
           + "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]}";
 
   AnalysisProjectApi analysisProjectApiMock = mock();
+  DashboardRegistrationFailureService dashboardRegistrationFailureServiceMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   CityJSONRequestRepository cityJSONRequestRepositoryMock = mock();
   ThreeDTrackingRegister subject =
       new ThreeDTrackingRegister(
           analysisProjectApiMock,
           new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock),
+          dashboardRegistrationFailureServiceMock,
           communityAuthorizationRepositoryMock,
           cityJSONRequestRepositoryMock);
 
@@ -168,6 +175,54 @@ class ThreeDTrackingRegisterTest {
     assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
 
     verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
+  }
+
+  @Test
+  void unreachable_dashboard_persists_the_registration_and_keeps_request_unregistered() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    var unreachable = new ResourceAccessException("connection refused");
+    when(analysisProjectApiMock.register3d(any(), any(), any())).thenThrow(unreachable);
+
+    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
+
+    verify(dashboardRegistrationFailureServiceMock)
+        .record(
+            eq(DashboardRegistrationType.THREE_D_3D),
+            eq(requestId),
+            eq(communityOwnerId),
+            eq(AnalysisProjectKeys.of(List.of(polygonFeature())).orElseThrow()),
+            eq(new Register3d(null)),
+            any(DashboardUnavailableException.class));
+    verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
+  }
+
+  @Test
+  void server_error_is_handled_like_an_unreachable_dashboard() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.register3d(any(), any(), any()))
+        .thenThrow(
+            HttpServerErrorException.create(
+                HttpStatus.BAD_GATEWAY, "error", HttpHeaders.EMPTY, new byte[0], null));
+
+    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
+
+    verify(dashboardRegistrationFailureServiceMock)
+        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+  }
+
+  @Test
+  void successful_registration_closes_the_pending_failure() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+
+    subject.accept(requestId, communityOwnerId);
+
+    verify(dashboardRegistrationFailureServiceMock)
+        .markReprocessed(DashboardRegistrationType.THREE_D_3D, requestId);
+    verify(dashboardRegistrationFailureServiceMock, never())
+        .record(any(), any(), any(), any(), any(), any());
   }
 
   @Test

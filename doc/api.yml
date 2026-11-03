@@ -168,6 +168,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SingleUserInfo"
+  '/dashboardRegistrationFailures/{id}/reprocess':
+    put:
+      tags:
+        - Dashboard
+      operationId: reprocessDashboardRegistrationFailure
+      summary: Reprocess a registration that could not reach the dashboard
+      description: |
+        When the dashboard (bpartners-api) is unreachable at the end of a detection or a 3D request,
+        the registration of the analysis project that should have been done is persisted and the
+        admin is notified by email. Once the dashboard is available again, this operation emits
+        the registration event again. Only pending failures can be reprocessed.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Dashboard registration failure identifier
+          required: true
+      responses:
+        200:
+          description: The failure whose registration has been emitted again
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardRegistrationFailure'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
   '/jobs/{id}/annotationProcessing':
     post:
       tags:
@@ -3023,6 +3056,40 @@ components:
           type: string
         isAdmin:
           type: boolean
+    DashboardRegistrationFailure:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          description: DETECTION_2D or THREE_D_3D
+        subjectId:
+          type: string
+          description: Detection identifier or 3D request identifier
+        communityOwnerId:
+          type: string
+        projectKey:
+          type: string
+        payload:
+          type: string
+          description: Registration that should have been done, as JSON
+        errorMessage:
+          type: string
+        attempts:
+          type: integer
+        status:
+          type: string
+          description: PENDING or REPROCESSED
+        creationDatetime:
+          type: string
+          format: date-time
+        lastAttemptDatetime:
+          type: string
+          format: date-time
+        reprocessedDatetime:
+          type: string
+          format: date-time
     RestException:
       type: object
       properties:
