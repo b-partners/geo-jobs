@@ -46,6 +46,19 @@ public final class AnalysisProjectKeys {
     return Optional.of(VERSION_PREFIX + sha256(String.join("|", canonicalParts)));
   }
 
+  public static boolean isIndividual(List<Feature> features) {
+    return features != null
+        && features.stream()
+                .filter(Objects::nonNull)
+                .filter(feature -> feature.getGeometry() != null)
+                .count()
+            == 1;
+  }
+
+  public static Optional<String> ofIndividual(List<Feature> features) {
+    return isIndividual(features) ? of(features) : Optional.empty();
+  }
+
   private static List<String> canonicalGeometry(Feature.FeatureGeometry geometry) {
     var raw = geometry.getActualInstanceStringValue();
     if (raw == null) {

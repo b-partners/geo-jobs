@@ -49,8 +49,13 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
   }
 
   private String projectKeyOf(Detection detection) {
-    return AnalysisProjectKeys.of(detection.getDomainProvidedGeoJsonZone())
-        .orElse("detection:" + detection.getId());
+    var detectionKey = "detection:" + detection.getId();
+    var convertedAddresses = detection.getConvertedAddresses();
+    if (convertedAddresses != null && convertedAddresses.size() > 1) {
+      return detectionKey;
+    }
+    return AnalysisProjectKeys.ofIndividual(detection.getDomainProvidedGeoJsonZone())
+        .orElse(detectionKey);
   }
 
   private String getApiKey(Detection detection) {

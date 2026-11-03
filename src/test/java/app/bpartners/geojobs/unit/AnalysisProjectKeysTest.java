@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -94,6 +95,36 @@ class AnalysisProjectKeysTest {
     assertTrue(AnalysisProjectKeys.of(List.of()).isEmpty());
     assertTrue(AnalysisProjectKeys.of(List.of(Feature.builder().build())).isEmpty());
     assertTrue(AnalysisProjectKeys.of(List.of(feature("not a json"))).isEmpty());
+  }
+
+  @Test
+  void individual_means_a_single_geometry() {
+    var other = "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]";
+
+    assertTrue(AnalysisProjectKeys.isIndividual(List.of(polygon(SQUARE))));
+    assertFalse(AnalysisProjectKeys.isIndividual(List.of(polygon(SQUARE), polygon(other))));
+    assertFalse(AnalysisProjectKeys.isIndividual(List.of()));
+    assertFalse(AnalysisProjectKeys.isIndividual(null));
+    assertFalse(AnalysisProjectKeys.isIndividual(List.of(Feature.builder().build())));
+  }
+
+  @Test
+  void multi_polygon_feature_stays_individual() {
+    var multiPolygon =
+        feature("{\"type\":\"MultiPolygon\",\"coordinates\":[" + SQUARE + "," + SQUARE + "]}");
+
+    assertTrue(AnalysisProjectKeys.isIndividual(List.of(multiPolygon)));
+  }
+
+  @Test
+  void no_individual_key_for_several_geometries() {
+    var other = "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]";
+
+    assertTrue(
+        AnalysisProjectKeys.ofIndividual(List.of(polygon(SQUARE), polygon(other))).isEmpty());
+    assertEquals(
+        AnalysisProjectKeys.of(List.of(polygon(SQUARE))),
+        AnalysisProjectKeys.ofIndividual(List.of(polygon(SQUARE))));
   }
 
   private static Feature polygon(String coordinates) {

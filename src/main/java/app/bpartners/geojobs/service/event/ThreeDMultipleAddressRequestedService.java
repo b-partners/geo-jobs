@@ -92,6 +92,8 @@ public class ThreeDMultipleAddressRequestedService
           skippedAddresses);
     }
 
+    // TODO: check the analysis credits of the whole request here, once the addresses are
+    // converted and before the request leaves the REQUEST_ACCEPTED step (pre-processing)
     var saved =
         cityJSONRequestRepository.save(
             persistedRequest.toBuilder()

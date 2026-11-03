@@ -8,13 +8,16 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationRequested;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
 import app.bpartners.geojobs.service.dashboard.component.Register2d;
+import java.util.List;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,6 +94,74 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         "non supportée",
         actual.creationDatetime(),
         new DetectionInitiator("non supporté", emailReceiver, "non supporté"));
+  }
+
+  @Test
+  void register_individual_detection_with_geometry_key() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of(polygonFeature()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock)
+        .register2d(
+            eq(apiKey), eq(AnalysisProjectKeys.of(List.of(polygonFeature())).orElseThrow()), any());
+  }
+
+  @Test
+  void register_multi_address_detection_with_a_detection_key_whatever_the_given_zone() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getConvertedAddresses()).thenReturn(List.of("address 1", "address 2"));
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of(polygonFeature()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock)
+        .register2d(eq(apiKey), eq("detection:" + detectionIdentifier), any());
+  }
+
+  @Test
+  void register_detection_with_an_empty_zone_with_a_detection_key() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of());
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock)
+        .register2d(eq(apiKey), eq("detection:" + detectionIdentifier), any());
+  }
+
+  private Detection registrableDetection(String detectionIdentifier) {
+    var communityOwnerId = randomUUID().toString();
+    var detectionBuilderMock = mock(Detection.DetectionBuilder.class);
+    var detectionMock = mock(Detection.class);
+    when(detectionMock.getId()).thenReturn(detectionIdentifier);
+    when(detectionMock.getCommunityOwnerId()).thenReturn(communityOwnerId);
+    when(detectionBuilderMock.dashboardRegistrationDatetime(any()))
+        .thenReturn(detectionBuilderMock);
+    when(detectionMock.toBuilder()).thenReturn(detectionBuilderMock);
+    when(detectionBuilderMock.build()).thenReturn(mock(Detection.class));
+    when(detectionRepositoryMock.findById(detectionIdentifier))
+        .thenReturn(Optional.of(detectionMock));
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
+        .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
+    return detectionMock;
+  }
+
+  private static Feature polygonFeature() {
+    return Feature.builder()
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .actualInstanceStringValue(
+                    "{\"type\":\"Polygon\",\"coordinates\":"
+                        + "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]}")
+                .build())
+        .build();
   }
 
   @Test

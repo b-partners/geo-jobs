@@ -12,16 +12,25 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.exception.PaymentRequiredException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ThreeDCreditGuard;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class ThreeDCreditGuardTest {
+  static final String SQUARE =
+      "{\"type\":\"Polygon\",\"coordinates\":"
+          + "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]}";
+  static final String OTHER_SQUARE =
+      "{\"type\":\"Polygon\",\"coordinates\":"
+          + "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]}";
+
   AnalysisProjectApi analysisProjectApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   ThreeDCreditGuard subject =
@@ -33,13 +42,17 @@ class ThreeDCreditGuardTest {
       CityJSONRequest.builder()
           .id(randomUUID().toString())
           .communityOwnerId(communityOwnerId)
-          .delimitations(List.of())
+          .delimitations(List.of(polygonFeature(SQUARE)))
+          .build();
+  final CityJSONRequest bulkRequest =
+      request.toBuilder()
+          .delimitations(List.of(polygonFeature(SQUARE), polygonFeature(OTHER_SQUARE)))
           .build();
 
   @Test
   void accept_when_credits_are_sufficient() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
-    when(analysisProjectApiMock.get(eq(dashboardApiKey), eq("city-json:" + request.getId())))
+    when(analysisProjectApiMock.get(eq(dashboardApiKey), eq(individualKey())))
         .thenReturn(project(true));
 
     assertDoesNotThrow(() -> subject.accept(request));
@@ -54,7 +67,24 @@ class ThreeDCreditGuardTest {
   }
 
   @Test
-  void accept_when_dashboard_cannot_be_reached() {
+  void bulk_request_is_keyed_by_request_and_checked_like_any_other() {
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.get(eq(dashboardApiKey), eq("city-json:" + bulkRequest.getId())))
+        .thenReturn(project(false));
+
+    assertThrows(PaymentRequiredException.class, () -> subject.accept(bulkRequest));
+  }
+
+  @Test
+  void bulk_request_is_refused_when_dashboard_cannot_be_reached() {
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
+
+    assertThrows(RuntimeException.class, () -> subject.accept(bulkRequest));
+  }
+
+  @Test
+  void individual_request_is_accepted_when_dashboard_cannot_be_reached() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
@@ -77,6 +107,16 @@ class ThreeDCreditGuardTest {
     assertDoesNotThrow(() -> subject.accept(withoutOwner));
 
     verify(analysisProjectApiMock, never()).get(any(), any());
+  }
+
+  private String individualKey() {
+    return AnalysisProjectKeys.of(request.getRequestDelimitations()).orElseThrow();
+  }
+
+  private static Feature polygonFeature(String geometryJson) {
+    return Feature.builder()
+        .geometry(Feature.FeatureGeometry.builder().actualInstanceStringValue(geometryJson).build())
+        .build();
   }
 
   private void givenCommunity(CommunityAuthorization community) {

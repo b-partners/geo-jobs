@@ -57,7 +57,7 @@ public class ThreeDTrackingRegister {
   }
 
   public static String projectKeyOf(CityJSONRequest request) {
-    return AnalysisProjectKeys.of(request.getRequestDelimitations())
+    return AnalysisProjectKeys.ofIndividual(request.getRequestDelimitations())
         .orElse("city-json:" + request.getId());
   }
 

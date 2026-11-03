@@ -78,6 +78,24 @@ class ThreeDTrackingRegisterTest {
   }
 
   @Test
+  void register_3d_of_several_geometries_with_a_request_key() {
+    var other =
+        Feature.builder()
+            .geometry(
+                Feature.FeatureGeometry.builder()
+                    .actualInstanceStringValue("{\"type\":\"Point\",\"coordinates\":[2.5,48.5]}")
+                    .build())
+            .build();
+    givenRequest(requestBuilder().delimitations(List.of(polygonFeature(), other)).build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+
+    subject.accept(requestId, communityOwnerId);
+
+    verify(analysisProjectApiMock)
+        .register3d(eq(dashboardApiKey), eq("city-json:" + requestId), any());
+  }
+
+  @Test
   void skip_request_already_registered() {
     givenRequest(requestBuilder().dashboardRegistrationDatetime(Instant.now()).build());
 

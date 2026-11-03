@@ -212,6 +212,8 @@ public class DetectionService {
 
   public Detection configureDetectionAddresses(String detectionId, List<String> addresses) {
     var detection = getDetectionByE2IdOrId(detectionId);
+    // TODO: check the analysis credits of all the addresses here, once they are converted and
+    // before the detection leaves the REQUEST_ACCEPTED step (pre-processing)
     var savedDetection =
         detectionRepository.save(detection.toBuilder().convertedAddresses(addresses).build());
 
