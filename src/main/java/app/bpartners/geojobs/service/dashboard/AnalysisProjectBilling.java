@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.dashboard;
 
+import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
 import app.bpartners.geojobs.model.exception.PaymentRequiredException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -9,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 @Slf4j
 @Component
@@ -36,12 +39,14 @@ public class AnalysisProjectBilling {
       }
       log.error("{} delivered but not billed, insufficient credits on dashboard", subject);
       return false;
+    } catch (ResourceAccessException | HttpServerErrorException e) {
+      throw new DashboardUnavailableException(e);
     }
     return true;
   }
 
   public void checkCredits(
-      String communityOwnerId, String projectKey, boolean failOpen, String subject, String action) {
+      String communityOwnerId, String projectKey, String subject, String action) {
     if (communityOwnerId == null) {
       return;
     }
@@ -50,7 +55,7 @@ public class AnalysisProjectBilling {
       return;
     }
 
-    var project = retrieveProject(community, projectKey, failOpen, subject);
+    var project = retrieveProject(community, projectKey, subject);
     if (project != null && !project.creditsSufficient()) {
       throw new PaymentRequiredException(
           "Not enough analysis credits to "
@@ -62,13 +67,10 @@ public class AnalysisProjectBilling {
   }
 
   private app.bpartners.geojobs.service.dashboard.component.AnalysisProject retrieveProject(
-      CommunityAuthorization community, String projectKey, boolean failOpen, String subject) {
+      CommunityAuthorization community, String projectKey, String subject) {
     try {
       return analysisProjectApi.get(community.getDashboardApiKey(), projectKey);
     } catch (RuntimeException e) {
-      if (!failOpen) {
-        throw e;
-      }
       log.warn("Unable to check credits before {}", subject, e);
       return null;
     }

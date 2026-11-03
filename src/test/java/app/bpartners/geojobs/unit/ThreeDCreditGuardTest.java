@@ -79,11 +79,11 @@ class ThreeDCreditGuardTest {
   }
 
   @Test
-  void bulk_request_is_refused_when_dashboard_cannot_be_reached() {
+  void bulk_request_is_accepted_when_dashboard_cannot_be_reached() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
-    assertThrows(RuntimeException.class, () -> subject.accept(bulkRequest));
+    assertDoesNotThrow(() -> subject.accept(bulkRequest));
   }
 
   @Test

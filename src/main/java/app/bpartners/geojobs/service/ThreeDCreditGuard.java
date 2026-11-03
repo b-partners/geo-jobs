@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.service.ThreeDTrackingRegister.isIndividual;
 import static app.bpartners.geojobs.service.ThreeDTrackingRegister.projectKeyOf;
 
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -17,7 +16,6 @@ public class ThreeDCreditGuard {
     analysisProjectBilling.checkCredits(
         request.getCommunityOwnerId(),
         projectKeyOf(request),
-        isIndividual(request),
         "3D request " + request.getId(),
         "generate this 3D model");
   }

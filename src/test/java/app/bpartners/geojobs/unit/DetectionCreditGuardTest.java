@@ -105,12 +105,11 @@ class DetectionCreditGuardTest {
   }
 
   @Test
-  void several_geometries_are_refused_when_dashboard_cannot_be_reached() {
+  void several_geometries_are_accepted_when_dashboard_cannot_be_reached() {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
-    assertThrows(
-        RuntimeException.class,
+    assertDoesNotThrow(
         () ->
             subject.accept(
                 communityOwnerId,
