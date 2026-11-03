@@ -27,6 +27,7 @@ import app.bpartners.geojobs.service.ThreeDTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
+import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import app.bpartners.geojobs.service.dashboard.component.Register3d;
 import java.time.Instant;
 import java.util.List;
@@ -64,7 +65,8 @@ class ThreeDTrackingRegisterTest {
   void register_3d_with_geometry_key_and_mark_request_registered() {
     givenRequest(requestBuilder().build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
-    when(analysisProjectApiMock.register3d(any(), any(), any())).thenReturn(mock());
+    var analysisProject = mock(AnalysisProject.class);
+    when(analysisProjectApiMock.register3d(any(), any(), any())).thenReturn(analysisProject);
 
     subject.accept(requestId, communityOwnerId, null);
 
@@ -188,7 +190,7 @@ class ThreeDTrackingRegisterTest {
     assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId, null));
 
     verify(dashboardRegistrationFailureServiceMock)
-        .record(
+        .recordFailure(
             eq(DashboardRegistrationType.THREE_D_3D),
             eq(requestId),
             eq(communityOwnerId),
@@ -210,7 +212,7 @@ class ThreeDTrackingRegisterTest {
     assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId, null));
 
     verify(dashboardRegistrationFailureServiceMock)
-        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+        .recordFailure(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
   }
 
   @Test
@@ -276,7 +278,7 @@ class ThreeDTrackingRegisterTest {
     subject.accept(requestId, communityOwnerId, "failure");
 
     verify(dashboardRegistrationFailureServiceMock)
-        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+        .recordFailure(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
     verify(dashboardRegistrationFailureServiceMock, never()).resolve(any());
   }
 

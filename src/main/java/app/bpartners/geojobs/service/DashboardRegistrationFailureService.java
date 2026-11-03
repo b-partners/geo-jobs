@@ -53,7 +53,7 @@ public class DashboardRegistrationFailureService {
   }
 
   @Transactional
-  public DashboardRegistrationFailure record(
+  public DashboardRegistrationFailure recordFailure(
       DashboardRegistrationType type,
       String subjectId,
       String communityOwnerId,

@@ -55,7 +55,7 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
               "Detection " + detection.getId(),
               apiKey -> analysisProjectApi.register2d(apiKey, projectKey, register2d));
     } catch (DashboardUnavailableException e) {
-      dashboardRegistrationFailureService.record(
+      dashboardRegistrationFailureService.recordFailure(
           DETECTION_2D,
           detection.getId(),
           detection.getCommunityOwnerId(),

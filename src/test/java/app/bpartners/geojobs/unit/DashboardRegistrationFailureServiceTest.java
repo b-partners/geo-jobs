@@ -53,7 +53,7 @@ class DashboardRegistrationFailureServiceTest {
     when(htmlTemplateParserMock.apply(any(), any())).thenReturn("<html></html>");
 
     var actual =
-        subject.record(
+        subject.recordFailure(
             THREE_D_3D,
             subjectId,
             communityOwnerId,
@@ -77,7 +77,7 @@ class DashboardRegistrationFailureServiceTest {
     when(repositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     when(htmlTemplateParserMock.apply(any(), any())).thenReturn("<html>body</html>");
 
-    subject.record(
+    subject.recordFailure(
         DETECTION_2D,
         subjectId,
         communityOwnerId,
@@ -109,7 +109,7 @@ class DashboardRegistrationFailureServiceTest {
     when(htmlTemplateParserMock.apply(any(), any())).thenReturn("<html></html>");
 
     var actual =
-        subject.record(
+        subject.recordFailure(
             DETECTION_2D,
             subjectId,
             communityOwnerId,
@@ -129,7 +129,7 @@ class DashboardRegistrationFailureServiceTest {
     doThrow(new RuntimeException("ses down")).when(mailerMock).accept(any());
 
     var actual =
-        subject.record(
+        subject.recordFailure(
             THREE_D_3D,
             subjectId,
             communityOwnerId,

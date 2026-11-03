@@ -51,7 +51,7 @@ public class ThreeDTrackingRegister {
               "3D request " + request.getId(),
               apiKey -> analysisProjectApi.register3d(apiKey, projectKey, register3d));
     } catch (DashboardUnavailableException e) {
-      dashboardRegistrationFailureService.record(
+      dashboardRegistrationFailureService.recordFailure(
           THREE_D_3D, request.getId(), communityOwnerId, projectKey, register3d, e);
       return;
     }

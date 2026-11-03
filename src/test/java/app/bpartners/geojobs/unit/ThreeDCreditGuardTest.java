@@ -4,7 +4,6 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -55,8 +54,7 @@ class ThreeDCreditGuardTest {
   @Test
   void accept_when_credits_are_sufficient() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
-    when(analysisProjectApiMock.get(eq(dashboardApiKey), eq(individualKey())))
-        .thenReturn(project(true));
+    when(analysisProjectApiMock.get(dashboardApiKey, individualKey())).thenReturn(project(true));
 
     assertDoesNotThrow(() -> subject.accept(request));
   }
@@ -72,7 +70,7 @@ class ThreeDCreditGuardTest {
   @Test
   void bulk_request_is_keyed_by_request_and_checked_like_any_other() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
-    when(analysisProjectApiMock.get(eq(dashboardApiKey), eq("city-json:" + bulkRequest.getId())))
+    when(analysisProjectApiMock.get(dashboardApiKey, "city-json:" + bulkRequest.getId()))
         .thenReturn(project(false));
 
     assertThrows(PaymentRequiredException.class, () -> subject.accept(bulkRequest));

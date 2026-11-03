@@ -52,8 +52,8 @@ class DetectionTrackingRegistrationRequestedServiceTest {
 
   @BeforeEach
   void setUp() {
-    when(analysisProjectApiMock.register2d(eq(apiKey), any(), any()))
-        .thenReturn(mock(AnalysisProject.class));
+    var analysisProject = mock(AnalysisProject.class);
+    when(analysisProjectApiMock.register2d(eq(apiKey), any(), any())).thenReturn(analysisProject);
   }
 
   @Test
@@ -84,8 +84,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
         .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
 
-    assertDoesNotThrow(
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertDoesNotThrow(() -> registerDetection(detectionIdentifier));
 
     var projectKeyCaptor = ArgumentCaptor.forClass(String.class);
     var registerCaptor = ArgumentCaptor.forClass(Register2d.class);
@@ -147,6 +146,10 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         .register2d(eq(apiKey), eq("detection:" + detectionIdentifier), any());
   }
 
+  private void registerDetection(String detectionIdentifier) {
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+  }
+
   private Detection registrableDetection(String detectionIdentifier) {
     var communityOwnerId = randomUUID().toString();
     var detectionBuilderMock = mock(Detection.DetectionBuilder.class);
@@ -156,7 +159,8 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(detectionBuilderMock.dashboardRegistrationDatetime(any()))
         .thenReturn(detectionBuilderMock);
     when(detectionMock.toBuilder()).thenReturn(detectionBuilderMock);
-    when(detectionBuilderMock.build()).thenReturn(mock(Detection.class));
+    var registeredDetectionMock = mock(Detection.class);
+    when(detectionBuilderMock.build()).thenReturn(registeredDetectionMock);
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(detectionRepositoryMock.save(any()))
@@ -186,8 +190,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
             HttpClientErrorException.create(
                 HttpStatus.PAYMENT_REQUIRED, "error", HttpHeaders.EMPTY, new byte[0], null));
 
-    assertDoesNotThrow(
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertDoesNotThrow(() -> registerDetection(detectionIdentifier));
 
     verify(detectionRepositoryMock, never()).save(any());
   }
@@ -199,12 +202,11 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(analysisProjectApiMock.register2d(any(), any(), any()))
         .thenThrow(new ResourceAccessException("connection refused"));
 
-    assertDoesNotThrow(
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertDoesNotThrow(() -> registerDetection(detectionIdentifier));
 
     var communityOwnerId = detectionMock.getCommunityOwnerId();
     verify(dashboardRegistrationFailureServiceMock)
-        .record(
+        .recordFailure(
             eq(DashboardRegistrationType.DETECTION_2D),
             eq(detectionIdentifier),
             eq(communityOwnerId),
@@ -270,7 +272,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier, "failure"));
 
     verify(dashboardRegistrationFailureServiceMock)
-        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+        .recordFailure(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
     verify(dashboardRegistrationFailureServiceMock, never()).resolve(any());
   }
 
@@ -283,9 +285,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
             HttpClientErrorException.create(
                 HttpStatus.FORBIDDEN, "error", HttpHeaders.EMPTY, new byte[0], null));
 
-    assertThrows(
-        HttpClientErrorException.class,
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertThrows(HttpClientErrorException.class, () -> registerDetection(detectionIdentifier));
     verify(detectionRepositoryMock, never()).save(any());
   }
 
@@ -315,9 +315,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
     when(analysisProjectApiMock.register2d(any(), any(), any())).thenThrow(new RuntimeException());
 
-    assertThrows(
-        RuntimeException.class,
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertThrows(RuntimeException.class, () -> registerDetection(detectionIdentifier));
   }
 
   @Test
@@ -330,8 +328,6 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         .thenReturn(Optional.of(detectionMock));
     when(communityAuthorizationRepositoryMock.findById(any())).thenReturn(Optional.empty());
 
-    assertThrows(
-        RuntimeException.class,
-        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
+    assertThrows(RuntimeException.class, () -> registerDetection(detectionIdentifier));
   }
 }
