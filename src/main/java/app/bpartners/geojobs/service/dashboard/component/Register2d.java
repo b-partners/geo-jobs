@@ -2,9 +2,9 @@ package app.bpartners.geojobs.service.dashboard.component;
 
 import java.time.Instant;
 
-public record CreateDetectionTracking(
+public record Register2d(
+    String detectionIdentifier,
     String zone,
     String address,
     Instant creationDatetime,
-    DetectionInitiator initiator,
-    String detectionIdentifier) {}
+    DetectionInitiator initiator) {}

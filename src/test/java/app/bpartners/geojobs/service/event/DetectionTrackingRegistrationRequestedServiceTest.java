@@ -11,11 +11,10 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionTrackingRegister;
-import app.bpartners.geojobs.service.dashboard.DetectionTrackingApi;
-import app.bpartners.geojobs.service.dashboard.component.CreateDetectionTracking;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
-import app.bpartners.geojobs.service.dashboard.component.DetectionTracking;
-import java.util.List;
+import app.bpartners.geojobs.service.dashboard.component.Register2d;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +22,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class DetectionTrackingRegistrationRequestedServiceTest {
-  DetectionTrackingApi detectionTrackingApiMock = mock();
+  AnalysisProjectApi analysisProjectApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionTrackingRegister detectionTrackingRegister =
       new DetectionTrackingRegister(
-          detectionTrackingApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
+          analysisProjectApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
   DetectionTrackingRegistrationRequestedService subject =
       new DetectionTrackingRegistrationRequestedService(
           detectionTrackingRegister, detectionRepositoryMock);
@@ -37,8 +36,8 @@ class DetectionTrackingRegistrationRequestedServiceTest {
 
   @BeforeEach
   void setUp() {
-    when(detectionTrackingApiMock.registerDetection(eq(apiKey), any()))
-        .thenReturn(List.of(mock(DetectionTracking.class)));
+    when(analysisProjectApiMock.register2d(eq(apiKey), any(), any()))
+        .thenReturn(mock(AnalysisProject.class));
   }
 
   @Test
@@ -72,28 +71,26 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     assertDoesNotThrow(
         () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
 
-    var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(detectionTrackingApiMock, only()).registerDetection(eq(apiKey), listCaptor.capture());
-    var actualCreateDetection = (List<CreateDetectionTracking>) listCaptor.getValue();
-    var expectedCreateDetection =
-        getExpectedCreateDetection(zoneName, emailReceiver, endToEndId, actualCreateDetection);
+    var projectKeyCaptor = ArgumentCaptor.forClass(String.class);
+    var registerCaptor = ArgumentCaptor.forClass(Register2d.class);
+    verify(analysisProjectApiMock, only())
+        .register2d(eq(apiKey), projectKeyCaptor.capture(), registerCaptor.capture());
+    var expectedRegister2d =
+        getExpectedRegister2d(zoneName, emailReceiver, endToEndId, registerCaptor.getValue());
     verify(detectionRepositoryMock).save(detectionMockWithRegistrationDatetime);
 
-    assertEquals(expectedCreateDetection, actualCreateDetection);
+    assertEquals(expectedRegister2d, registerCaptor.getValue());
+    assertEquals("detection:" + detectionIdentifier, projectKeyCaptor.getValue());
   }
 
-  private @NotNull List<CreateDetectionTracking> getExpectedCreateDetection(
-      String zoneName,
-      String emailReceiver,
-      String endToEndId,
-      List<CreateDetectionTracking> actualCreateDetection) {
-    return List.of(
-        new CreateDetectionTracking(
-            zoneName,
-            "non supportée",
-            actualCreateDetection.getFirst().creationDatetime(),
-            new DetectionInitiator("non supporté", emailReceiver, "non supporté"),
-            endToEndId));
+  private @NotNull Register2d getExpectedRegister2d(
+      String zoneName, String emailReceiver, String endToEndId, Register2d actual) {
+    return new Register2d(
+        endToEndId,
+        zoneName,
+        "non supportée",
+        actual.creationDatetime(),
+        new DetectionInitiator("non supporté", emailReceiver, "non supporté"));
   }
 
   @Test
@@ -102,13 +99,12 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     var detectionMock = mock(Detection.class);
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getCommunityOwnerId()).thenReturn(randomUUID().toString());
-    reset(detectionTrackingApiMock);
+    reset(analysisProjectApiMock);
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(communityAuthorizationRepositoryMock.findById(any()))
         .thenReturn(Optional.of(CommunityAuthorization.builder().apiKey(apiKey).build()));
-    when(detectionTrackingApiMock.registerDetection(any(), any()))
-        .thenThrow(new RuntimeException());
+    when(analysisProjectApiMock.register2d(any(), any(), any())).thenThrow(new RuntimeException());
 
     assertThrows(
         RuntimeException.class,
