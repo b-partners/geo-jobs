@@ -66,7 +66,7 @@ class ThreeDTrackingRegisterTest {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
     when(analysisProjectApiMock.register3d(any(), any(), any())).thenReturn(mock());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     var projectKeyCaptor = ArgumentCaptor.forClass(String.class);
     verify(analysisProjectApiMock)
@@ -82,7 +82,7 @@ class ThreeDTrackingRegisterTest {
     givenRequest(requestBuilder().delimitations(List.of()).build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock)
         .register3d(eq(dashboardApiKey), eq("city-json:" + requestId), any());
@@ -100,7 +100,7 @@ class ThreeDTrackingRegisterTest {
     givenRequest(requestBuilder().delimitations(List.of(polygonFeature(), other)).build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock)
         .register3d(eq(dashboardApiKey), eq("city-json:" + requestId), any());
@@ -125,7 +125,7 @@ class ThreeDTrackingRegisterTest {
             .build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock)
         .register3d(eq(dashboardApiKey), eq(AnalysisProjectKeys.of(pans).orElseThrow()), any());
@@ -135,7 +135,7 @@ class ThreeDTrackingRegisterTest {
   void skip_request_already_registered() {
     givenRequest(requestBuilder().dashboardRegistrationDatetime(Instant.now()).build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock, never()).register3d(any(), any(), any());
     verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
@@ -146,7 +146,7 @@ class ThreeDTrackingRegisterTest {
     givenRequest(requestBuilder().build());
     givenCommunity(CommunityAuthorization.builder().build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock, never()).register3d(any(), any(), any());
     verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
@@ -161,7 +161,7 @@ class ThreeDTrackingRegisterTest {
             .integrationTestUsage(true)
             .build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verify(analysisProjectApiMock, never()).register3d(any(), any(), any());
   }
@@ -173,7 +173,7 @@ class ThreeDTrackingRegisterTest {
     when(analysisProjectApiMock.register3d(any(), any(), any()))
         .thenThrow(clientError(HttpStatus.PAYMENT_REQUIRED));
 
-    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
+    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId, null));
 
     verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
   }
@@ -185,7 +185,7 @@ class ThreeDTrackingRegisterTest {
     var unreachable = new ResourceAccessException("connection refused");
     when(analysisProjectApiMock.register3d(any(), any(), any())).thenThrow(unreachable);
 
-    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
+    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId, null));
 
     verify(dashboardRegistrationFailureServiceMock)
         .record(
@@ -207,7 +207,7 @@ class ThreeDTrackingRegisterTest {
             HttpServerErrorException.create(
                 HttpStatus.BAD_GATEWAY, "error", HttpHeaders.EMPTY, new byte[0], null));
 
-    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId));
+    assertDoesNotThrow(() -> subject.accept(requestId, communityOwnerId, null));
 
     verify(dashboardRegistrationFailureServiceMock)
         .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
@@ -218,7 +218,7 @@ class ThreeDTrackingRegisterTest {
     givenRequest(requestBuilder().build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
 
-    subject.accept(requestId, communityOwnerId);
+    subject.accept(requestId, communityOwnerId, null);
 
     verifyNoInteractions(dashboardRegistrationFailureServiceMock);
   }
@@ -287,7 +287,8 @@ class ThreeDTrackingRegisterTest {
     when(analysisProjectApiMock.register3d(any(), any(), any()))
         .thenThrow(clientError(HttpStatus.FORBIDDEN));
 
-    assertThrows(HttpClientErrorException.class, () -> subject.accept(requestId, communityOwnerId));
+    assertThrows(
+        HttpClientErrorException.class, () -> subject.accept(requestId, communityOwnerId, null));
     verify(cityJSONRequestRepositoryMock, never()).markDashboardRegistered(any(), any());
   }
 
@@ -296,7 +297,7 @@ class ThreeDTrackingRegisterTest {
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
         .thenReturn(Optional.empty());
 
-    assertThrows(NotFoundException.class, () -> subject.accept(requestId, communityOwnerId));
+    assertThrows(NotFoundException.class, () -> subject.accept(requestId, communityOwnerId, null));
   }
 
   @Test

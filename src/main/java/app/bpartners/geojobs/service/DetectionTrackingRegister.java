@@ -12,7 +12,7 @@ import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
 import app.bpartners.geojobs.service.dashboard.component.Register2d;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DetectionTrackingRegister implements Consumer<Detection> {
+public class DetectionTrackingRegister implements BiConsumer<Detection, String> {
   private final AnalysisProjectApi analysisProjectApi;
   private final AnalysisProjectBilling analysisProjectBilling;
   private final DashboardRegistrationFailureService dashboardRegistrationFailureService;
@@ -28,10 +28,6 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
   private final DetectionRepository detectionRepository;
 
   @Override
-  public void accept(Detection detection) {
-    accept(detection, null);
-  }
-
   public void accept(Detection detection, String failureId) {
     if (detection.isDashboardRegistrationCompleted()) {
       log.info(

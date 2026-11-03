@@ -27,10 +27,6 @@ public class ThreeDTrackingRegister {
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
-  public void accept(String requestId, String communityOwnerId) {
-    accept(requestId, communityOwnerId, null);
-  }
-
   public void accept(String requestId, String communityOwnerId, String failureId) {
     var request =
         cityJSONRequestRepository
