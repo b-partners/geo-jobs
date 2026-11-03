@@ -93,9 +93,10 @@ public class DashboardRegistrationFailureService {
   }
 
   @Transactional
-  public void markReprocessed(DashboardRegistrationType type, String subjectId) {
+  public void resolve(String failureId) {
     repository
-        .findFirstByTypeAndSubjectIdAndStatus(type, subjectId, PENDING)
+        .findById(failureId)
+        .filter(failure -> PENDING.equals(failure.getStatus()))
         .ifPresent(
             pending ->
                 repository.save(
@@ -119,10 +120,11 @@ public class DashboardRegistrationFailureService {
 
   private static PojaEvent eventOf(DashboardRegistrationFailure failure) {
     return switch (failure.getType()) {
-      case DETECTION_2D -> new DetectionTrackingRegistrationRequested(failure.getSubjectId());
+      case DETECTION_2D ->
+          new DetectionTrackingRegistrationRequested(failure.getSubjectId(), failure.getId());
       case THREE_D_3D ->
           new ThreeDTrackingRegistrationRequested(
-              failure.getSubjectId(), failure.getCommunityOwnerId());
+              failure.getSubjectId(), failure.getCommunityOwnerId(), failure.getId());
     };
   }
 

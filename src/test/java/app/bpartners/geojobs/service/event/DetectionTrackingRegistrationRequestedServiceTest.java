@@ -215,16 +215,63 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   @Test
-  void successful_registration_closes_the_pending_failure() {
+  void normal_registration_does_not_touch_the_failures() {
     var detectionIdentifier = randomUUID().toString();
     registrableDetection(detectionIdentifier);
 
     subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
 
+    verifyNoInteractions(dashboardRegistrationFailureServiceMock);
+  }
+
+  @Test
+  void successful_replay_resolves_the_failure() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier, "failure"));
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+  }
+
+  @Test
+  void replay_with_insufficient_credits_resolves_the_failure() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+    when(analysisProjectApiMock.register2d(any(), any(), any()))
+        .thenThrow(
+            HttpClientErrorException.create(
+                HttpStatus.PAYMENT_REQUIRED, "error", HttpHeaders.EMPTY, new byte[0], null));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier, "failure"));
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+  }
+
+  @Test
+  void replay_of_an_already_registered_detection_resolves_the_failure() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.isDashboardRegistrationCompleted()).thenReturn(true);
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier, "failure"));
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+    verify(analysisProjectApiMock, never()).register2d(any(), any(), any());
+  }
+
+  @Test
+  void replay_with_a_still_unreachable_dashboard_records_again_without_resolving() {
+    var detectionIdentifier = randomUUID().toString();
+    registrableDetection(detectionIdentifier);
+    when(analysisProjectApiMock.register2d(any(), any(), any()))
+        .thenThrow(new ResourceAccessException("connection refused"));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier, "failure"));
+
     verify(dashboardRegistrationFailureServiceMock)
-        .markReprocessed(DashboardRegistrationType.DETECTION_2D, detectionIdentifier);
-    verify(dashboardRegistrationFailureServiceMock, never())
-        .record(any(), any(), any(), any(), any(), any());
+        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+    verify(dashboardRegistrationFailureServiceMock, never()).resolve(any());
   }
 
   @Test

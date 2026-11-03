@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.exception.DashboardUnavailableException;
@@ -213,16 +214,70 @@ class ThreeDTrackingRegisterTest {
   }
 
   @Test
-  void successful_registration_closes_the_pending_failure() {
+  void normal_registration_does_not_touch_the_failures() {
     givenRequest(requestBuilder().build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
 
     subject.accept(requestId, communityOwnerId);
 
+    verifyNoInteractions(dashboardRegistrationFailureServiceMock);
+  }
+
+  @Test
+  void successful_replay_resolves_the_failure() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+
+    subject.accept(requestId, communityOwnerId, "failure");
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+    verify(cityJSONRequestRepositoryMock).markDashboardRegistered(eq(requestId), any());
+  }
+
+  @Test
+  void replay_with_insufficient_credits_resolves_the_failure() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.register3d(any(), any(), any()))
+        .thenThrow(clientError(HttpStatus.PAYMENT_REQUIRED));
+
+    subject.accept(requestId, communityOwnerId, "failure");
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+  }
+
+  @Test
+  void replay_of_a_community_no_longer_billed_resolves_the_failure() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().build());
+
+    subject.accept(requestId, communityOwnerId, "failure");
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+  }
+
+  @Test
+  void replay_of_an_already_registered_request_resolves_the_failure() {
+    givenRequest(requestBuilder().dashboardRegistrationDatetime(Instant.now()).build());
+
+    subject.accept(requestId, communityOwnerId, "failure");
+
+    verify(dashboardRegistrationFailureServiceMock).resolve("failure");
+    verify(analysisProjectApiMock, never()).register3d(any(), any(), any());
+  }
+
+  @Test
+  void replay_with_a_still_unreachable_dashboard_records_again_without_resolving() {
+    givenRequest(requestBuilder().build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.register3d(any(), any(), any()))
+        .thenThrow(new ResourceAccessException("connection refused"));
+
+    subject.accept(requestId, communityOwnerId, "failure");
+
     verify(dashboardRegistrationFailureServiceMock)
-        .markReprocessed(DashboardRegistrationType.THREE_D_3D, requestId);
-    verify(dashboardRegistrationFailureServiceMock, never())
-        .record(any(), any(), any(), any(), any(), any());
+        .record(any(), any(), any(), any(), any(), any(DashboardUnavailableException.class));
+    verify(dashboardRegistrationFailureServiceMock, never()).resolve(any());
   }
 
   @Test

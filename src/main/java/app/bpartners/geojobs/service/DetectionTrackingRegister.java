@@ -29,11 +29,16 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
 
   @Override
   public void accept(Detection detection) {
+    accept(detection, null);
+  }
+
+  public void accept(Detection detection, String failureId) {
     if (detection.isDashboardRegistrationCompleted()) {
       log.info(
           "Detection {} already registered in dashboard {}",
           detection.getId(),
           detection.getDashboardRegistrationDatetime());
+      resolveFailure(failureId);
       return;
     }
     var community =
@@ -63,7 +68,7 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
           e);
       return;
     }
-    dashboardRegistrationFailureService.markReprocessed(DETECTION_2D, detection.getId());
+    resolveFailure(failureId);
     if (!registered) {
       return;
     }
@@ -72,6 +77,12 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
 
     detectionRepository.save(
         actualDetection.toBuilder().dashboardRegistrationDatetime(now()).build());
+  }
+
+  private void resolveFailure(String failureId) {
+    if (failureId != null) {
+      dashboardRegistrationFailureService.resolve(failureId);
+    }
   }
 
   public static boolean isIndividual(Detection detection) {

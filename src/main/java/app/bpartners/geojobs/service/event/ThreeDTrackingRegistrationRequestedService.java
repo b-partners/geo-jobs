@@ -14,6 +14,7 @@ public class ThreeDTrackingRegistrationRequestedService
 
   @Override
   public void accept(ThreeDTrackingRegistrationRequested event) {
-    threeDTrackingRegister.accept(event.getRequestId(), event.getCommunityOwnerId());
+    threeDTrackingRegister.accept(
+        event.getRequestId(), event.getCommunityOwnerId(), event.getFailureId());
   }
 }

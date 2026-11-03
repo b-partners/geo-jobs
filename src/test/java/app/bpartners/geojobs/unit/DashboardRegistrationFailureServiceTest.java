@@ -142,7 +142,7 @@ class DashboardRegistrationFailureServiceTest {
   }
 
   @Test
-  void mark_reprocessed_closes_the_pending_failure() {
+  void resolve_closes_the_pending_failure() {
     var pending =
         DashboardRegistrationFailure.builder()
             .id("existing")
@@ -150,10 +150,9 @@ class DashboardRegistrationFailureServiceTest {
             .subjectId(subjectId)
             .status(PENDING)
             .build();
-    when(repositoryMock.findFirstByTypeAndSubjectIdAndStatus(THREE_D_3D, subjectId, PENDING))
-        .thenReturn(Optional.of(pending));
+    when(repositoryMock.findById("existing")).thenReturn(Optional.of(pending));
 
-    subject.markReprocessed(THREE_D_3D, subjectId);
+    subject.resolve("existing");
 
     var captor = ArgumentCaptor.forClass(DashboardRegistrationFailure.class);
     verify(repositoryMock).save(captor.capture());
@@ -162,11 +161,26 @@ class DashboardRegistrationFailureServiceTest {
   }
 
   @Test
-  void mark_reprocessed_does_nothing_without_pending_failure() {
-    when(repositoryMock.findFirstByTypeAndSubjectIdAndStatus(any(), any(), any()))
-        .thenReturn(Optional.empty());
+  void resolve_does_nothing_for_an_unknown_failure() {
+    when(repositoryMock.findById("unknown")).thenReturn(Optional.empty());
 
-    subject.markReprocessed(THREE_D_3D, subjectId);
+    subject.resolve("unknown");
+
+    verify(repositoryMock, never()).save(any());
+  }
+
+  @Test
+  void resolve_does_nothing_for_an_already_reprocessed_failure() {
+    when(repositoryMock.findById("done"))
+        .thenReturn(
+            Optional.of(
+                DashboardRegistrationFailure.builder()
+                    .id("done")
+                    .type(THREE_D_3D)
+                    .status(REPROCESSED)
+                    .build()));
+
+    subject.resolve("done");
 
     verify(repositoryMock, never()).save(any());
   }
@@ -186,7 +200,7 @@ class DashboardRegistrationFailureServiceTest {
     subject.reprocess("id");
 
     verify(eventProducerMock)
-        .accept(List.of(new DetectionTrackingRegistrationRequested(subjectId)));
+        .accept(List.of(new DetectionTrackingRegistrationRequested(subjectId, "id")));
   }
 
   @Test
@@ -205,7 +219,8 @@ class DashboardRegistrationFailureServiceTest {
     subject.reprocess("id");
 
     verify(eventProducerMock)
-        .accept(List.of(new ThreeDTrackingRegistrationRequested(subjectId, communityOwnerId)));
+        .accept(
+            List.of(new ThreeDTrackingRegistrationRequested(subjectId, communityOwnerId, "id")));
   }
 
   @Test

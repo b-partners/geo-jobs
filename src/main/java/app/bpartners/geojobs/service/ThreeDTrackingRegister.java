@@ -28,6 +28,10 @@ public class ThreeDTrackingRegister {
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
   public void accept(String requestId, String communityOwnerId) {
+    accept(requestId, communityOwnerId, null);
+  }
+
+  public void accept(String requestId, String communityOwnerId, String failureId) {
     var request =
         cityJSONRequestRepository
             .findByIdAndCommunityOwnerId(requestId, communityOwnerId)
@@ -37,6 +41,7 @@ public class ThreeDTrackingRegister {
           "3D request {} already registered in dashboard {}",
           request.getId(),
           request.getDashboardRegistrationDatetime());
+      resolveFailure(failureId);
       return;
     }
     var community = communityAuthorizationRepository.findById(communityOwnerId).orElseThrow();
@@ -54,9 +59,15 @@ public class ThreeDTrackingRegister {
           THREE_D_3D, request.getId(), communityOwnerId, projectKey, register3d, e);
       return;
     }
-    dashboardRegistrationFailureService.markReprocessed(THREE_D_3D, request.getId());
+    resolveFailure(failureId);
     if (registered) {
       cityJSONRequestRepository.markDashboardRegistered(request.getId(), now());
+    }
+  }
+
+  private void resolveFailure(String failureId) {
+    if (failureId != null) {
+      dashboardRegistrationFailureService.resolve(failureId);
     }
   }
 

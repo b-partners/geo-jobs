@@ -12,6 +12,11 @@ import lombok.*;
 public class ThreeDTrackingRegistrationRequested extends PojaEvent {
   private String requestId;
   private String communityOwnerId;
+  private String failureId;
+
+  public ThreeDTrackingRegistrationRequested(String requestId, String communityOwnerId) {
+    this(requestId, communityOwnerId, null);
+  }
 
   @Override
   public Duration maxConsumerDuration() {
