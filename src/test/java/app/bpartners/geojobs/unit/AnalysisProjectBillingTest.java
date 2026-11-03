@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 
 class AnalysisProjectBillingTest {
   AnalysisProjectBilling subject =
@@ -103,6 +104,20 @@ class AnalysisProjectBillingTest {
                       HttpHeaders.EMPTY,
                       new byte[0],
                       null);
+                }));
+  }
+
+  @Test
+  void register_signals_an_unreadable_dashboard_response() {
+    assertThrows(
+        DashboardUnavailableException.class,
+        () ->
+            subject.register(
+                billed,
+                "subject",
+                apiKey -> {
+                  throw new RestClientException(
+                      "no suitable HttpMessageConverter found for content type [text/html]");
                 }));
   }
 

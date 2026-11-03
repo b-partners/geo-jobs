@@ -10,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @Component
@@ -39,7 +38,7 @@ public class AnalysisProjectBilling {
       }
       log.error("{} delivered but not billed, insufficient credits on dashboard", subject);
       return false;
-    } catch (ResourceAccessException | HttpServerErrorException e) {
+    } catch (RestClientException e) {
       throw new DashboardUnavailableException(e);
     }
     return true;
@@ -56,7 +55,14 @@ public class AnalysisProjectBilling {
     }
 
     var project = retrieveProject(community, projectKey, subject);
-    if (project != null && !project.creditsSufficient()) {
+    if (project == null) {
+      return;
+    }
+    if (project.creditsSufficient() == null) {
+      log.warn("Dashboard gave no credit balance for the project of {}", subject);
+      return;
+    }
+    if (!project.creditsSufficient()) {
       throw new PaymentRequiredException(
           "Not enough analysis credits to "
               + action

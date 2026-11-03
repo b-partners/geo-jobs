@@ -132,6 +132,15 @@ class ThreeDCreditGuardTest {
         .build();
   }
 
+  @Test
+  void accept_when_dashboard_gives_no_credit_balance() {
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.get(any(), any()))
+        .thenReturn(new AnalysisProject("key", false, false, false, List.of(), null, null));
+
+    assertDoesNotThrow(() -> subject.accept(request));
+  }
+
   private void givenCommunity(CommunityAuthorization community) {
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
         .thenReturn(Optional.of(community));

@@ -122,6 +122,15 @@ class DetectionCreditGuardTest {
     verify(analysisProjectApiMock, never()).get(any(), any());
   }
 
+  @Test
+  void accept_when_dashboard_gives_no_credit_balance() {
+    givenBilledCommunity();
+    when(analysisProjectApiMock.get(any(), any()))
+        .thenReturn(new AnalysisProject("key", false, false, false, List.of(), null, null));
+
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, square));
+  }
+
   private void givenBilledCommunity() {
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
         .thenReturn(

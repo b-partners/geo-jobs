@@ -10,5 +10,5 @@ public record AnalysisProject(
     boolean model3dDone,
     boolean creditConsumed,
     List<String> remainingSteps,
-    long creditCost,
-    boolean creditsSufficient) {}
+    Long creditCost,
+    Boolean creditsSufficient) {}
