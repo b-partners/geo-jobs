@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ThreeDCreditGuard;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.AnalysisProject;
 import java.util.List;
@@ -35,7 +36,8 @@ class ThreeDCreditGuardTest {
   AnalysisProjectApi analysisProjectApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   ThreeDCreditGuard subject =
-      new ThreeDCreditGuard(analysisProjectApiMock, communityAuthorizationRepositoryMock);
+      new ThreeDCreditGuard(
+          new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock));
 
   final String communityOwnerId = randomUUID().toString();
   final String dashboardApiKey = "dashboardApiKey";

@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ThreeDTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.Register3d;
 import java.time.Instant;
@@ -43,6 +44,7 @@ class ThreeDTrackingRegisterTest {
   ThreeDTrackingRegister subject =
       new ThreeDTrackingRegister(
           analysisProjectApiMock,
+          new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock),
           communityAuthorizationRepositoryMock,
           cityJSONRequestRepositoryMock);
 
@@ -190,11 +192,11 @@ class ThreeDTrackingRegisterTest {
   @Test
   void billing_applies_only_to_non_test_communities_with_a_dashboard_key() {
     assertTrue(
-        ThreeDTrackingRegister.isBilledOnDashboard(
+        AnalysisProjectBilling.isBilled(
             CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build()));
     assertEquals(
         false,
-        ThreeDTrackingRegister.isBilledOnDashboard(
+        AnalysisProjectBilling.isBilled(
             CommunityAuthorization.builder().dashboardApiKey(" ").build()));
   }
 

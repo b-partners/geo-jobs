@@ -7,21 +7,20 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
-import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.dashboard.component.Register3d;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ThreeDTrackingRegister {
   private final AnalysisProjectApi analysisProjectApi;
+  private final AnalysisProjectBilling analysisProjectBilling;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
@@ -38,23 +37,15 @@ public class ThreeDTrackingRegister {
       return;
     }
     var community = communityAuthorizationRepository.findById(communityOwnerId).orElseThrow();
-    if (!isBilledOnDashboard(community)) {
-      return;
+    var registered =
+        analysisProjectBilling.register(
+            community,
+            "3D request " + request.getId(),
+            apiKey ->
+                analysisProjectApi.register3d(apiKey, projectKeyOf(request), new Register3d(null)));
+    if (registered) {
+      cityJSONRequestRepository.markDashboardRegistered(request.getId(), now());
     }
-
-    try {
-      analysisProjectApi.register3d(
-          community.getDashboardApiKey(), projectKeyOf(request), new Register3d(null));
-    } catch (HttpClientErrorException e) {
-      if (!HttpStatus.PAYMENT_REQUIRED.equals(e.getStatusCode())) {
-        throw e;
-      }
-      log.error(
-          "3D request {} delivered but not billed, insufficient credits on dashboard",
-          request.getId());
-      return;
-    }
-    cityJSONRequestRepository.markDashboardRegistered(request.getId(), now());
   }
 
   public static boolean isIndividual(CityJSONRequest request) {
@@ -71,11 +62,5 @@ public class ThreeDTrackingRegister {
       return requestKey;
     }
     return AnalysisProjectKeys.of(request.getRequestDelimitations()).orElse(requestKey);
-  }
-
-  public static boolean isBilledOnDashboard(CommunityAuthorization community) {
-    return !community.isIntegrationTestUsage()
-        && community.getDashboardApiKey() != null
-        && !community.getDashboardApiKey().isBlank();
   }
 }
