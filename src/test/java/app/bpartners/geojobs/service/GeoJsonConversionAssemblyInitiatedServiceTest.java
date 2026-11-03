@@ -93,6 +93,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           mock(),
           fileWriter,
           mock(),
+          mock(),
           mock());
   ZipGeoJsonAssembler zipGeoJsonAssemblerMock = mock();
   GeoJsonConversionAssemblyInitiatedService subject =

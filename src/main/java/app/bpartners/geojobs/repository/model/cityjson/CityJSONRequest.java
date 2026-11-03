@@ -76,6 +76,13 @@ public class CityJSONRequest implements Serializable {
   @Column(name = "knn")
   private Integer knn;
 
+  @Column(name = "dashboard_registration_datetime")
+  private Instant dashboardRegistrationDatetime;
+
+  public boolean isDashboardRegistrationCompleted() {
+    return dashboardRegistrationDatetime != null;
+  }
+
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);

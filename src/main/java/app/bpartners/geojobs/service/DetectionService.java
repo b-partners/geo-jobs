@@ -92,6 +92,7 @@ public class DetectionService {
   private final FileWriter fileWriter;
   private final DetectionRoofSlopeValidator detectionRoofSlopeValidator;
   private final FeatureVggRequestedService featureVggRequestedService;
+  private final DetectionCreditGuard detectionCreditGuard;
 
   public Detection getByZoneDetectionJob(ZoneDetectionJob zoneDetectionJob) {
     ZoneDetectionJob machineZDJ =
@@ -212,6 +213,7 @@ public class DetectionService {
 
   public Detection configureDetectionAddresses(String detectionId, List<String> addresses) {
     var detection = getDetectionByE2IdOrId(detectionId);
+    detectionCreditGuard.accept(detection.getCommunityOwnerId(), detectionId, List.of());
     var savedDetection =
         detectionRepository.save(detection.toBuilder().convertedAddresses(addresses).build());
 

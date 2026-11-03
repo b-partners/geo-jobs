@@ -46,6 +46,7 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.model.exception.PaymentRequiredException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.CachedAreaPictureMapLayerRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -198,6 +199,7 @@ class DetectionServiceTest {
   DetectionRoofSlopeValidator detectionRoofSlopeValidatorMock = mock();
   BuildingFinder buildingFinderMock = mock();
   FeatureVggRequestedService featureVggRequestedServiceMock = mock();
+  DetectionCreditGuard detectionCreditGuardMock = mock();
 
   DetectionService subject =
       spy(
@@ -233,7 +235,8 @@ class DetectionServiceTest {
                   new DefaultResolutionModelValidator(false)),
               fileWriterMock,
               detectionRoofSlopeValidatorMock,
-              featureVggRequestedServiceMock));
+              featureVggRequestedServiceMock,
+              detectionCreditGuardMock));
 
   private static MapLayerActual latestDefaultLayer() {
     return new MapLayerActual(
@@ -1110,6 +1113,30 @@ class DetectionServiceTest {
         .taskStatusStatistics(new ArrayList<>())
         .jobType(geoJobType)
         .build();
+  }
+
+  @Test
+  void configure_addresses_is_refused_when_credits_are_insufficient() {
+    var detectionId = randomUUID().toString();
+    var communityOwnerId = randomUUID().toString();
+    var detection =
+        detectionCreator.create(detectionId, randomUUID().toString(), communityOwnerId, null);
+    var addresses = List.of("11-7 Rue Mot, 94120 Fontenay-sous-Bois, France", "1 Rue de Rivoli");
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(any(), any()))
+        .thenReturn(Optional.of(detection));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+    doThrow(new PaymentRequiredException("Not enough analysis credits"))
+        .when(detectionCreditGuardMock)
+        .accept(detection.getCommunityOwnerId(), detectionId, List.of());
+
+    assertThrows(
+        PaymentRequiredException.class,
+        () -> subject.configureDetectionAddresses(detectionId, addresses));
+
+    verify(detectionRepositoryMock, never()).save(any());
+    verify(detectionAddressConsumerMock, never()).accept(any());
   }
 
   @Test
