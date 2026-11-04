@@ -81,7 +81,11 @@ public class FeatureRoofResultPropertiesComputer {
     actualProperties.put("moisissure_rate", moisissureRate);
     actualProperties.put("global_rate_value", globalRateValue);
     actualProperties.put("global_rate_type", globalRateType);
-    if (roofAssessment != null) {
+    // Same honesty rule as toVegetationFeu() below: vegetation detection isn't requested for
+    // every job (e.g. the TOITURE model alone doesn't request it), so an assessment computed from
+    // zero real vegetation input is not a confirmed "no risk" - only expose these when real
+    // vegetation was actually detected near the roof.
+    if (roofAssessment != null && vegetationEvaluator.hasVegetationData()) {
       actualProperties.put("vegetation_index", roofAssessment.vegetationIndex());
       actualProperties.put("fire_risk", roofAssessment.fireRiskLevel());
       actualProperties.put("maintenance_vegetation", roofAssessment.maintenancePriority());
