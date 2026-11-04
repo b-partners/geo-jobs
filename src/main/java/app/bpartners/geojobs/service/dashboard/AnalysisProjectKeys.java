@@ -20,7 +20,9 @@ import java.util.stream.StreamSupport;
 
 public final class AnalysisProjectKeys {
   private static final String VERSION_PREFIX = "v1:";
+  private static final String ZONE_VERSION_PREFIX = "zone-v1:";
   private static final int COORDINATE_SCALE = 6;
+  private static final int ZONE_COORDINATE_SCALE = 5;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final Comparator<BigDecimal[]> POINT_ORDER =
       Comparator.<BigDecimal[], BigDecimal>comparing(point -> point[0])
@@ -29,6 +31,16 @@ public final class AnalysisProjectKeys {
   private AnalysisProjectKeys() {}
 
   public static Optional<String> of(List<Feature> features) {
+    return hashOf(features, VERSION_PREFIX, COORDINATE_SCALE);
+  }
+
+  public static Optional<String> zoneHashOfIndividual(List<Feature> features) {
+    return isIndividual(features)
+        ? hashOf(features, ZONE_VERSION_PREFIX, ZONE_COORDINATE_SCALE)
+        : Optional.empty();
+  }
+
+  private static Optional<String> hashOf(List<Feature> features, String prefix, int scale) {
     if (features == null) {
       return Optional.empty();
     }
@@ -37,13 +49,13 @@ public final class AnalysisProjectKeys {
             .filter(Objects::nonNull)
             .map(Feature::getGeometry)
             .filter(Objects::nonNull)
-            .flatMap(geometry -> canonicalGeometry(geometry).stream())
+            .flatMap(geometry -> canonicalGeometry(geometry, scale).stream())
             .sorted()
             .toList();
     if (canonicalParts.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(VERSION_PREFIX + sha256(String.join("|", canonicalParts)));
+    return Optional.of(prefix + sha256(String.join("|", canonicalParts)));
   }
 
   public static boolean isIndividual(List<Feature> features) {
@@ -66,7 +78,7 @@ public final class AnalysisProjectKeys {
     return isIndividual(features) ? of(features) : Optional.empty();
   }
 
-  private static List<String> canonicalGeometry(Feature.FeatureGeometry geometry) {
+  private static List<String> canonicalGeometry(Feature.FeatureGeometry geometry, int scale) {
     var raw = geometry.getActualInstanceStringValue();
     if (raw == null) {
       return List.of();
@@ -80,20 +92,22 @@ public final class AnalysisProjectKeys {
     var coordinates = root.path("coordinates");
     var type = root.path("type").asText("").replace("_", "").toLowerCase();
     return switch (type) {
-      case "point" -> List.of("P" + canonicalPoint(coordinates));
-      case "polygon" -> canonicalPolygon(coordinates);
+      case "point" -> List.of("P" + canonicalPoint(coordinates, scale));
+      case "polygon" -> canonicalPolygon(coordinates, scale);
       case "multipolygon" ->
-          children(coordinates).flatMap(polygon -> canonicalPolygon(polygon).stream()).toList();
+          children(coordinates)
+              .flatMap(polygon -> canonicalPolygon(polygon, scale).stream())
+              .toList();
       default -> List.of();
     };
   }
 
-  private static List<String> canonicalPolygon(JsonNode rings) {
-    return children(rings).map(AnalysisProjectKeys::canonicalRing).toList();
+  private static List<String> canonicalPolygon(JsonNode rings, int scale) {
+    return children(rings).map(ring -> canonicalRing(ring, scale)).toList();
   }
 
-  private static String canonicalRing(JsonNode ring) {
-    var points = new ArrayList<>(children(ring).map(AnalysisProjectKeys::roundedPoint).toList());
+  private static String canonicalRing(JsonNode ring, int scale) {
+    var points = new ArrayList<>(children(ring).map(point -> roundedPoint(point, scale)).toList());
     if (points.size() > 1 && samePoint(points.getFirst(), points.getLast())) {
       points.removeLast();
     }
@@ -105,16 +119,16 @@ public final class AnalysisProjectKeys {
     return "R" + points.stream().map(AnalysisProjectKeys::format).toList();
   }
 
-  private static String canonicalPoint(JsonNode point) {
-    return format(roundedPoint(point));
+  private static String canonicalPoint(JsonNode point, int scale) {
+    return format(roundedPoint(point, scale));
   }
 
-  private static BigDecimal[] roundedPoint(JsonNode point) {
-    return new BigDecimal[] {round(point.path(0)), round(point.path(1))};
+  private static BigDecimal[] roundedPoint(JsonNode point, int scale) {
+    return new BigDecimal[] {round(point.path(0), scale), round(point.path(1), scale)};
   }
 
-  private static BigDecimal round(JsonNode value) {
-    return value.decimalValue().setScale(COORDINATE_SCALE, RoundingMode.HALF_UP);
+  private static BigDecimal round(JsonNode value, int scale) {
+    return value.decimalValue().setScale(scale, RoundingMode.HALF_UP);
   }
 
   private static boolean samePoint(BigDecimal[] first, BigDecimal[] second) {

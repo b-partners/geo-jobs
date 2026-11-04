@@ -134,6 +134,49 @@ class AnalysisProjectKeysTest {
         AnalysisProjectKeys.ofIndividual(List.of(polygon(SQUARE))));
   }
 
+  @Test
+  void zone_hash_tolerates_a_shift_of_a_few_decimeters_that_the_project_key_does_not() {
+    var shifted =
+        "[[[2.000004,48.000004],[2.001004,48.000004],[2.001004,48.001004],[2.000004,48.001004],"
+            + "[2.000004,48.000004]]]";
+
+    assertEquals(
+        AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(SQUARE))),
+        AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(shifted))));
+    assertNotEquals(
+        AnalysisProjectKeys.of(List.of(polygon(SQUARE))),
+        AnalysisProjectKeys.of(List.of(polygon(shifted))));
+  }
+
+  @Test
+  void zone_hash_distinguishes_zones_shifted_by_several_meters() {
+    var shifted =
+        "[[[2.0001,48.0001],[2.0011,48.0001],[2.0011,48.0011],[2.0001,48.0011],[2.0001,48.0001]]]";
+
+    assertNotEquals(
+        AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(SQUARE))),
+        AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(shifted))));
+  }
+
+  @Test
+  void zone_hash_is_prefixed_and_distinct_from_the_project_key() {
+    var zoneHash = AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(SQUARE))).orElseThrow();
+
+    assertTrue(zoneHash.startsWith("zone-v1:"));
+    assertNotEquals(AnalysisProjectKeys.of(List.of(polygon(SQUARE))).orElseThrow(), zoneHash);
+  }
+
+  @Test
+  void no_zone_hash_for_several_geometries_or_no_geometry() {
+    var other = "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]";
+
+    assertTrue(
+        AnalysisProjectKeys.zoneHashOfIndividual(List.of(polygon(SQUARE), polygon(other)))
+            .isEmpty());
+    assertTrue(AnalysisProjectKeys.zoneHashOfIndividual(List.of()).isEmpty());
+    assertTrue(AnalysisProjectKeys.zoneHashOfIndividual(null).isEmpty());
+  }
+
   private static Feature polygon(String coordinates) {
     return feature("{\"type\":\"Polygon\",\"coordinates\":" + coordinates + "}");
   }
