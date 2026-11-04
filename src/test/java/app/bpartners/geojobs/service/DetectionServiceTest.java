@@ -249,7 +249,7 @@ class DetectionServiceTest {
   @BeforeEach
   void setUp() {
     when(detectionReuseServiceMock.fingerprintOf(any()))
-        .thenReturn(new DetectionReuseService.Fingerprint(null, null));
+        .thenReturn(new DetectionReuseFingerprint(null, null));
     when(featureImageRetrieverMock.apply(any()))
         .thenAnswer(
             invocation ->
@@ -346,7 +346,7 @@ class DetectionServiceTest {
     when(mapLayerClientMock.getActualMapLayer(anyDouble(), anyDouble()))
         .thenReturn(Optional.of(latestDefaultLayer()));
     when(detectionReuseServiceMock.fingerprintOf(any()))
-        .thenReturn(new DetectionReuseService.Fingerprint("zone-hash", "signature"));
+        .thenReturn(new DetectionReuseFingerprint("zone-hash", "signature"));
     when(detectionReuseServiceMock.reuseResultsOf(any()))
         .thenAnswer(
             invocation ->

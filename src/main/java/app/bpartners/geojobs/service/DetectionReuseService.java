@@ -49,9 +49,7 @@ public class DetectionReuseService {
   private final EventProducer eventProducer;
   private final DetectionSucceededService detectionSucceededService;
 
-  public record Fingerprint(String zoneHash, String inferenceSignature) {}
-
-  public Fingerprint fingerprintOf(Detection detection) {
+  public DetectionReuseFingerprint fingerprintOf(Detection detection) {
     String zoneHash = null;
     String inferenceSignature = null;
     try {
@@ -71,7 +69,7 @@ public class DetectionReuseService {
           detection.getEndToEndId(),
           e);
     }
-    return new Fingerprint(zoneHash, inferenceSignature);
+    return new DetectionReuseFingerprint(zoneHash, inferenceSignature);
   }
 
   public Optional<Detection> reuseResultsOf(Detection target) {
