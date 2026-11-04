@@ -14,6 +14,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import app.bpartners.geojobs.endpoint.rest.model.CreateLidarCaching;
 import app.bpartners.geojobs.endpoint.rest.model.CreateRoofIntersections;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
@@ -38,6 +39,43 @@ class ThreedApiClientTest {
   private final ThreedApiClient subject =
       new ThreedApiClient(
           restTemplate, new ThreedApiProperties(BASE_URL, API_KEY), new ObjectMapper());
+
+  @Test
+  void should_put_the_point_and_read_the_cached_lidar_files() {
+    server
+        .expect(requestTo(BASE_URL + "/lidar-caching/address-1?apiKey=" + API_KEY))
+        .andExpect(method(PUT))
+        .andExpect(content().json("{\"latitude\": 48.8566, \"longitude\": 2.3522}"))
+        .andRespond(
+            withSuccess(
+                """
+                {"id": "address-1", "address": {"latitude": 48.8566, "longitude": 2.3522},
+                 "halfSideInMeters": 100,
+                 "lidarFiles": [
+                   {"url": "https://data.geopf.fr/a.laz", "cached": true, "error": null},
+                   {"url": "https://data.geopf.fr/b.laz", "cached": false, "error": "down"}]}
+                """,
+                APPLICATION_JSON));
+
+    var actual =
+        subject.cacheLidar(
+            "address-1", new CreateLidarCaching().latitude(48.8566).longitude(2.3522));
+
+    server.verify();
+    assertEquals("address-1", actual.getId());
+    assertEquals(100.0, actual.getHalfSideInMeters());
+    assertEquals(2, actual.getLidarFiles().size());
+    assertEquals(true, actual.getLidarFiles().getFirst().getCached());
+    assertEquals("down", actual.getLidarFiles().get(1).getError());
+  }
+
+  @Test
+  void should_refuse_a_lidar_caching_id_that_is_a_path() {
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            subject.cacheLidar("../lrg/x", new CreateLidarCaching().latitude(0.0).longitude(0.0)));
+  }
 
   @Test
   void should_put_the_zone_and_read_the_intersections() {

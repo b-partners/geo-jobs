@@ -1674,6 +1674,49 @@ paths:
           $ref: '#/components/responses/400'
         '500':
           $ref: '#/components/responses/500'
+  '/3d/{id}/lidar-caching':
+    put:
+      tags:
+        - ThreeD
+      operationId: putLidarCaching
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Identifier chosen by the client, used in the logs
+          schema:
+            type: string
+      summary: Cache the lidar files around a point, without generating any 3D
+      description: |
+        ## Overview
+        Puts in cache the lidar files a 3D of the building at the given point will read, so that the 3D
+        generated afterwards does not download them from the lidar source. No 3D is generated.
+        The files are those covering a 200 m square centered on the point: it holds the building found
+        near the point (up to ~150 m wide) and its grounds, while most points stay within a single 1 km tile.
+        ## Usage
+        Synchronous and idempotent: the response comes once every file is cached, which takes up to a few
+        minutes for files not cached yet and is immediate for files already cached.
+        A file that could not be cached has `cached: false` and its `error`; the other files are still cached.
+        A point out of every lidar coverage gives an empty `lidarFiles`.
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLidarCaching'
+      responses:
+        200:
+          description: Lidar files around the point, and whether each one is cached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LidarCaching'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
   '/geocode':
     get:
       tags:
@@ -3614,6 +3657,46 @@ components:
       properties:
         feature:
           $ref: '#/components/schemas/Feature'
+    CreateLidarCaching:
+      type: object
+      description: A WGS84 point, typically a geocoded address
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+    LidarCaching:
+      type: object
+      properties:
+        id:
+          type: string
+        address:
+          $ref: '#/components/schemas/CreateLidarCaching'
+        halfSideInMeters:
+          type: number
+          format: double
+          description: Half the side of the square centered on the point whose lidar files are cached
+        lidarFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CachedLidarFile'
+    CachedLidarFile:
+      type: object
+      properties:
+        url:
+          type: string
+          description: The lidar file at its source (IGN, swisstopo, ...)
+        cached:
+          type: boolean
+          description: Whether the file is cached now
+        error:
+          type: string
+          description: Why the file could not be cached, absent when it is
     GeoPoint3D:
       type: object
       required:
