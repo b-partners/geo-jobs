@@ -80,6 +80,17 @@ class ThreeDTrackingRegisterTest {
   }
 
   @Test
+  void register_3d_on_the_provided_project_with_its_external_reference() {
+    givenRequest(requestBuilder().projectKey("session-1").externalReference("crm-42").build());
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+
+    subject.accept(requestId, communityOwnerId, null);
+
+    verify(analysisProjectApiMock)
+        .register3d(eq(dashboardApiKey), eq("session-1"), eq(new Register3d(null, "crm-42")));
+  }
+
+  @Test
   void register_3d_falls_back_to_a_request_key_without_geometry() {
     givenRequest(requestBuilder().delimitations(List.of()).build());
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());

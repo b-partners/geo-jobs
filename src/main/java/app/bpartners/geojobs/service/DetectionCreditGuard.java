@@ -13,11 +13,17 @@ public class DetectionCreditGuard {
   private final AnalysisProjectBilling analysisProjectBilling;
 
   public void accept(
-      String communityOwnerId, String detectionIdentifier, List<Feature> providedFeatures) {
+      String communityOwnerId,
+      String detectionIdentifier,
+      String providedProjectKey,
+      List<Feature> providedFeatures) {
     var individual = AnalysisProjectKeys.isIndividual(providedFeatures);
+    var projectKey = AnalysisProjectKeys.providedOrNull(providedProjectKey);
     analysisProjectBilling.checkCredits(
         communityOwnerId,
-        projectKeyOf(detectionIdentifier, providedFeatures, individual),
+        projectKey != null
+            ? projectKey
+            : projectKeyOf(detectionIdentifier, providedFeatures, individual),
         "detection " + detectionIdentifier,
         "run this detection");
   }

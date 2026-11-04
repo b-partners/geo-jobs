@@ -122,6 +122,22 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   @Test
+  void register_detection_on_the_provided_project_with_its_external_reference() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of(polygonFeature()));
+    when(detectionMock.getProjectKey()).thenReturn("session-1");
+    when(detectionMock.getExternalReference()).thenReturn("crm-42");
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    var registerCaptor = ArgumentCaptor.forClass(Register2d.class);
+    verify(analysisProjectApiMock)
+        .register2d(eq(apiKey), eq("session-1"), registerCaptor.capture());
+    assertEquals("crm-42", registerCaptor.getValue().externalReference());
+  }
+
+  @Test
   void register_multi_address_detection_with_a_detection_key_whatever_the_given_zone() {
     var detectionIdentifier = randomUUID().toString();
     var detectionMock = registrableDetection(detectionIdentifier);

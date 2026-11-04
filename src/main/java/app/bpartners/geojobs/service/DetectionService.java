@@ -214,7 +214,8 @@ public class DetectionService {
 
   public Detection configureDetectionAddresses(String detectionId, List<String> addresses) {
     var detection = getDetectionByE2IdOrId(detectionId);
-    detectionCreditGuard.accept(detection.getCommunityOwnerId(), detectionId, List.of());
+    detectionCreditGuard.accept(
+        detection.getCommunityOwnerId(), detectionId, detection.getProjectKey(), List.of());
     var savedDetection =
         detectionRepository.save(detection.toBuilder().convertedAddresses(addresses).build());
 

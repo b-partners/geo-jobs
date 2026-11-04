@@ -60,6 +60,16 @@ class ThreeDCreditGuardTest {
   }
 
   @Test
+  void provided_project_key_is_checked_instead_of_the_geometry_key() {
+    givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
+    when(analysisProjectApiMock.get(dashboardApiKey, "session-1")).thenReturn(project(false));
+
+    assertThrows(
+        PaymentRequiredException.class,
+        () -> subject.accept(request.toBuilder().projectKey("session-1").build()));
+  }
+
+  @Test
   void refuse_when_credits_are_insufficient() {
     givenCommunity(CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build());
     when(analysisProjectApiMock.get(any(), any())).thenReturn(project(false));

@@ -46,7 +46,8 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
             detection.getZoneName(),
             "non supportée",
             now(),
-            new DetectionInitiator("non supporté", detection.getEmailReceiver(), "non supporté"));
+            new DetectionInitiator("non supporté", detection.getEmailReceiver(), "non supporté"),
+            detection.getExternalReference());
     boolean registered;
     try {
       registered =
@@ -90,6 +91,10 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
   }
 
   public static String projectKeyOf(Detection detection) {
+    var providedKey = AnalysisProjectKeys.providedOrNull(detection.getProjectKey());
+    if (providedKey != null) {
+      return providedKey;
+    }
     var detectionKey = "detection:" + detection.getId();
     if (!isIndividual(detection)) {
       return detectionKey;

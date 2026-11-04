@@ -125,7 +125,11 @@ public class DetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    detectionCreditGuard.accept(communityOwnerId, detectionId, providedFeaturesOf(createDetection));
+    detectionCreditGuard.accept(
+        communityOwnerId,
+        detectionId,
+        createDetection.getProjectKey(),
+        providedFeaturesOf(createDetection));
     return detectionRestMapper.toRest(
         detectionService.processDetection(
             detectionId,
@@ -216,7 +220,11 @@ public class DetectionController {
             "community authorization lookup",
             () -> communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword()));
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    detectionCreditGuard.accept(communityOwnerId, detectionId, providedFeaturesOf(createDetection));
+    detectionCreditGuard.accept(
+        communityOwnerId,
+        detectionId,
+        createDetection.getProjectKey(),
+        providedFeaturesOf(createDetection));
     return detectionRestMapper.toRest(
         detectionService.processDetectionSynchronously(
             detectionId,

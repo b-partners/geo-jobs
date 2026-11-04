@@ -42,7 +42,7 @@ public class ThreeDTrackingRegister {
     }
     var community = communityAuthorizationRepository.findById(communityOwnerId).orElseThrow();
     var projectKey = projectKeyOf(request);
-    var register3d = new Register3d(null);
+    var register3d = new Register3d(null, request.getExternalReference());
     boolean registered;
     try {
       registered =
@@ -76,6 +76,10 @@ public class ThreeDTrackingRegister {
   }
 
   public static String projectKeyOf(CityJSONRequest request) {
+    var providedKey = AnalysisProjectKeys.providedOrNull(request.getProjectKey());
+    if (providedKey != null) {
+      return providedKey;
+    }
     var requestKey = "city-json:" + request.getId();
     if (!isIndividual(request)) {
       return requestKey;

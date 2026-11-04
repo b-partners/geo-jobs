@@ -1260,7 +1260,7 @@ class DetectionServiceTest {
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     doThrow(new PaymentRequiredException("Not enough analysis credits"))
         .when(detectionCreditGuardMock)
-        .accept(detection.getCommunityOwnerId(), detectionId, List.of());
+        .accept(detection.getCommunityOwnerId(), detectionId, detection.getProjectKey(), List.of());
 
     assertThrows(
         PaymentRequiredException.class,

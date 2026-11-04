@@ -58,7 +58,7 @@ class DashboardRegistrationFailureServiceTest {
             subjectId,
             communityOwnerId,
             "city-json:" + subjectId,
-            new Register3d("1 rue de la Paix"),
+            new Register3d("1 rue de la Paix", "crm-42"),
             new ResourceAccessException("connection refused"));
 
     assertNotNull(actual.getId());
@@ -66,7 +66,8 @@ class DashboardRegistrationFailureServiceTest {
     assertEquals(subjectId, actual.getSubjectId());
     assertEquals(communityOwnerId, actual.getCommunityOwnerId());
     assertEquals("city-json:" + subjectId, actual.getProjectKey());
-    assertEquals("{\"address\":\"1 rue de la Paix\"}", actual.getPayload());
+    assertEquals(
+        "{\"address\":\"1 rue de la Paix\",\"externalReference\":\"crm-42\"}", actual.getPayload());
     assertTrue(actual.getErrorMessage().contains("connection refused"));
     assertEquals(1, actual.getAttempts());
     assertEquals(PENDING, actual.getStatus());

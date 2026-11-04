@@ -48,7 +48,27 @@ class DetectionCreditGuardTest {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(dashboardApiKey, squareKey())).thenReturn(project(true));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, square));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
+  }
+
+  @Test
+  void provided_project_key_is_checked_instead_of_the_geometry_key() {
+    givenBilledCommunity();
+    when(analysisProjectApiMock.get(dashboardApiKey, "session-1")).thenReturn(project(false));
+
+    assertThrows(
+        PaymentRequiredException.class,
+        () -> subject.accept(communityOwnerId, detectionIdentifier, "session-1", square));
+    verify(analysisProjectApiMock, never()).get(dashboardApiKey, squareKey());
+  }
+
+  @Test
+  void blank_project_key_falls_back_to_the_geometry_key() {
+    givenBilledCommunity();
+    when(analysisProjectApiMock.get(dashboardApiKey, squareKey())).thenReturn(project(true));
+
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, " ", square));
+    verify(analysisProjectApiMock).get(dashboardApiKey, squareKey());
   }
 
   @Test
@@ -58,7 +78,7 @@ class DetectionCreditGuardTest {
 
     assertThrows(
         PaymentRequiredException.class,
-        () -> subject.accept(communityOwnerId, detectionIdentifier, square));
+        () -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
   }
 
   @Test
@@ -66,7 +86,7 @@ class DetectionCreditGuardTest {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, square));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
   }
 
   @Test
@@ -77,7 +97,7 @@ class DetectionCreditGuardTest {
 
     assertThrows(
         PaymentRequiredException.class,
-        () -> subject.accept(communityOwnerId, detectionIdentifier, noGeometry));
+        () -> subject.accept(communityOwnerId, detectionIdentifier, null, noGeometry));
   }
 
   @Test
@@ -86,7 +106,7 @@ class DetectionCreditGuardTest {
     when(analysisProjectApiMock.get(dashboardApiKey, "detection:" + detectionIdentifier))
         .thenReturn(project(true));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, squares));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, squares));
   }
 
   @Test
@@ -94,7 +114,8 @@ class DetectionCreditGuardTest {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, noGeometry));
+    assertDoesNotThrow(
+        () -> subject.accept(communityOwnerId, detectionIdentifier, null, noGeometry));
   }
 
   @Test
@@ -102,7 +123,7 @@ class DetectionCreditGuardTest {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(any(), any())).thenThrow(new RuntimeException("down"));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, squares));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, squares));
   }
 
   @Test
@@ -110,14 +131,15 @@ class DetectionCreditGuardTest {
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
         .thenReturn(Optional.of(CommunityAuthorization.builder().build()));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, square));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
 
     verify(analysisProjectApiMock, never()).get(any(), any());
   }
 
   @Test
   void skip_detection_without_community_owner() {
-    assertDoesNotThrow(() -> subject.accept(null, detectionIdentifier, List.of(feature(SQUARE))));
+    assertDoesNotThrow(
+        () -> subject.accept(null, detectionIdentifier, null, List.of(feature(SQUARE))));
 
     verify(analysisProjectApiMock, never()).get(any(), any());
   }
@@ -128,7 +150,7 @@ class DetectionCreditGuardTest {
     when(analysisProjectApiMock.get(any(), any()))
         .thenReturn(new AnalysisProject("key", false, false, false, List.of(), null, null));
 
-    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, square));
+    assertDoesNotThrow(() -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
   }
 
   private void givenBilledCommunity() {
