@@ -172,6 +172,12 @@ public class Detection implements Serializable {
   @Column(name = "dashboard_registration_datetime")
   private Instant dashboardRegistrationDatetime;
 
+  @Column(name = "project_key")
+  private String projectKey;
+
+  @Column(name = "external_reference")
+  private String externalReference;
+
   @Column(name = "zone_hash")
   private String zoneHash;
 

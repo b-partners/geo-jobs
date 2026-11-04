@@ -19,6 +19,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.BuildingFinder;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
@@ -116,6 +117,9 @@ public class DetectionCreationMapper {
                     && createDetection.getNeedsImageOutput())
             .geoJsonDelimitationType(createDetection.getGeoJsonDelimitationType())
             .debugMode(debugMode)
+            .projectKey(AnalysisProjectKeys.providedOrNull(createDetection.getProjectKey()))
+            .externalReference(
+                AnalysisProjectKeys.providedOrNull(createDetection.getExternalReference()))
             .build();
     detection.addFeatures(domainProvidedGeoJsonZone, PROVIDED_FEATURE);
     return detection;

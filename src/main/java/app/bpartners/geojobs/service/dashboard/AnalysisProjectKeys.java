@@ -30,6 +30,10 @@ public final class AnalysisProjectKeys {
 
   private AnalysisProjectKeys() {}
 
+  public static String providedOrNull(String key) {
+    return key == null || key.isBlank() ? null : key;
+  }
+
   public static Optional<String> of(List<Feature> features) {
     return hashOf(features, VERSION_PREFIX, COORDINATE_SCALE);
   }

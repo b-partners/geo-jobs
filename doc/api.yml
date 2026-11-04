@@ -3929,6 +3929,15 @@ components:
         - emailReceiver
         - zoneName
       properties:
+        projectKey:
+          type: string
+          description: |
+            Key of the analysis project this detection belongs to, as created on the dashboard side.
+            When provided, the 2D analysis and the 3D model of a same project are registered on it, so they consume one credit.
+            When absent, a key is deduced from the delimited geometry.
+        externalReference:
+          type: string
+          description: Reference of the analysis project in the consumer's own system, used to retrieve the project when its key is unknown.
         emailReceiver:
           type: string
           description: |
@@ -4220,6 +4229,15 @@ components:
           $ref: '#/components/schemas/LidarProcessorType'
         knn:
           type: integer
+        projectKey:
+          type: string
+          description: |
+            Key of the analysis project this 3D request belongs to, as created on the dashboard side.
+            When provided, the 2D analysis and the 3D model of a same project are registered on it, so they consume one credit.
+            When absent, a key is deduced from the delimited geometry.
+        externalReference:
+          type: string
+          description: Reference of the analysis project in the consumer's own system, used to retrieve the project when its key is unknown.
 
     DelimitationObjectType:
       type: string
