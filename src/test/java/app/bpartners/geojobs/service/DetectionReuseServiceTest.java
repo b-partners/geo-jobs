@@ -1,0 +1,419 @@
+package app.bpartners.geojobs.service;
+
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.ASSEMBLE_VGG;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.TILE_MASK;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import app.bpartners.geojobs.concurrency.Workers;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationRequested;
+import app.bpartners.geojobs.endpoint.rest.model.DelimitationType;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
+import app.bpartners.geojobs.file.bucket.BucketObjectCopier;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
+import app.bpartners.geojobs.repository.model.detection.DetectionFileType;
+import app.bpartners.geojobs.service.detection.inference.InferenceSignatureComputer;
+import app.bpartners.geojobs.service.event.DetectionSucceededService;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Pageable;
+
+class DetectionReuseServiceTest {
+  static final String SQUARE = "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]";
+  static final String OTHER =
+      "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]";
+
+  DetectionRepository detectionRepository = mock();
+  InferenceSignatureComputer signatureComputer = mock();
+  BucketObjectCopier bucketObjectCopier = mock();
+  EventProducer eventProducer = mock();
+  DetectionSucceededService detectionSucceededService = mock();
+  DetectionReuseService subject =
+      new DetectionReuseService(
+          detectionRepository,
+          signatureComputer,
+          bucketObjectCopier,
+          new Workers(),
+          eventProducer,
+          detectionSucceededService);
+
+  @BeforeEach
+  void setUp() {
+    when(detectionRepository.save(any(Detection.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+  }
+
+  @Test
+  void fingerprint_of_an_individual_zone_holds_the_zone_hash_and_the_inference_signature() {
+    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+
+    var actual = subject.fingerprintOf(target(SQUARE));
+
+    assertTrue(actual.zoneHash().startsWith("zone-v1:"));
+    assertEquals("card@5.0#v1", actual.inferenceSignature());
+  }
+
+  @Test
+  void fingerprint_of_a_zone_shifted_by_a_few_decimeters_is_the_same() {
+    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+    var shifted =
+        "[[[2.000004,48.000004],[2.001004,48.000004],[2.001004,48.001004],[2.000004,48.001004],"
+            + "[2.000004,48.000004]]]";
+
+    assertEquals(subject.fingerprintOf(target(SQUARE)), subject.fingerprintOf(target(shifted)));
+    assertNotEquals(subject.fingerprintOf(target(SQUARE)), subject.fingerprintOf(target(OTHER)));
+  }
+
+  @Test
+  void fingerprint_has_no_hash_for_several_geometries() {
+    var detection =
+        target(SQUARE).toBuilder()
+            .providedGeoJsonZone(List.of(polygon(SQUARE), polygon(OTHER)))
+            .build();
+
+    var actual = subject.fingerprintOf(detection);
+
+    assertNull(actual.zoneHash());
+    assertNull(actual.inferenceSignature());
+    verifyNoInteractions(signatureComputer);
+  }
+
+  @Test
+  void fingerprint_keeps_the_hash_when_the_signature_cannot_be_computed() {
+    when(signatureComputer.compute(any(), any())).thenThrow(new IllegalStateException("s3"));
+
+    var actual = subject.fingerprintOf(target(SQUARE));
+
+    assertTrue(actual.zoneHash().startsWith("zone-v1:"));
+    assertNull(actual.inferenceSignature());
+  }
+
+  @Test
+  void nothing_is_reused_without_a_fingerprint_or_for_an_already_processed_detection() {
+    var withoutHash = target(SQUARE).toBuilder().zoneHash(null).build();
+    var withoutSignature = target(SQUARE).toBuilder().inferenceSignature(null).build();
+    var withoutCommunity = target(SQUARE).toBuilder().communityOwnerId(null).build();
+    var withResults = target(SQUARE).toBuilder().geojsonS3FileKey("geoJson/t/z.zip").build();
+    var withTiling = target(SQUARE).toBuilder().ztjId("ztj").build();
+
+    for (var detection :
+        List.of(withoutHash, withoutSignature, withoutCommunity, withResults, withTiling)) {
+      assertTrue(subject.reuseResultsOf(detection).isEmpty());
+    }
+
+    verifyNoInteractions(detectionRepository, bucketObjectCopier);
+  }
+
+  @Test
+  void nothing_is_reused_when_no_succeeded_detection_matches() {
+    whenCandidates(List.of());
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+
+    verifyNoInteractions(bucketObjectCopier, eventProducer);
+    verify(detectionRepository, never()).save(any());
+  }
+
+  @Test
+  void results_of_the_latest_compatible_detection_are_copied_into_the_target() {
+    var latest = source("latest", "L1");
+    var older = source("older", "L1");
+    whenCandidates(List.of(latest, older));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    assertEquals("latest", actual.getSourceDetectionId());
+    assertEquals("geoJson/target/zone.zip", actual.getGeojsonS3FileKey());
+    assertEquals("vgg/target/zone.json", actual.getVggFileKey());
+    assertEquals("image/target/zone.png", actual.getImageFileKey());
+    assertEquals(200, actual.getImageWidth());
+    assertEquals(100, actual.getImageHeight());
+    verify(bucketObjectCopier).copy("geoJson/latest/zone.zip", "geoJson/target/zone.zip");
+    verify(bucketObjectCopier).copy("vgg/latest/zone.json", "vgg/target/zone.json");
+    verify(bucketObjectCopier).copy("image/latest/zone.png", "image/target/zone.png");
+    verify(bucketObjectCopier, never()).copy(eq("geoJson/older/zone.zip"), anyString());
+  }
+
+  @Test
+  void only_the_result_file_objects_are_copied_under_new_identifiers() {
+    var source = source("latest", "L1");
+    whenCandidates(List.of(source));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    assertEquals(1, actual.getFileObjects().size());
+    var copiedFileObject = actual.getFileObjects().getFirst();
+    assertEquals("target", copiedFileObject.getDetectionIdentifier());
+    assertEquals("vgg/target/zone.json", copiedFileObject.getBucketKey());
+    assertEquals(ASSEMBLE_VGG, copiedFileObject.getFileType());
+    assertNotEquals("file-object", copiedFileObject.getId());
+    verify(bucketObjectCopier, never()).copy(eq("tiles/latest/tile.jpg"), anyString());
+  }
+
+  @Test
+  void a_source_shared_by_several_fields_is_copied_once() {
+    var source = source("latest", "L1");
+    whenCandidates(List.of(source));
+
+    subject.reuseResultsOf(target(SQUARE));
+
+    verify(bucketObjectCopier).copy("vgg/latest/zone.json", "vgg/target/zone.json");
+    verify(bucketObjectCopier, org.mockito.Mockito.times(3)).copy(anyString(), anyString());
+  }
+
+  @Test
+  void candidates_on_another_layer_are_skipped() {
+    whenCandidates(List.of(source("other-layer", "L2"), source("same-layer", "L1")));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    assertEquals("same-layer", actual.getSourceDetectionId());
+  }
+
+  @Test
+  void candidates_with_other_objects_or_confidence_are_skipped() {
+    var otherConfidence =
+        source("other-confidence", "L1").toBuilder()
+            .detectableObjectConfigurations(List.of(configuration(0.9)))
+            .build();
+    var otherObjects =
+        source("other-objects", "L1").toBuilder()
+            .detectableObjectConfigurations(
+                List.of(
+                    configuration(0.5),
+                    DetectableObjectConfiguration.builder()
+                        .objectType(
+                            app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE)
+                        .build()))
+            .build();
+    whenCandidates(List.of(otherConfidence, otherObjects));
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+  }
+
+  @Test
+  void candidates_with_another_delimitation_or_output_format_are_skipped() {
+    var otherDelimitation =
+        source("delimitation", "L1").toBuilder()
+            .geoJsonDelimitationType(DelimitationType.PARCEL)
+            .build();
+    var zippedSource = source("zipped", "L1").toBuilder().isOutputZipped(true).build();
+    whenCandidates(List.of(otherDelimitation, zippedSource));
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+  }
+
+  @Test
+  void a_source_without_image_cannot_serve_a_detection_needing_one() {
+    var withoutImage = source("no-image", "L1").toBuilder().imageFileKey(null).build();
+    whenCandidates(List.of(withoutImage));
+
+    assertTrue(
+        subject
+            .reuseResultsOf(target(SQUARE).toBuilder().needsImageOutput(true).build())
+            .isEmpty());
+  }
+
+  @Test
+  void a_copy_failure_removes_the_copied_files_and_falls_back_to_processing() {
+    whenCandidates(List.of(source("latest", "L1")));
+    doThrow(new IllegalStateException("s3 down"))
+        .when(bucketObjectCopier)
+        .copy(eq("vgg/latest/zone.json"), anyString());
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+
+    verify(detectionRepository, never()).save(any());
+    verify(bucketObjectCopier).deleteQuietly("geoJson/target/zone.zip");
+    verify(bucketObjectCopier).deleteQuietly("image/target/zone.png");
+    verify(bucketObjectCopier, never()).deleteQuietly("vgg/target/zone.json");
+    verifyNoInteractions(eventProducer);
+  }
+
+  @Test
+  void a_save_failure_removes_the_copied_files_and_falls_back_to_processing() {
+    whenCandidates(List.of(source("latest", "L1")));
+    when(detectionRepository.save(any(Detection.class))).thenThrow(new IllegalStateException("db"));
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+
+    verify(bucketObjectCopier).deleteQuietly("geoJson/target/zone.zip");
+    verify(bucketObjectCopier).deleteQuietly("vgg/target/zone.json");
+    verify(bucketObjectCopier).deleteQuietly("image/target/zone.png");
+  }
+
+  @Test
+  void an_asynchronous_copy_notifies_the_client_and_registers_the_analysis() {
+    whenCandidates(List.of(source("latest", "L1")));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    verify(detectionSucceededService).acceptReused(actual);
+    var events = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer).accept(events.capture());
+    assertTrue(
+        events.getValue().getFirst() instanceof DetectionTrackingRegistrationRequested event
+            && "target".equals(event.getDetectionIdentifier()));
+  }
+
+  @Test
+  void a_synchronous_copy_only_registers_the_analysis() {
+    whenCandidates(List.of(source("latest", "L1")));
+
+    subject.reuseResultsOf(target(SQUARE).toBuilder().isSynchronous(true).build());
+
+    verifyNoInteractions(detectionSucceededService);
+    verify(eventProducer).accept(any());
+  }
+
+  @Test
+  void a_notification_failure_does_not_discard_the_copy() {
+    whenCandidates(List.of(source("latest", "L1")));
+    doThrow(new IllegalStateException("mail")).when(detectionSucceededService).acceptReused(any());
+
+    var actual = subject.reuseResultsOf(target(SQUARE));
+
+    assertTrue(actual.isPresent());
+    verify(bucketObjectCopier, never()).deleteQuietly(anyString());
+  }
+
+  @Test
+  void the_lookup_is_scoped_to_the_community_the_fingerprint_and_the_test_flag() {
+    whenCandidates(List.of());
+
+    subject.reuseResultsOf(target(SQUARE));
+
+    verify(detectionRepository)
+        .findReusableSourceIds(
+            eq("community"),
+            eq("hash"),
+            eq("signature"),
+            eq(false),
+            eq("target"),
+            any(Pageable.class));
+  }
+
+  @Test
+  void destination_key_replaces_the_source_identifier_or_prefixes_the_target_one() {
+    var source = Detection.builder().id("source").build();
+    var target = Detection.builder().id("target").build();
+
+    assertEquals(
+        "geoJson/target/zone.zip",
+        DetectionReuseService.destinationKey(source, target, "geoJson/source/zone.zip"));
+    assertEquals(
+        "zip/target/combined.zip",
+        DetectionReuseService.destinationKey(source, target, "zip/combined.zip"));
+    assertEquals(
+        "reused/target/file.json",
+        DetectionReuseService.destinationKey(source, target, "file.json"));
+  }
+
+  @Test
+  void a_target_with_the_same_layer_but_no_layer_at_all_is_never_compatible() {
+    var withoutLayer = target(SQUARE).toBuilder().geoServerProperties(null).build();
+
+    assertFalse(DetectionReuseService.isCompatible(source("s", null), withoutLayer));
+  }
+
+  private void whenCandidates(List<Detection> candidates) {
+    when(detectionRepository.findReusableSourceIds(
+            anyString(), anyString(), anyString(), anyBoolean(), anyString(), any(Pageable.class)))
+        .thenReturn(candidates.stream().map(Detection::getId).toList());
+    candidates.forEach(
+        candidate ->
+            when(detectionRepository.findById(candidate.getId()))
+                .thenReturn(Optional.of(candidate)));
+  }
+
+  private static Detection target(String coordinates) {
+    return Detection.builder()
+        .id("target")
+        .endToEndId("target-e2e")
+        .communityOwnerId("community")
+        .zoneHash("hash")
+        .inferenceSignature("signature")
+        .providedGeoJsonZone(List.of(polygon(coordinates)))
+        .multiPolygonGeoJsonZone(List.of(polygon(coordinates)))
+        .geoServerProperties(properties("L1"))
+        .detectableObjectConfigurations(List.of(configuration(0.5)))
+        .geoJsonDelimitationType(DelimitationType.PARCEL_FREE_DELIMITATION)
+        .build();
+  }
+
+  private static Detection source(String id, String layer) {
+    return Detection.builder()
+        .id(id)
+        .communityOwnerId("community")
+        .zoneHash("hash")
+        .inferenceSignature("signature")
+        .geoServerProperties(properties(layer))
+        .detectableObjectConfigurations(List.of(configuration(0.5)))
+        .geoJsonDelimitationType(DelimitationType.PARCEL_FREE_DELIMITATION)
+        .geojsonS3FileKey("geoJson/" + id + "/zone.zip")
+        .vggFileKey("vgg/" + id + "/zone.json")
+        .imageFileKey("image/" + id + "/zone.png")
+        .imageWidth(200)
+        .imageHeight(100)
+        .fileObjects(
+            List.of(
+                fileObject(ASSEMBLE_VGG, "vgg/" + id + "/zone.json"),
+                fileObject(TILE_MASK, "tiles/" + id + "/tile.jpg")))
+        .build();
+  }
+
+  private static DetectionFileObject fileObject(DetectionFileType type, String key) {
+    return DetectionFileObject.builder()
+        .id("file-object")
+        .detectionIdentifier("source")
+        .bucketKey(key)
+        .fileName("zone")
+        .fileType(type)
+        .build();
+  }
+
+  private static DetectableObjectConfiguration configuration(double confidence) {
+    return DetectableObjectConfiguration.builder()
+        .objectType(TOITURE_REVETEMENT)
+        .minConfidenceForDetection(confidence)
+        .build();
+  }
+
+  private static GeoServerProperties properties(String layer) {
+    return new GeoServerProperties()
+        .geoServerParameter(new GeoServerParameter().layers(layer).precisionLevelInCm(5));
+  }
+
+  private static Feature polygon(String coordinates) {
+    return Feature.builder()
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .actualInstanceStringValue(
+                    "{\"type\":\"Polygon\",\"coordinates\":" + coordinates + "}")
+                .build())
+        .build();
+  }
+}
