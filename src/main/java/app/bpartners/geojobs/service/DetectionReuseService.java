@@ -15,7 +15,6 @@ import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import app.bpartners.geojobs.service.detection.inference.InferenceSignatureComputer;
 import app.bpartners.geojobs.service.event.DetectionSucceededService;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +76,7 @@ public class DetectionReuseService {
     if (!isEligible(target)) {
       return Optional.empty();
     }
-    var copiedKeys = new ArrayList<String>();
+    var copiedKeys = new CopyOnWriteArrayList<String>();
     try {
       var source = findSource(target);
       if (source.isEmpty()) {
@@ -237,9 +237,7 @@ public class DetectionReuseService {
                 entry ->
                     () -> {
                       bucketObjectCopier.copy(entry.getKey(), entry.getValue());
-                      synchronized (copiedKeys) {
-                        copiedKeys.add(entry.getValue());
-                      }
+                      copiedKeys.add(entry.getValue());
                       return null;
                     })
             .toList();
