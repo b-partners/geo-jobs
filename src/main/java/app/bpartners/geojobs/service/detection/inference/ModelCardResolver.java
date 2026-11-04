@@ -53,6 +53,17 @@ public class ModelCardResolver {
         .orElse(DEFAULT_TILING_ZOOM);
   }
 
+  public List<ModelCardMapping> mappingsUsedBy(
+      List<DetectableObjectConfiguration> objectConfigurations, Double spatialResolutionInCm) {
+    var mappingsByType = mappingsByType();
+    return objectConfigurations.stream()
+        .map(
+            configuration ->
+                mappingOf(mappingsByType, configuration.getObjectType(), spatialResolutionInCm))
+        .flatMap(Optional::stream)
+        .toList();
+  }
+
   public Set<Double> supportedSpatialResolutionsInCm(
       List<DetectableObjectConfiguration> objectConfigurations) {
     return supportedSpatialResolutionsInCmOfTypes(
