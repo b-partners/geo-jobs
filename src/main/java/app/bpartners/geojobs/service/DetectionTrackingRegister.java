@@ -26,6 +26,7 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
   private final DashboardRegistrationFailureService dashboardRegistrationFailureService;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
+  private final DetectionAddressResolver detectionAddressResolver;
 
   @Override
   public void accept(Detection detection, String failureId) {
@@ -44,7 +45,7 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
         new Register2d(
             detection.getEndToEndId(),
             detection.getZoneName(),
-            detection.getZoneName(),
+            detectionAddressResolver.apply(detection),
             now(),
             new DetectionInitiator(community.getName(), detection.getEmailReceiver(), null),
             detection.getExternalReference());

@@ -15,6 +15,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.dashboard.DashboardRegistrationType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DashboardRegistrationFailureService;
+import app.bpartners.geojobs.service.DetectionAddressResolver;
 import app.bpartners.geojobs.service.DetectionTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectApi;
 import app.bpartners.geojobs.service.dashboard.AnalysisProjectBilling;
@@ -38,13 +39,15 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   DashboardRegistrationFailureService dashboardRegistrationFailureServiceMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  DetectionAddressResolver detectionAddressResolverMock = mock();
   DetectionTrackingRegister detectionTrackingRegister =
       new DetectionTrackingRegister(
           analysisProjectApiMock,
           new AnalysisProjectBilling(analysisProjectApiMock, communityAuthorizationRepositoryMock),
           dashboardRegistrationFailureServiceMock,
           communityAuthorizationRepositoryMock,
-          detectionRepositoryMock);
+          detectionRepositoryMock,
+          detectionAddressResolverMock);
   DetectionTrackingRegistrationRequestedService subject =
       new DetectionTrackingRegistrationRequestedService(
           detectionTrackingRegister, detectionRepositoryMock);
@@ -73,6 +76,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(detectionMock.getEmailReceiver()).thenReturn(emailReceiver);
     when(detectionMock.getEndToEndId()).thenReturn(endToEndId);
     when(detectionMock.getCommunityOwnerId()).thenReturn(communityOwnerId);
+    when(detectionAddressResolverMock.apply(detectionMock)).thenReturn(zoneName);
     when(detectionBuilderMock.dashboardRegistrationDatetime(any()))
         .thenReturn(detectionBuilderMock);
     when(detectionMock.toBuilder()).thenReturn(detectionBuilderMock);
@@ -96,7 +100,12 @@ class DetectionTrackingRegistrationRequestedServiceTest {
         .register2d(eq(apiKey), projectKeyCaptor.capture(), registerCaptor.capture());
     var expectedRegister2d =
         getExpectedRegister2d(
-            zoneName, emailReceiver, endToEndId, dummyCommunityName, registerCaptor.getValue());
+            zoneName,
+            emailReceiver,
+            endToEndId,
+            dummyCommunityName,
+            zoneName,
+            registerCaptor.getValue());
     verify(detectionRepositoryMock).save(detectionMockWithRegistrationDatetime);
 
     assertEquals(expectedRegister2d, registerCaptor.getValue());
@@ -108,11 +117,12 @@ class DetectionTrackingRegistrationRequestedServiceTest {
       String emailReceiver,
       String endToEndId,
       String communityName,
+      String resolvedAddress,
       Register2d actual) {
     return new Register2d(
         endToEndId,
         zoneName,
-        zoneName,
+        resolvedAddress,
         actual.creationDatetime(),
         new DetectionInitiator(communityName, emailReceiver, null));
   }
@@ -160,6 +170,34 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   @Test
+  void register_single_address_detection_with_geometry_key() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getConvertedAddresses()).thenReturn(List.of("address 1"));
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of(polygonFeature()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock)
+        .register2d(
+            eq(apiKey), eq(AnalysisProjectKeys.of(List.of(polygonFeature())).orElseThrow()), any());
+  }
+
+  @Test
+  void register_detection_without_converted_addresses_with_geometry_key() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionMock.getConvertedAddresses()).thenReturn(null);
+    when(detectionMock.getDomainProvidedGeoJsonZone()).thenReturn(List.of(polygonFeature()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock)
+        .register2d(
+            eq(apiKey), eq(AnalysisProjectKeys.of(List.of(polygonFeature())).orElseThrow()), any());
+  }
+
+  @Test
   void register_detection_with_an_empty_zone_with_a_detection_key() {
     var detectionIdentifier = randomUUID().toString();
     var detectionMock = registrableDetection(detectionIdentifier);
@@ -169,6 +207,19 @@ class DetectionTrackingRegistrationRequestedServiceTest {
 
     verify(analysisProjectApiMock)
         .register2d(eq(apiKey), eq("detection:" + detectionIdentifier), any());
+  }
+
+  @Test
+  void register_detection_with_the_resolved_address() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(detectionAddressResolverMock.apply(detectionMock)).thenReturn("resolved address");
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    var registerCaptor = ArgumentCaptor.forClass(Register2d.class);
+    verify(analysisProjectApiMock).register2d(eq(apiKey), any(), registerCaptor.capture());
+    assertEquals("resolved address", registerCaptor.getValue().address());
   }
 
   private void registerDetection(String detectionIdentifier) {
