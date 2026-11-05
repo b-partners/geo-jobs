@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,12 +78,15 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(detectionMock.toBuilder()).thenReturn(detectionBuilderMock);
     when(detectionBuilderMock.build()).thenReturn(detectionMockWithRegistrationDatetime);
 
+    var dummyCommunityName = "dummy " + currentTimeMillis();
+    var communityAuthorization =
+        CommunityAuthorization.builder().dashboardApiKey(apiKey).name(dummyCommunityName).build();
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
-        .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
+        .thenReturn(Optional.of(communityAuthorization));
 
     assertDoesNotThrow(() -> registerDetection(detectionIdentifier));
 
@@ -91,7 +95,8 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     verify(analysisProjectApiMock, only())
         .register2d(eq(apiKey), projectKeyCaptor.capture(), registerCaptor.capture());
     var expectedRegister2d =
-        getExpectedRegister2d(zoneName, emailReceiver, endToEndId, registerCaptor.getValue());
+        getExpectedRegister2d(
+            zoneName, emailReceiver, endToEndId, dummyCommunityName, registerCaptor.getValue());
     verify(detectionRepositoryMock).save(detectionMockWithRegistrationDatetime);
 
     assertEquals(expectedRegister2d, registerCaptor.getValue());
@@ -99,13 +104,17 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   private @NotNull Register2d getExpectedRegister2d(
-      String zoneName, String emailReceiver, String endToEndId, Register2d actual) {
+      String zoneName,
+      String emailReceiver,
+      String endToEndId,
+      String communityName,
+      Register2d actual) {
     return new Register2d(
         endToEndId,
         zoneName,
-        "non supportée",
+        zoneName,
         actual.creationDatetime(),
-        new DetectionInitiator("non supporté", emailReceiver, "non supporté"));
+        new DetectionInitiator(communityName, emailReceiver, null));
   }
 
   @Test

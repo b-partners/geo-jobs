@@ -44,9 +44,9 @@ public class DetectionTrackingRegister implements BiConsumer<Detection, String> 
         new Register2d(
             detection.getEndToEndId(),
             detection.getZoneName(),
-            "non supportée",
+            detection.getZoneName(),
             now(),
-            new DetectionInitiator("non supporté", detection.getEmailReceiver(), "non supporté"),
+            new DetectionInitiator(community.getName(), detection.getEmailReceiver(), null),
             detection.getExternalReference());
     boolean registered;
     try {
