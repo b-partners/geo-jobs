@@ -13,11 +13,9 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSONRequestService;
 import app.bpartners.geojobs.service.FeatureAddressConverter;
-import app.bpartners.geojobs.service.LidarCachingService;
 import app.bpartners.geojobs.service.RoofIntersectionsService;
 import app.bpartners.geojobs.service.ThreeDCreditGuard;
 import app.bpartners.geojobs.validator.CreateCityJSONRequestValidator;
-import app.bpartners.geojobs.validator.CreateLidarCachingValidator;
 import app.bpartners.geojobs.validator.CreateRoofIntersectionsValidator;
 import app.bpartners.geojobs.validator.ThreeDAddressesRequestValidator;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +34,6 @@ public class CityJSONController {
   private final FeatureAddressConverter featureAddressConverter;
   private final CreateRoofIntersectionsValidator createRoofIntersectionsValidator;
   private final RoofIntersectionsService roofIntersectionsService;
-  private final CreateLidarCachingValidator createLidarCachingValidator;
-  private final LidarCachingService lidarCachingService;
   private final ThreeDCreditGuard threeDCreditGuard;
 
   @GetMapping("/3d/{id}")
@@ -121,13 +117,6 @@ public class CityJSONController {
       @PathVariable(name = "id") String id) {
     createRoofIntersectionsValidator.accept(createRoofIntersections);
     return roofIntersectionsService.compute(id, createRoofIntersections);
-  }
-
-  @PutMapping("/3d/{id}/lidar-caching")
-  public LidarCaching putLidarCaching(
-      @RequestBody CreateLidarCaching createLidarCaching, @PathVariable(name = "id") String id) {
-    createLidarCachingValidator.accept(createLidarCaching);
-    return lidarCachingService.cache(id, createLidarCaching);
   }
 
   @PutMapping("/city-jsons/{id}/process")
