@@ -88,6 +88,26 @@ class DetectionCreationMapperTest {
   }
 
   @Test
+  void map_the_analysis_project_of_the_detection() {
+    var createDetection = createDetection().projectKey("session-1").externalReference("crm-42");
+
+    var actual = subject.apply(createDetection, randomUUID().toString(), null, false, null);
+
+    assertEquals("session-1", actual.getProjectKey());
+    assertEquals("crm-42", actual.getExternalReference());
+  }
+
+  @Test
+  void map_blank_analysis_project_as_none() {
+    var createDetection = createDetection().projectKey(" ").externalReference("");
+
+    var actual = subject.apply(createDetection, randomUUID().toString(), null, false, null);
+
+    assertNull(actual.getProjectKey());
+    assertNull(actual.getExternalReference());
+  }
+
+  @Test
   void map_detection_with_no_detectable_object_model_list_ok() {
     var detectionE2Id = randomUUID().toString();
     var communityOwnerId = randomUUID().toString();
