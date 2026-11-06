@@ -20,9 +20,7 @@ public class AnalysisProjectBilling {
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
   public static boolean isBilled(CommunityAuthorization community) {
-    return !community.isIntegrationTestUsage()
-        && community.getDashboardApiKey() != null
-        && !community.getDashboardApiKey().isBlank();
+    return community.getDashboardApiKey() != null && !community.getDashboardApiKey().isBlank();
   }
 
   public boolean register(

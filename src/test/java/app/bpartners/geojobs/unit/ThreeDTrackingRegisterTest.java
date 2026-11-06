@@ -166,17 +166,20 @@ class ThreeDTrackingRegisterTest {
   }
 
   @Test
-  void skip_integration_test_community() {
+  void register_integration_test_community_like_any_other() {
     givenRequest(requestBuilder().build());
     givenCommunity(
         CommunityAuthorization.builder()
             .dashboardApiKey(dashboardApiKey)
             .integrationTestUsage(true)
             .build());
+    when(analysisProjectApiMock.register3d(any(), any(), any()))
+        .thenReturn(mock(AnalysisProject.class));
 
     subject.accept(requestId, communityOwnerId, null);
 
-    verify(analysisProjectApiMock, never()).register3d(any(), any(), any());
+    verify(analysisProjectApiMock).register3d(eq(dashboardApiKey), any(), any());
+    verify(cityJSONRequestRepositoryMock).markDashboardRegistered(eq(requestId), any());
   }
 
   @Test
@@ -314,10 +317,16 @@ class ThreeDTrackingRegisterTest {
   }
 
   @Test
-  void billing_applies_only_to_non_test_communities_with_a_dashboard_key() {
+  void billing_applies_to_every_community_with_a_dashboard_key() {
     assertTrue(
         AnalysisProjectBilling.isBilled(
             CommunityAuthorization.builder().dashboardApiKey(dashboardApiKey).build()));
+    assertTrue(
+        AnalysisProjectBilling.isBilled(
+            CommunityAuthorization.builder()
+                .dashboardApiKey(dashboardApiKey)
+                .integrationTestUsage(true)
+                .build()));
     assertEquals(
         false,
         AnalysisProjectBilling.isBilled(

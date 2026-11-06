@@ -366,6 +366,23 @@ class DetectionTrackingRegistrationRequestedServiceTest {
   }
 
   @Test
+  void register_integration_test_community_like_any_other() {
+    var detectionIdentifier = randomUUID().toString();
+    var detectionMock = registrableDetection(detectionIdentifier);
+    when(communityAuthorizationRepositoryMock.findById(detectionMock.getCommunityOwnerId()))
+        .thenReturn(
+            Optional.of(
+                CommunityAuthorization.builder()
+                    .dashboardApiKey(apiKey)
+                    .integrationTestUsage(true)
+                    .build()));
+
+    subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier));
+
+    verify(analysisProjectApiMock).register2d(eq(apiKey), any(), any());
+  }
+
+  @Test
   void skip_community_not_billed_on_dashboard() {
     var detectionIdentifier = randomUUID().toString();
     var detectionMock = registrableDetection(detectionIdentifier);

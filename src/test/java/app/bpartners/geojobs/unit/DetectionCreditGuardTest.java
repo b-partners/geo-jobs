@@ -72,6 +72,22 @@ class DetectionCreditGuardTest {
   }
 
   @Test
+  void refuse_integration_test_community_when_credits_are_insufficient() {
+    when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
+        .thenReturn(
+            Optional.of(
+                CommunityAuthorization.builder()
+                    .dashboardApiKey(dashboardApiKey)
+                    .integrationTestUsage(true)
+                    .build()));
+    when(analysisProjectApiMock.get(dashboardApiKey, squareKey())).thenReturn(project(false));
+
+    assertThrows(
+        PaymentRequiredException.class,
+        () -> subject.accept(communityOwnerId, detectionIdentifier, null, square));
+  }
+
+  @Test
   void refuse_individual_detection_when_credits_are_insufficient() {
     givenBilledCommunity();
     when(analysisProjectApiMock.get(dashboardApiKey, squareKey())).thenReturn(project(false));
