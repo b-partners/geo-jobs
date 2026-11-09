@@ -46,4 +46,23 @@ public interface DetectionRepository extends JpaRepository<Detection, String> {
 
   Optional<Detection> findByEndToEndIdAndCommunityOwnerId(
       String endToEndId, String communityOwnerId);
+
+  @Query(
+      """
+    SELECT d.id FROM Detection d
+    WHERE d.communityOwnerId = :communityOwnerId
+      AND d.zoneHash = :zoneHash
+      AND d.inferenceSignature = :inferenceSignature
+      AND d.integrationTest = :integrationTest
+      AND d.geojsonS3FileKey IS NOT NULL
+      AND d.id <> :excludedId
+    ORDER BY d.creationDatetime DESC
+""")
+  List<String> findReusableSourceIds(
+      @Param("communityOwnerId") String communityOwnerId,
+      @Param("zoneHash") String zoneHash,
+      @Param("inferenceSignature") String inferenceSignature,
+      @Param("integrationTest") boolean integrationTest,
+      @Param("excludedId") String excludedId,
+      Pageable pageable);
 }

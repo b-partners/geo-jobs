@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestSte
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
+import app.bpartners.geojobs.endpoint.event.model.ThreeDTrackingRegistrationRequested;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.*;
@@ -79,6 +80,10 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
             .build();
     entityManager.clear();
     cityJSONRequestRepository.save(updated);
+    eventProducer.accept(
+        List.of(
+            new ThreeDTrackingRegistrationRequested(
+                updated.getId(), updated.getCommunityOwnerId())));
   }
 
   private static String failureMessage(Exception e) {

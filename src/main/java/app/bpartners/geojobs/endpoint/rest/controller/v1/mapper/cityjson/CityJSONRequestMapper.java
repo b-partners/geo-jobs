@@ -12,6 +12,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
+import app.bpartners.geojobs.service.dashboard.AnalysisProjectKeys;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -164,6 +165,9 @@ public class CityJSONRequestMapper {
                 ? null
                 : createCityJSONRequest.getComplexityFactor().floatValue())
         .knn(createCityJSONRequest.getKnn())
+        .projectKey(AnalysisProjectKeys.providedOrNull(createCityJSONRequest.getProjectKey()))
+        .externalReference(
+            AnalysisProjectKeys.providedOrNull(createCityJSONRequest.getExternalReference()))
         .build();
   }
 }

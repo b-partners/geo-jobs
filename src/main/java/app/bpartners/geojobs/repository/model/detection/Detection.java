@@ -172,6 +172,25 @@ public class Detection implements Serializable {
   @Column(name = "dashboard_registration_datetime")
   private Instant dashboardRegistrationDatetime;
 
+  @Column(name = "project_key")
+  private String projectKey;
+
+  @Column(name = "external_reference")
+  private String externalReference;
+
+  @Column(name = "zone_hash")
+  private String zoneHash;
+
+  @Column(name = "inference_signature")
+  private String inferenceSignature;
+
+  @Column(name = "source_detection_id")
+  private String sourceDetectionId;
+
+  public boolean isReusedFromAnotherDetection() {
+    return sourceDetectionId != null;
+  }
+
   public boolean isDashboardRegistrationCompleted() {
     return dashboardRegistrationDatetime != null;
   }
