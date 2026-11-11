@@ -26,7 +26,9 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationR
 import app.bpartners.geojobs.endpoint.rest.model.DelimitationType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketObjectCopier;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -41,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Pageable;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 class DetectionReuseServiceTest {
   static final String SQUARE = "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]";
@@ -50,6 +53,8 @@ class DetectionReuseServiceTest {
   DetectionRepository detectionRepository = mock();
   InferenceSignatureComputer signatureComputer = mock();
   BucketObjectCopier bucketObjectCopier = mock();
+  BucketComponent bucketComponent = mock();
+  CustomBucketComponent customBucketComponent = mock();
   EventProducer eventProducer = mock();
   DetectionSucceededService detectionSucceededService = mock();
   DetectionReuseService subject =
@@ -57,6 +62,8 @@ class DetectionReuseServiceTest {
           detectionRepository,
           signatureComputer,
           bucketObjectCopier,
+          bucketComponent,
+          customBucketComponent,
           new Workers(),
           eventProducer,
           detectionSucceededService);
@@ -149,12 +156,10 @@ class DetectionReuseServiceTest {
     assertEquals("latest", actual.getSourceDetectionId());
     assertEquals("geoJson/target/zone.zip", actual.getGeojsonS3FileKey());
     assertEquals("vgg/target/zone.json", actual.getVggFileKey());
-    assertEquals("image/target/zone.png", actual.getImageFileKey());
     assertEquals(200, actual.getImageWidth());
     assertEquals(100, actual.getImageHeight());
     verify(bucketObjectCopier).copy("geoJson/latest/zone.zip", "geoJson/target/zone.zip");
     verify(bucketObjectCopier).copy("vgg/latest/zone.json", "vgg/target/zone.json");
-    verify(bucketObjectCopier).copy("image/latest/zone.png", "image/target/zone.png");
     verify(bucketObjectCopier, never()).copy(eq("geoJson/older/zone.zip"), anyString());
   }
 
@@ -182,7 +187,7 @@ class DetectionReuseServiceTest {
     subject.reuseResultsOf(target(SQUARE));
 
     verify(bucketObjectCopier).copy("vgg/latest/zone.json", "vgg/target/zone.json");
-    verify(bucketObjectCopier, times(3)).copy(anyString(), anyString());
+    verify(bucketObjectCopier, times(2)).copy(anyString(), anyString());
   }
 
   @Test
@@ -229,13 +234,45 @@ class DetectionReuseServiceTest {
 
   @Test
   void a_source_without_image_cannot_serve_a_detection_needing_one() {
-    var withoutImage = source("no-image", "L1").toBuilder().imageFileKey(null).build();
-    whenCandidates(List.of(withoutImage));
+    whenCandidates(List.of(sourceWithFeature("no-image")));
+    whenZoneImages("no-image");
 
-    assertTrue(
-        subject
-            .reuseResultsOf(target(SQUARE).toBuilder().needsImageOutput(true).build())
-            .isEmpty());
+    assertTrue(subject.reuseResultsOf(targetNeedingImage()).isEmpty());
+    verify(bucketObjectCopier, never()).copy(anyString(), anyString());
+  }
+
+  @Test
+  void zone_images_of_the_source_are_copied_under_the_target_identifiers() {
+    whenCandidates(List.of(sourceWithFeature("latest")));
+    whenZoneImages(
+        "latest", "zone_images/latest.jpg", "zone_images/latest/feature-source/zone-source.jpg");
+
+    var actual = subject.reuseResultsOf(targetNeedingImage());
+
+    assertTrue(actual.isPresent());
+    verify(bucketObjectCopier).copy("zone_images/latest.jpg", "zone_images/target.jpg");
+    verify(bucketObjectCopier)
+        .copy(
+            "zone_images/latest/feature-source/zone-source.jpg",
+            "zone_images/target/feature-target/zone-target.jpg");
+  }
+
+  @Test
+  void a_source_with_only_the_single_zone_image_serves_a_detection_needing_one() {
+    whenCandidates(List.of(sourceWithFeature("latest")));
+    whenZoneImages("latest", "zone_images/latest.jpg");
+
+    assertTrue(subject.reuseResultsOf(targetNeedingImage()).isPresent());
+    verify(bucketObjectCopier).copy("zone_images/latest.jpg", "zone_images/target.jpg");
+  }
+
+  @Test
+  void zone_images_are_not_copied_when_the_target_does_not_need_an_image() {
+    whenCandidates(List.of(sourceWithFeature("latest")));
+    whenZoneImages("latest", "zone_images/latest.jpg");
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isPresent());
+    verify(bucketObjectCopier, never()).copy(eq("zone_images/latest.jpg"), anyString());
   }
 
   @Test
@@ -249,7 +286,6 @@ class DetectionReuseServiceTest {
 
     verify(detectionRepository, never()).save(any());
     verify(bucketObjectCopier).deleteQuietly("geoJson/target/zone.zip");
-    verify(bucketObjectCopier).deleteQuietly("image/target/zone.png");
     verify(bucketObjectCopier, never()).deleteQuietly("vgg/target/zone.json");
     verifyNoInteractions(eventProducer);
   }
@@ -263,7 +299,6 @@ class DetectionReuseServiceTest {
 
     verify(bucketObjectCopier).deleteQuietly("geoJson/target/zone.zip");
     verify(bucketObjectCopier).deleteQuietly("vgg/target/zone.json");
-    verify(bucketObjectCopier).deleteQuietly("image/target/zone.png");
   }
 
   @Test
@@ -340,6 +375,34 @@ class DetectionReuseServiceTest {
     assertFalse(DetectionReuseService.isCompatible(source("s", null), withoutLayer));
   }
 
+  private void whenZoneImages(String sourceId, String... keys) {
+    when(bucketComponent.getBucketName()).thenReturn("bucket");
+    when(customBucketComponent.listObjects("bucket", "zone_images/" + sourceId))
+        .thenReturn(
+            java.util.Arrays.stream(keys).map(key -> S3Object.builder().key(key).build()).toList());
+  }
+
+  private static Detection targetNeedingImage() {
+    return target(SQUARE).toBuilder()
+        .needsImageOutput(true)
+        .zoneName("zone-target")
+        .providedGeoJsonZone(List.of(polygonWithId(SQUARE, "feature-target")))
+        .build();
+  }
+
+  private static Detection sourceWithFeature(String id) {
+    return source(id, "L1").toBuilder()
+        .zoneName("zone-source")
+        .providedGeoJsonZone(List.of(polygonWithId(SQUARE, "feature-source")))
+        .build();
+  }
+
+  private static Feature polygonWithId(String coordinates, String id) {
+    var feature = polygon(coordinates);
+    feature.setProperties(java.util.Map.of("id", id));
+    return feature;
+  }
+
   private void whenCandidates(List<Detection> candidates) {
     when(detectionRepository.findReusableSourceIds(
             anyString(), anyString(), anyString(), anyBoolean(), anyString(), any(Pageable.class)))
@@ -376,7 +439,6 @@ class DetectionReuseServiceTest {
         .geoJsonDelimitationType(DelimitationType.PARCEL_FREE_DELIMITATION)
         .geojsonS3FileKey("geoJson/" + id + "/zone.zip")
         .vggFileKey("vgg/" + id + "/zone.json")
-        .imageFileKey("image/" + id + "/zone.png")
         .imageWidth(200)
         .imageHeight(100)
         .fileObjects(
