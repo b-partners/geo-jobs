@@ -559,6 +559,14 @@ public class DetectionService {
         detectionToSave.toBuilder()
             .zoneHash(fingerprint.zoneHash())
             .inferenceSignature(fingerprint.inferenceSignature());
+    var zoneBounds = fingerprint.zoneBounds();
+    if (zoneBounds != null) {
+      detectionToSaveBuilder
+          .zoneMinLon(zoneBounds.minLon())
+          .zoneMinLat(zoneBounds.minLat())
+          .zoneMaxLon(zoneBounds.maxLon())
+          .zoneMaxLat(zoneBounds.maxLat());
+    }
     if (communityOwnerId != null) {
       var communityOwner = communityAuthRepository.findById(communityOwnerId).orElseThrow();
       if (communityOwner.isIntegrationTestUsage()) {

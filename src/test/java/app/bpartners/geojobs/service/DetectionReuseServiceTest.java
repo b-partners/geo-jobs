@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -47,6 +48,15 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 class DetectionReuseServiceTest {
   static final String SQUARE = "[[[2.0,48.0],[2.001,48.0],[2.001,48.001],[2.0,48.001],[2.0,48.0]]]";
+  static final String SHIFTED_40_CM =
+      "[[[2.000004,48.000004],[2.001004,48.000004],[2.001004,48.001004],[2.000004,48.001004],"
+          + "[2.000004,48.000004]]]";
+  static final String SHIFTED_80_CM =
+      "[[[2.000008,48.000008],[2.001008,48.000008],[2.001008,48.001008],[2.000008,48.001008],"
+          + "[2.000008,48.000008]]]";
+  static final String SHIFTED_3_M =
+      "[[[2.00003,48.00003],[2.00103,48.00003],[2.00103,48.00103],[2.00003,48.00103],"
+          + "[2.00003,48.00003]]]";
   static final String OTHER =
       "[[[2.01,48.0],[2.011,48.0],[2.011,48.001],[2.01,48.001],[2.01,48.0]]]";
 
@@ -66,7 +76,8 @@ class DetectionReuseServiceTest {
           customBucketComponent,
           new Workers(),
           eventProducer,
-          detectionSucceededService);
+          detectionSucceededService,
+          new ZoneSimilarityConf(true, 0.95, 1.0));
 
   @BeforeEach
   void setUp() {
@@ -91,8 +102,12 @@ class DetectionReuseServiceTest {
         "[[[2.000004,48.000004],[2.001004,48.000004],[2.001004,48.001004],[2.000004,48.001004],"
             + "[2.000004,48.000004]]]";
 
-    assertEquals(subject.fingerprintOf(target(SQUARE)), subject.fingerprintOf(target(shifted)));
-    assertNotEquals(subject.fingerprintOf(target(SQUARE)), subject.fingerprintOf(target(OTHER)));
+    assertEquals(
+        subject.fingerprintOf(target(SQUARE)).zoneHash(),
+        subject.fingerprintOf(target(shifted)).zoneHash());
+    assertNotEquals(
+        subject.fingerprintOf(target(SQUARE)).zoneHash(),
+        subject.fingerprintOf(target(OTHER)).zoneHash());
   }
 
   @Test
@@ -401,6 +416,113 @@ class DetectionReuseServiceTest {
     var feature = polygon(coordinates);
     feature.setProperties(java.util.Map.of("id", id));
     return feature;
+  }
+
+  @Test
+  void fingerprint_holds_the_bounds_of_the_zone() {
+    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+
+    var bounds = subject.fingerprintOf(target(SQUARE)).zoneBounds();
+
+    assertEquals(2.0, bounds.minLon());
+    assertEquals(48.0, bounds.minLat());
+    assertEquals(2.001, bounds.maxLon());
+    assertEquals(48.001, bounds.maxLat());
+  }
+
+  @Test
+  void a_zone_shifted_by_less_than_the_tolerance_reuses_the_nearby_detection() {
+    whenNearby(List.of(nearbySource("near", SHIFTED_40_CM)));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    assertEquals("near", actual.getSourceDetectionId());
+    verify(bucketObjectCopier).copy("geoJson/near/zone.zip", "geoJson/target/zone.zip");
+  }
+
+  @Test
+  void a_zone_shifted_by_more_than_the_tolerance_is_processed() {
+    whenNearby(List.of(nearbySource("far", SHIFTED_3_M)));
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+    verifyNoInteractions(bucketObjectCopier);
+  }
+
+  @Test
+  void the_nearby_detection_with_the_best_overlap_is_reused() {
+    whenNearby(
+        List.of(
+            nearbySource("less-aligned", SHIFTED_80_CM), nearbySource("aligned", SHIFTED_40_CM)));
+
+    var actual = subject.reuseResultsOf(target(SQUARE)).orElseThrow();
+
+    assertEquals("aligned", actual.getSourceDetectionId());
+  }
+
+  @Test
+  void nearby_detections_on_another_layer_are_skipped() {
+    var otherLayer =
+        nearbySource("other-layer", SHIFTED_40_CM).toBuilder()
+            .geoServerProperties(properties("L2"))
+            .build();
+    whenNearby(List.of(otherLayer));
+
+    assertTrue(subject.reuseResultsOf(target(SQUARE)).isEmpty());
+  }
+
+  @Test
+  void nearby_detections_are_not_searched_when_approximate_reuse_is_disabled() {
+    var disabled =
+        new DetectionReuseService(
+            detectionRepository,
+            signatureComputer,
+            bucketObjectCopier,
+            bucketComponent,
+            customBucketComponent,
+            new Workers(),
+            eventProducer,
+            detectionSucceededService,
+            new ZoneSimilarityConf(false, 0.95, 1.0));
+    whenNearby(List.of(nearbySource("near", SHIFTED_40_CM)));
+
+    assertTrue(disabled.reuseResultsOf(target(SQUARE)).isEmpty());
+    verify(detectionRepository, never())
+        .findReusableSourceIdsNear(
+            anyString(),
+            anyString(),
+            anyBoolean(),
+            anyString(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            any(Pageable.class));
+  }
+
+  private void whenNearby(List<Detection> candidates) {
+    when(detectionRepository.findReusableSourceIdsNear(
+            anyString(),
+            anyString(),
+            anyBoolean(),
+            anyString(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            anyDouble(),
+            any(Pageable.class)))
+        .thenReturn(candidates.stream().map(Detection::getId).toList());
+    candidates.forEach(
+        candidate ->
+            when(detectionRepository.findById(candidate.getId()))
+                .thenReturn(Optional.of(candidate)));
+  }
+
+  private static Detection nearbySource(String id, String coordinates) {
+    return source(id, "L1").toBuilder().providedGeoJsonZone(List.of(polygon(coordinates))).build();
   }
 
   private void whenCandidates(List<Detection> candidates) {
