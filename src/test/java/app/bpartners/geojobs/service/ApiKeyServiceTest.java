@@ -2,12 +2,14 @@ package app.bpartners.geojobs.service;
 
 import static java.time.Instant.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.security.ApiKey;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -126,6 +128,15 @@ class ApiKeyServiceTest {
     assertEquals(new ApiKey("key-a", OLD), actual.get(0));
     verify(communityAuthorizationRepository).save(existing);
     assertEquals("new-dashboard-key", existing.getDashboardApiKey());
+  }
+
+  @Test
+  void request_without_any_api_key_is_rejected() {
+    var requested = requested("a@mail.com", "x");
+    requested.setApiKeys(List.of());
+
+    assertThrows(
+        BadRequestException.class, () -> apiKeyService.generateApiKeys(List.of(requested)));
   }
 
   private void givenStored(CommunityAuthorization stored) {

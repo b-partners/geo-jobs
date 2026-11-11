@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.security.ApiKey;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -33,17 +34,27 @@ public class ApiKeyService {
   }
 
   private ApiKey generateApiKey(CommunityAuthorization requested) {
+    var requestedApiKey = requested.getMostRecentApiKey();
+    if (requestedApiKey == null) {
+      throw new BadRequestException("No API key to generate for " + requested.getEmail());
+    }
     var stored =
         communityAuthorizationRepository
             .findByEmail(requested.getEmail())
-            .map(existing -> updateExisting(existing, requested))
+            .map(existing -> updateExisting(existing, requested, requestedApiKey))
             .orElseGet(() -> createNew(requested));
     var mostRecentApiKey = stored.getMostRecentApiKey();
+    if (mostRecentApiKey == null) {
+      throw new BadRequestException(
+          "The requested API key is revoked for " + requested.getEmail());
+    }
     return new ApiKey(mostRecentApiKey.getKeyValue(), mostRecentApiKey.getCreationDatetime());
   }
 
   private CommunityAuthorization updateExisting(
-      CommunityAuthorization existing, CommunityAuthorization requested) {
+      CommunityAuthorization existing,
+      CommunityAuthorization requested,
+      CommunityAuthorizationApiKey requestedApiKey) {
     var changed = false;
     if (requested.getDashboardApiKey() != null
         && !requested.getDashboardApiKey().equals(existing.getDashboardApiKey())) {
@@ -51,15 +62,14 @@ public class ApiKeyService {
       changed = true;
     }
     if (existing.getMostRecentApiKey() == null) {
-      addRequestedApiKey(existing, requested);
+      addRequestedApiKey(existing, requestedApiKey);
       changed = true;
     }
     return changed ? communityAuthorizationRepository.save(existing) : existing;
   }
 
   private void addRequestedApiKey(
-      CommunityAuthorization existing, CommunityAuthorization requested) {
-    var requestedApiKey = requested.getMostRecentApiKey();
+      CommunityAuthorization existing, CommunityAuthorizationApiKey requestedApiKey) {
     if (existing.getApiKeys() == null) {
       existing.setApiKeys(new ArrayList<>());
     }
