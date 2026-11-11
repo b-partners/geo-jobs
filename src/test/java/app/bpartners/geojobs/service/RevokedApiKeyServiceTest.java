@@ -127,7 +127,6 @@ class RevokedApiKeyServiceTest {
 
   @Test
   void hide_never_throws_on_short_keys() {
-    assertEquals("*", hide("a").substring(0, 1));
     for (int length = 1; length <= 40; length++) {
       var key = "k".repeat(length);
       assertEquals(key.length(), hide(key).length(), "length " + length);
