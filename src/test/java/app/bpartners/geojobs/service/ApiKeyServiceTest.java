@@ -135,8 +135,9 @@ class ApiKeyServiceTest {
     var requested = requested("a@mail.com", "x");
     requested.setApiKeys(List.of());
 
-    assertThrows(
-        BadRequestException.class, () -> apiKeyService.generateApiKeys(List.of(requested)));
+    var requests = List.of(requested);
+
+    assertThrows(BadRequestException.class, () -> apiKeyService.generateApiKeys(requests));
   }
 
   private void givenStored(CommunityAuthorization stored) {
