@@ -45,8 +45,7 @@ public class ApiKeyService {
             .orElseGet(() -> createNew(requested));
     var mostRecentApiKey = stored.getMostRecentApiKey();
     if (mostRecentApiKey == null) {
-      throw new BadRequestException(
-          "The requested API key is revoked for " + requested.getEmail());
+      throw new BadRequestException("The requested API key is revoked for " + requested.getEmail());
     }
     return new ApiKey(mostRecentApiKey.getKeyValue(), mostRecentApiKey.getCreationDatetime());
   }
