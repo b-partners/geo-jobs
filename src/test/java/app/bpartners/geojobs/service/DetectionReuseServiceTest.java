@@ -77,7 +77,7 @@ class DetectionReuseServiceTest {
           new Workers(),
           eventProducer,
           detectionSucceededService,
-          new ZoneSimilarityConf(true, 0.95, 1.0));
+          ZoneSimilarityConf.defaults());
 
   @BeforeEach
   void setUp() {
@@ -438,6 +438,30 @@ class DetectionReuseServiceTest {
 
     assertEquals("near", actual.getSourceDetectionId());
     verify(bucketObjectCopier).copy("geoJson/near/zone.zip", "geoJson/target/zone.zip");
+  }
+
+  @Test
+  void any_of_the_hand_drawn_zones_of_the_same_building_reuses_the_results_of_another() {
+    var zones = ZoneGeometryRealZonesTest.ZONES;
+    for (int sourceIndex = 0; sourceIndex < zones.size(); sourceIndex++) {
+      for (int targetIndex = 0; targetIndex < zones.size(); targetIndex++) {
+        if (sourceIndex == targetIndex) {
+          continue;
+        }
+        whenNearby(List.of(nearbySource("source-" + sourceIndex, zones.get(sourceIndex))));
+
+        var actual = subject.reuseResultsOf(target(zones.get(targetIndex)));
+
+        assertEquals(
+            "source-" + sourceIndex,
+            actual
+                .orElseThrow(
+                    () ->
+                        new AssertionError(
+                            "a zone of the same building was processed instead of reused"))
+                .getSourceDetectionId());
+      }
+    }
   }
 
   @Test
