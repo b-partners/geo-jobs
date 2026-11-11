@@ -60,8 +60,6 @@ public class SecurityConf {
         new OrRequestMatcher(
             new AntPathRequestMatcher("/**", OPTIONS.toString()),
             new AntPathRequestMatcher("/ping", GET.name()),
-            new AntPathRequestMatcher("/health/event/uuids", POST.name()),
-            new AntPathRequestMatcher("/health/**", GET.name()),
             new AntPathRequestMatcher("/**", OPTIONS.toString()),
             new AntPathRequestMatcher("/readme/webhook", POST.name()));
     httpSecurity
@@ -95,6 +93,8 @@ public class SecurityConf {
                     .anonymous()
                     .requestMatchers(OPTIONS, "/**")
                     .permitAll()
+                    .requestMatchers("/health/**")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/image")
                     .authenticated()
                     .requestMatchers("/jobs/*/annotationProcessing")

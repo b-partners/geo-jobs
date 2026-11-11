@@ -9,6 +9,7 @@ on:
 
 env:
   AWS_REGION: eu-west-3
+  HEALTH_ADMIN_API_KEY: ${{ secrets.HEALTH_ADMIN_API_KEY }}
 
 jobs:
   check-sync-stack:
