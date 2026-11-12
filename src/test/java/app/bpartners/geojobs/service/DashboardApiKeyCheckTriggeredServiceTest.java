@@ -3,10 +3,12 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -27,6 +29,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
   UserAccountsApi userAccountsApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepository = mock();
+  EventProducer<DashboardApiKeyCheckTriggered> eventProducerMock = mock();
   DashboardApiKeyCheckTriggeredService subject;
 
   @Test
@@ -57,7 +60,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository, eventProducerMock);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -107,7 +110,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository, eventProducerMock);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -167,7 +170,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository, eventProducerMock);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -204,7 +207,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = new CommunityAuthorization();
-    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.of(authorization));
+    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
 
     User user =
         new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
@@ -213,7 +216,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
         .thenAnswer(invocation -> new UserApiKey(invocation.getArgument(1), DASHBOARD));
 
     DashboardApiKeyCheckTriggered event =
@@ -224,7 +227,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository, eventProducerMock);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -241,7 +244,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
                               .equals(
-                                  "[DAKC H] New Dashboard api key generated for user " + email));
+                                  "[DAKC H] New Dashboard api key generated for user " + authId));
       assertTrue(hasNewKeyGeneratedLog);
 
       boolean hasUpdatedLog =
@@ -250,7 +253,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                   e ->
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
-                              .equals("[DAKC H] Dashboard api key updated for user " + email));
+                              .equals("[DAKC H] Dashboard api key updated for user " + authId));
       assertTrue(hasUpdatedLog);
     } finally {
       logger.detachAppender(appender);
@@ -271,10 +274,10 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey("existingKey", DASHBOARD));
 
-    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.empty());
+    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.empty());
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
@@ -284,7 +287,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository, eventProducerMock);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -302,7 +305,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Dashboard api key for user "
-                                      + email
+                                      + authId
                                       + " already exists in the user account api. No new key"
                                       + " generated."));
       assertTrue(hasExistingKeyLog);
@@ -315,12 +318,84 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Failed to update dashboard api key for user "
-                                      + email
+                                      + authId
                                       + ". User not found in database."));
       assertTrue(hasUserNotFoundLog);
     } finally {
       logger.detachAppender(appender);
       appender.stop();
     }
+  }
+
+  @Test
+  void accept_continues_lane_with_authorization_lanes_positions_later() {
+    var ids = java.util.stream.IntStream.range(0, 25).mapToObj(i -> "id-" + i).toList();
+    var next = mock(CommunityAuthorization.class);
+    when(next.getId()).thenReturn("id-13");
+    when(next.getEmail()).thenReturn("next@test.com");
+    when(next.getDashboardApiKey()).thenReturn("next-key");
+    when(communityAuthorizationRepository.findAllIdsByIntegrationTestUsageFalse()).thenReturn(ids);
+    when(communityAuthorizationRepository.findById("id-13")).thenReturn(Optional.of(next));
+    when(userAccountsApiMock.getUsersByCriteria(any(), any(), any(), any()))
+        .thenThrow(new RuntimeException("429"));
+    subject =
+        new DashboardApiKeyCheckTriggeredService(
+            userAccountsApiMock, "admin", communityAuthorizationRepository, eventProducerMock);
+
+    subject.accept(
+        DashboardApiKeyCheckTriggered.builder()
+            .communityAuthorizationId("id-3")
+            .email("a@test.com")
+            .dashboardApiKey("key")
+            .index(3)
+            .build());
+
+    verify(eventProducerMock)
+        .accept(
+            List.of(
+                DashboardApiKeyCheckTriggered.builder()
+                    .communityAuthorizationId("id-13")
+                    .email("next@test.com")
+                    .dashboardApiKey("next-key")
+                    .index(13)
+                    .build()));
+  }
+
+  @Test
+  void accept_at_end_of_lane_sends_nothing() {
+    when(communityAuthorizationRepository.findAllIdsByIntegrationTestUsageFalse())
+        .thenReturn(List.of("a", "b"));
+    when(userAccountsApiMock.getUsersByCriteria(any(), any(), any(), any())).thenReturn(List.of());
+    subject =
+        new DashboardApiKeyCheckTriggeredService(
+            userAccountsApiMock, "admin", communityAuthorizationRepository, eventProducerMock);
+
+    subject.accept(
+        DashboardApiKeyCheckTriggered.builder()
+            .communityAuthorizationId("b")
+            .email("b@test.com")
+            .dashboardApiKey("key")
+            .index(1)
+            .build());
+
+    verifyNoInteractions(eventProducerMock);
+  }
+
+  @Test
+  void accept_without_index_never_chains() {
+    when(userAccountsApiMock.getUsersByCriteria(any(), any(), any(), any())).thenReturn(List.of());
+    subject =
+        new DashboardApiKeyCheckTriggeredService(
+            userAccountsApiMock, "admin", communityAuthorizationRepository, eventProducerMock);
+
+    subject.accept(
+        DashboardApiKeyCheckTriggered.builder()
+            .communityAuthorizationId("a")
+            .email("a@test.com")
+            .dashboardApiKey("key")
+            .build());
+
+    verifyNoInteractions(eventProducerMock);
+    verify(communityAuthorizationRepository, never()).findAllIdsByIntegrationTestUsageFalse();
   }
 }

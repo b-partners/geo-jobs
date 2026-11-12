@@ -52,6 +52,12 @@ public class CityJSONRequest implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private CityJSONRequestStep step;
 
+  private String message;
+
+  @Column(name = "warnings")
+  @JdbcTypeCode(JSON)
+  private List<String> warnings;
+
   @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = EAGER)
   private List<CityJSON> cityJsons = new ArrayList<>();
 
@@ -64,14 +70,24 @@ public class CityJSONRequest implements Serializable {
   @Getter(AccessLevel.NONE)
   private DelimitationType delimitationType;
 
-  @OneToMany(mappedBy = "cityJsonRequest", cascade = CascadeType.ALL, fetch = EAGER)
-  private List<CityJSONTexture> textures;
-
   @Column(name = "complexity_factor")
   private Float complexityFactor;
 
   @Column(name = "knn")
   private Integer knn;
+
+  @Column(name = "dashboard_registration_datetime")
+  private Instant dashboardRegistrationDatetime;
+
+  @Column(name = "project_key")
+  private String projectKey;
+
+  @Column(name = "external_reference")
+  private String externalReference;
+
+  public boolean isDashboardRegistrationCompleted() {
+    return dashboardRegistrationDatetime != null;
+  }
 
   @PrePersist
   protected void onCreate() {

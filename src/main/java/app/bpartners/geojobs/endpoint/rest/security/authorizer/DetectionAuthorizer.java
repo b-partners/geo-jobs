@@ -1,8 +1,12 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
+import static app.bpartners.geojobs.monitoring.StepDurationLogger.logDurationOf;
+
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -22,6 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DetectionAuthorizer implements TriConsumer<String, CreateDetection, Principal> {
   private final CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer;
+  private final CommunityDetectableModelAuthorizer communityDetectableModelAuthorizer;
   private final CommunityAuthorizationRepository caRepository;
   private final CommunityZoneAuthorizer communityZoneAuthorizer;
   private final CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer;
@@ -54,10 +59,18 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
 
   public CommunityAuthorization authorizeCommunity(String detectionId, Principal principal) {
     var communityAuthorization =
-        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
+        logDurationOf(
+            "authorizer: community lookup by api key",
+            () ->
+                caRepository
+                    .findByApiKey(principal.getPassword())
+                    .orElseThrow(ForbiddenException::new));
     var optionalDetection =
-        detectionRepository.findByEndToEndIdAndCommunityOwnerId(
-            detectionId, communityAuthorization.getId());
+        logDurationOf(
+            "authorizer: detection lookup",
+            () ->
+                detectionRepository.findByEndToEndIdAndCommunityOwnerId(
+                    detectionId, communityAuthorization.getId()));
     optionalDetection.ifPresent(
         detection -> detectionOwnerAuthorizer.accept(communityAuthorization, detection));
     return communityAuthorization;
@@ -71,15 +84,45 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
       var featuresHasPolygonOrMultiPolygonInstance =
           featureTypeChecker.applySome(features, MultiPolygon.class, Polygon.class);
       if (principal.isCommunity() && featuresHasPolygonOrMultiPolygonInstance) {
-        communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
-        communityZoneAuthorizer.accept(communityAuthorization, features, principal);
+        logDurationOf(
+            "authorizer: used surface check",
+            () -> communityZoneSurfaceAuthorizer.accept(communityAuthorization, features));
+        logDurationOf(
+            "authorizer: authorized zones check",
+            () -> communityZoneAuthorizer.accept(communityAuthorization, features, principal));
       }
     }
+    var authorizedModels = communityAuthorization.getDetectableModels();
+    if (authorizedModels != null && !authorizedModels.isEmpty()) {
+      logDurationOf(
+          "authorizer: detectable models check",
+          () ->
+              getRequestedModels(createDetection)
+                  .forEach(
+                      requestedModel ->
+                          communityDetectableModelAuthorizer.accept(
+                              communityAuthorization, requestedModel)));
+      return;
+    }
     var detectableObjects = getDetectableObjectTypes(createDetection, communityAuthorization);
-    detectableObjects.forEach(
-        candidateObjectType ->
-            communityDetectableObjectTypeAuthorizer.accept(
-                communityAuthorization, candidateObjectType));
+    logDurationOf(
+        "authorizer: detectable object types check",
+        () ->
+            detectableObjects.forEach(
+                candidateObjectType ->
+                    communityDetectableObjectTypeAuthorizer.accept(
+                        communityAuthorization, candidateObjectType)));
+  }
+
+  private List<ModelName> getRequestedModels(CreateDetection createDetection) {
+    var models = createDetection.getDetectableObjectModelList();
+    if (models == null || models.isEmpty()) {
+      models = List.of(Objects.requireNonNull(createDetection.getDetectableObjectModel()));
+    }
+    return models.stream()
+        .map(DetectableObjectModel::getModelName)
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   private List<DetectableObjectType> getDetectableObjectTypes(

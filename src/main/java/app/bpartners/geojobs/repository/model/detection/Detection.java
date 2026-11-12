@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMa
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_CONSTRAINED_DELIMITATION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.POST_PROCESSING;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.REVETEMENT_OBSTACLE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -170,6 +171,37 @@ public class Detection implements Serializable {
 
   @Column(name = "dashboard_registration_datetime")
   private Instant dashboardRegistrationDatetime;
+
+  @Column(name = "project_key")
+  private String projectKey;
+
+  @Column(name = "external_reference")
+  private String externalReference;
+
+  @Column(name = "zone_hash")
+  private String zoneHash;
+
+  @Column(name = "inference_signature")
+  private String inferenceSignature;
+
+  @Column(name = "zone_min_lon")
+  private Double zoneMinLon;
+
+  @Column(name = "zone_min_lat")
+  private Double zoneMinLat;
+
+  @Column(name = "zone_max_lon")
+  private Double zoneMaxLon;
+
+  @Column(name = "zone_max_lat")
+  private Double zoneMaxLat;
+
+  @Column(name = "source_detection_id")
+  private String sourceDetectionId;
+
+  public boolean isReusedFromAnotherDetection() {
+    return sourceDetectionId != null;
+  }
 
   public boolean isDashboardRegistrationCompleted() {
     return dashboardRegistrationDatetime != null;
@@ -372,6 +404,18 @@ public class Detection implements Serializable {
             && TOITURE.equals(detectableObjectModel.getModelName()));
   }
 
+  public boolean hasRevetementObstacleModelName() {
+    return (detectableObjectModelList != null
+            && detectableObjectModelList.stream()
+                .anyMatch(model -> REVETEMENT_OBSTACLE.equals(model.getModelName())))
+        || (detectableObjectModel != null
+            && REVETEMENT_OBSTACLE.equals(detectableObjectModel.getModelName()));
+  }
+
+  public boolean hasRoofBasedModelName() {
+    return hasToitureModelName() || hasRevetementObstacleModelName();
+  }
+
   public boolean hasStationnementModelName() {
     return (detectableObjectModelList != null
             && detectableObjectModelList.stream()
@@ -388,6 +432,15 @@ public class Detection implements Serializable {
     return getMultiPolygonGeoJsonZone() == null
         || getMultiPolygonGeoJsonZone().isEmpty()
         || getGeoServerProperties() == null;
+  }
+
+  public Double spatialResolutionInCm() {
+    if (geoServerProperties == null
+        || geoServerProperties.getGeoServerParameter() == null
+        || geoServerProperties.getGeoServerParameter().getPrecisionLevelInCm() == null) {
+      return null;
+    }
+    return geoServerProperties.getGeoServerParameter().getPrecisionLevelInCm().doubleValue();
   }
 
   public boolean isStillOnTilingStep() {

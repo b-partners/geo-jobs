@@ -1,107 +1,73 @@
 package app.bpartners.geojobs.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered.LANES;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.datastructure.ListGrouper;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AllDashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.event.AllDashboardApiKeyCheckTriggeredService;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 class AllDashboardApiKeyCheckTriggeredServiceTest {
-  CommunityAuthorizationRepository communityAuthorizationRepositoryMock =
-      mock(CommunityAuthorizationRepository.class);
-  EventProducer<DashboardApiKeyCheckTriggered> eventProducerMock = mock(EventProducer.class);
-  ListGrouper<DashboardApiKeyCheckTriggered> listGrouper = new ListGrouper<>();
-
-  AllDashboardApiKeyCheckTriggeredService subject;
+  CommunityAuthorizationRepository repository = mock();
+  EventProducer<DashboardApiKeyCheckTriggered> eventProducer = mock();
+  AllDashboardApiKeyCheckTriggeredService subject =
+      new AllDashboardApiKeyCheckTriggeredService(repository, eventProducer);
 
   @Test
-  void all_dashboard_key_check_trigger_dashboard_key_check() {
-    List<CommunityAuthorization> communityAuthorizations =
-        multipleCommunityAuthorization(mock(CommunityAuthorization.class));
-    List<DashboardApiKeyCheckTriggered> childEvents = toChildEvents(communityAuthorizations);
-
-    when(communityAuthorizationRepositoryMock.findAllByIntegrationTestUsageFalse())
-        .thenReturn(communityAuthorizations);
-    doNothing().when(eventProducerMock).accept(eq(childEvents));
-    subject =
-        new AllDashboardApiKeyCheckTriggeredService(
-            communityAuthorizationRepositoryMock, eventProducerMock, listGrouper);
+  void accept_starts_one_lane_per_authorization_up_to_lanes() {
+    var ids = IntStream.range(0, LANES + 5).mapToObj(i -> "id-" + i).toList();
+    when(repository.findAllIdsByIntegrationTestUsageFalse()).thenReturn(ids);
+    ids.forEach(
+        id -> {
+          var authorization = authorization(id);
+          when(repository.findById(id)).thenReturn(Optional.of(authorization));
+        });
+    var expected =
+        IntStream.range(0, LANES)
+            .mapToObj(i -> DashboardApiKeyCheckTriggered.of(authorization("id-" + i), i))
+            .toList();
 
     subject.accept(new AllDashboardApiKeyCheckTriggered());
 
-    verify(communityAuthorizationRepositoryMock, times(1)).findAllByIntegrationTestUsageFalse();
-    verify(eventProducerMock, times(1)).accept(eq(childEvents));
+    verify(eventProducer).accept(expected);
   }
 
   @Test
-  void all_dashboard_key_check_chunks_and_sends_gradually() {
-    List<CommunityAuthorization> communityAuthorizations = new ArrayList<>();
-    for (int i = 1; i <= 60; i++) {
-      CommunityAuthorization mockAuth = mock(CommunityAuthorization.class);
-      when(mockAuth.getId()).thenReturn("id-" + i);
-      when(mockAuth.getEmail()).thenReturn("user" + i + "@test.com");
-      when(mockAuth.getDashboardApiKey()).thenReturn("key-" + i);
-      communityAuthorizations.add(mockAuth);
-    }
-
-    when(communityAuthorizationRepositoryMock.findAllByIntegrationTestUsageFalse())
-        .thenReturn(communityAuthorizations);
-
-    subject =
-        new AllDashboardApiKeyCheckTriggeredService(
-            communityAuthorizationRepositoryMock, eventProducerMock, listGrouper);
+  void accept_with_fewer_authorizations_than_lanes_starts_fewer_lanes() {
+    when(repository.findAllIdsByIntegrationTestUsageFalse()).thenReturn(List.of("id-0"));
+    var authorization = authorization("id-0");
+    when(repository.findById("id-0")).thenReturn(Optional.of(authorization));
+    var expected = List.of(DashboardApiKeyCheckTriggered.of(authorization, 0));
 
     subject.accept(new AllDashboardApiKeyCheckTriggered());
 
-    verify(communityAuthorizationRepositoryMock, times(1)).findAllByIntegrationTestUsageFalse();
-
-    ArgumentCaptor<List<DashboardApiKeyCheckTriggered>> captor =
-        ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(3)).accept(captor.capture());
-
-    List<List<DashboardApiKeyCheckTriggered>> capturedBatches = captor.getAllValues();
-    assertEquals(3, capturedBatches.size());
-
-    // Verify first chunk (size 25)
-    assertEquals(25, capturedBatches.get(0).size());
-    assertEquals("id-1", capturedBatches.get(0).get(0).getCommunityAuthorizationId());
-    assertEquals("id-25", capturedBatches.get(0).get(24).getCommunityAuthorizationId());
-
-    // Verify second chunk (size 25)
-    assertEquals(25, capturedBatches.get(1).size());
-    assertEquals("id-26", capturedBatches.get(1).get(0).getCommunityAuthorizationId());
-    assertEquals("id-50", capturedBatches.get(1).get(24).getCommunityAuthorizationId());
-
-    // Verify third chunk (size 10)
-    assertEquals(10, capturedBatches.get(2).size());
-    assertEquals("id-51", capturedBatches.get(2).get(0).getCommunityAuthorizationId());
-    assertEquals("id-60", capturedBatches.get(2).get(9).getCommunityAuthorizationId());
+    verify(eventProducer).accept(expected);
   }
 
-  private List<CommunityAuthorization> multipleCommunityAuthorization(
-      CommunityAuthorization communityAuthorization) {
-    return List.of(communityAuthorization, communityAuthorization, communityAuthorization);
+  @Test
+  void accept_without_authorization_sends_nothing() {
+    when(repository.findAllIdsByIntegrationTestUsageFalse()).thenReturn(List.of());
+
+    subject.accept(new AllDashboardApiKeyCheckTriggered());
+
+    verifyNoInteractions(eventProducer);
   }
 
-  private List<DashboardApiKeyCheckTriggered> toChildEvents(
-      List<CommunityAuthorization> communityAuthorizations) {
-    return communityAuthorizations.stream()
-        .map(
-            ca ->
-                DashboardApiKeyCheckTriggered.builder()
-                    .communityAuthorizationId(ca.getId())
-                    .email(ca.getEmail())
-                    .dashboardApiKey(ca.getDashboardApiKey())
-                    .build())
-        .toList();
+  static CommunityAuthorization authorization(String id) {
+    var authorization = mock(CommunityAuthorization.class);
+    when(authorization.getId()).thenReturn(id);
+    when(authorization.getEmail()).thenReturn(id + "@test.com");
+    when(authorization.getDashboardApiKey()).thenReturn("key-" + id);
+    return authorization;
   }
 }

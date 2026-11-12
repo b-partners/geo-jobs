@@ -187,7 +187,7 @@ public class SynchronousDetectionService
         detection.getEndToEndId());
 
     var machineSucceededDetection =
-        detectionWithResultProperties.hasToitureModelName()
+        detectionWithResultProperties.hasRoofBasedModelName()
             ? attemptVggFileKeyRetrieve(detectionWithResultProperties)
             : detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
                 detectionRepository.findById(detection.getId()).orElseThrow(),

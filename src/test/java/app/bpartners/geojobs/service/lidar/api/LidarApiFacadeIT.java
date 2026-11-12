@@ -14,7 +14,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
-@Disabled("TODO: hits real IGN/STAC network APIs, run manually only")
+@Disabled("TODO: hits the real geodata service (which itself hits IGN/STAC), run manually only")
 class LidarApiFacadeIT extends FacadeIT {
   @Autowired LidarApiFacade subject;
 
@@ -33,11 +33,13 @@ class LidarApiFacadeIT extends FacadeIT {
   }
 
   @Test
-  void falls_back_to_ign_when_open_source_stac_api_is_unreachable() {
+  void resolves_ign_lidar_hd_urls_via_geodata() {
     var actual = subject.getUniqueLidarFilesUrls(Set.of(an_area_covered_by_ign_lidar_hd()));
 
-    log.info("LidarFilesUrls resolved via real network call: {}", actual.keySet());
-    assertFalse(actual.isEmpty());
-    assertTrue(actual.keySet().stream().allMatch(url -> url.startsWith("https://data.geopf.fr/")));
+    log.info("LidarFilesUrls resolved via real network call: {}", actual.filesUrls().keySet());
+    assertFalse(actual.filesUrls().isEmpty());
+    assertTrue(
+        actual.filesUrls().keySet().stream()
+            .allMatch(url -> url.startsWith("https://data.geopf.fr/")));
   }
 }

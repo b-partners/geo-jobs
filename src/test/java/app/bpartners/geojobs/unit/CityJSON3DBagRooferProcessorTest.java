@@ -21,17 +21,20 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CoordinateTransformer;
 import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
-import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
 import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +56,11 @@ class CityJSON3DBagRooferProcessorTest {
   FileWriter fileWriterMock = mock(FileWriter.class);
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
   GeometryConverter geometryConverter = new GeometryConverter();
-  CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
   SwissBoundaryChecker swissBoundaryCheckerMock = mock(SwissBoundaryChecker.class);
+  WalloniaBoundaryChecker walloniaBoundaryCheckerMock = mock(WalloniaBoundaryChecker.class);
   Roofer3DBagCityJSONValidator roofer3DBagCityJSONValidatorMock =
       mock(Roofer3DBagCityJSONValidator.class);
+  ObjectMapper objectMapper = new ObjectMapper();
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
           bucketComponentMock,
@@ -66,9 +70,10 @@ class CityJSON3DBagRooferProcessorTest {
           fileWriterMock,
           coordinateTransformer,
           geometryConverter,
-          textureComputerMock,
           swissBoundaryCheckerMock,
-          roofer3DBagCityJSONValidatorMock);
+          walloniaBoundaryCheckerMock,
+          roofer3DBagCityJSONValidatorMock,
+          objectMapper);
 
   @BeforeEach
   void setup() {
@@ -104,7 +109,10 @@ class CityJSON3DBagRooferProcessorTest {
     when(bucketComponentMock.presign(any(), any())).thenReturn(geoJsonBuildingPresignedURLMock);
     when(featureMapperMock.domainToGeometryWithMultipolygonHandler(any())).thenReturn(geometryMock);
     when(lidarApiFacadeMock.getUniqueLidarFilesUrls(Collections.singleton(geometryMock)))
-        .thenReturn(Map.of(lidarUrl, Set.of(geometryMock)));
+        .thenReturn(
+            new LidarApiFacade.LidarFilesResult(
+                Map.of(lidarUrl, Set.of(geometryMock)),
+                app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93));
     when(cityJsonGenerationResponseMock.getCityJsonUrl()).thenReturn(cityJsonUrl);
     when(roofer3DBagApiClientMock.generateCityJson(
             CityJsonGenerationRequest.builder()
@@ -120,8 +128,6 @@ class CityJSON3DBagRooferProcessorTest {
             (mock, ctx) -> {
               Mockito.when(mock.toURL()).thenReturn(rooferCityJsonURLMock);
             });
-    when(textureComputerMock.applyTexture(any(), any()))
-        .thenAnswer(invocation -> invocation.getArgument(1));
 
     var cityJsonDocMock = mock(CityJsonIO.Doc.class);
     MockedStatic<CityJsonIO> cityJsonIOMockedStatic = mockStatic(CityJsonIO.class);
@@ -131,6 +137,16 @@ class CityJSON3DBagRooferProcessorTest {
     cityJsonIOMockedStatic
         .when(() -> write(eq(cityJsonDocMock), any()))
         .thenAnswer(invocation -> null);
+    cityJsonIOMockedStatic
+        .when(() -> CityJsonIO.convertCityJsonSeqToCityJson(any(), any()))
+        .thenAnswer(
+            invocation -> {
+              Path outputPath = invocation.getArgument(1);
+              Files.writeString(
+                  outputPath,
+                  "{\"type\":\"CityJSON\",\"version\":\"2.0\",\"CityObjects\":{},\"vertices\":[]}");
+              return outputPath.toFile();
+            });
 
     var actual = subject.apply(cityJSONRequestMock);
 

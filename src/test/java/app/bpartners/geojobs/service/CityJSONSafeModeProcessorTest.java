@@ -14,13 +14,13 @@ import org.mockito.ArgumentCaptor;
 
 class CityJSONSafeModeProcessorTest {
   private CityJSONSafeModeProcessor subject;
-  private CityJSONInternalProcessor internalProcessorMock;
+  private CityJSONThreedProcessor internalProcessorMock;
   private CityJSON3DBagRooferProcessor rooferProcessorMock;
   private CityJSONRequestRepository cityJSONRequestRepositoryMock;
 
   @BeforeEach
   void setup() {
-    internalProcessorMock = mock(CityJSONInternalProcessor.class);
+    internalProcessorMock = mock(CityJSONThreedProcessor.class);
     rooferProcessorMock = mock(CityJSON3DBagRooferProcessor.class);
     cityJSONRequestRepositoryMock = mock(CityJSONRequestRepository.class);
 
@@ -56,5 +56,16 @@ class CityJSONSafeModeProcessorTest {
     var captor = ArgumentCaptor.forClass(CityJSONRequest.class);
     verify(cityJSONRequestRepositoryMock, times(1)).save(captor.capture());
     assertEquals(LidarProcessorType.THREE_D_BAG_ROOFER, captor.getValue().getLidarProcessorType());
+  }
+
+  @Test
+  void generate_does_not_save_the_request() {
+    when(rooferProcessorMock.apply(any())).thenThrow(new RuntimeException());
+    when(internalProcessorMock.apply(any())).thenReturn(mock());
+
+    var actual = subject.generate(CityJSONRequest.builder().build());
+
+    assertEquals(LidarProcessorType.DEFAULT, actual.processorType());
+    verify(cityJSONRequestRepositoryMock, never()).save(any());
   }
 }
