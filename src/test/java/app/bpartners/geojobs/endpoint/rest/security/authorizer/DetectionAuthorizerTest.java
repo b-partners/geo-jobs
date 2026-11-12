@@ -126,17 +126,16 @@ class DetectionAuthorizerTest {
             detectableObjectTypeMapperMock,
             featureTypeChecker);
     var detectionId = randomUUID().toString();
+    var community = useRole(ROLE_COMMUNITY);
     when(detectionRepository.findByEndToEndId(detectionId))
         .thenReturn(Optional.of(Detection.builder().communityOwnerId("otherCommunity").build()));
 
     assertThrows(
         ForbiddenException.class,
-        () -> subjectWithRealOwnerCheck.authorizeCommunity(detectionId, useRole(ROLE_COMMUNITY)));
+        () -> subjectWithRealOwnerCheck.authorizeCommunity(detectionId, community));
     assertThrows(
         ForbiddenException.class,
-        () ->
-            subjectWithRealOwnerCheck.accept(
-                detectionId, createDetection, useRole(ROLE_COMMUNITY)));
+        () -> subjectWithRealOwnerCheck.accept(detectionId, createDetection, community));
   }
 
   private Principal useRole(Authority.Role role) {
