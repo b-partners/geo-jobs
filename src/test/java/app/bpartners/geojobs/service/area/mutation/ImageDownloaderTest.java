@@ -7,11 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.http.HttpTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,30 +17,21 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ImageDownloaderTest {
   private static final byte[] IMAGE_BYTES = {1, 2, 3, 4, 5};
-  private static final Duration TIMEOUT = Duration.ofMillis(500);
 
-  private final ImageDownloader subject = new ImageDownloader(TIMEOUT);
+  private final ImageDownloader subject = new ImageDownloader();
   private HttpServer server;
-  private CountDownLatch serverStopped;
 
   @TempDir Path tempDir;
 
   @BeforeEach
   @SneakyThrows
   void startServer() {
-    serverStopped = new CountDownLatch(1);
     server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     server.createContext(
         "/image.jpg",
         exchange -> {
           exchange.sendResponseHeaders(200, IMAGE_BYTES.length);
           exchange.getResponseBody().write(IMAGE_BYTES);
-          exchange.close();
-        });
-    server.createContext(
-        "/stalled.jpg",
-        exchange -> {
-          awaitQuietly(serverStopped);
           exchange.close();
         });
     server.createContext(
@@ -57,7 +45,6 @@ class ImageDownloaderTest {
 
   @AfterEach
   void stopServer() {
-    serverStopped.countDown();
     server.stop(0);
   }
 
@@ -68,11 +55,6 @@ class ImageDownloaderTest {
 
     assertTrue(downloaded.exists());
     assertArrayEquals(IMAGE_BYTES, Files.readAllBytes(downloaded.toPath()));
-  }
-
-  @Test
-  void download_gives_up_when_the_server_stalls() {
-    assertThrows(HttpTimeoutException.class, () -> subject.download(url("/stalled.jpg")));
   }
 
   @Test
@@ -92,13 +74,5 @@ class ImageDownloaderTest {
 
   private String url(String path) {
     return "http://127.0.0.1:" + server.getAddress().getPort() + path;
-  }
-
-  private static void awaitQuietly(CountDownLatch latch) {
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
   }
 }

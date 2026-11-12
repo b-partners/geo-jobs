@@ -9,28 +9,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
 import java.util.Set;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ImageDownloader {
   private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
 
-  private final HttpClient client;
-  private final Duration timeout;
-
-  @Autowired
-  public ImageDownloader() {
-    this(Duration.ofSeconds(30));
-  }
-
-  ImageDownloader(Duration timeout) {
-    this.timeout = timeout;
-    this.client = HttpClient.newBuilder().connectTimeout(timeout).build();
-  }
+  private final HttpClient client = HttpClient.newHttpClient();
 
   @SneakyThrows
   public File download(String imageUrl) {
@@ -40,7 +27,7 @@ public class ImageDownloader {
     }
     var destination =
         File.createTempFile("area_picture_" + randomUUID(), ".jpg", createTempDirectory());
-    var request = HttpRequest.newBuilder(uri).timeout(timeout).GET().build();
+    var request = HttpRequest.newBuilder(uri).GET().build();
     var response = client.send(request, BodyHandlers.ofFile(destination.toPath()));
     if (response.statusCode() / 100 != 2) {
       throw new IOException(
