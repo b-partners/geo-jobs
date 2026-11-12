@@ -231,7 +231,7 @@ class CityJSONRequestCreatedServiceTest {
     runWithRequest(subject, request, FINISHED, GEOMETRY_CONSTRUCTION, false);
 
     verify(eventProducerMock)
-        .accept(argThat(events -> events.getFirst() instanceof ThreeDRequestMonitoringTriggered));
+        .accept(argThat(events -> events.get(0) instanceof ThreeDRequestMonitoringTriggered));
   }
 
   @Test
@@ -245,7 +245,7 @@ class CityJSONRequestCreatedServiceTest {
     runWithRequest(subject, request, FAILED, GEOMETRY_CONSTRUCTION, true);
 
     verify(eventProducerMock, never())
-        .accept(argThat(events -> events.getFirst() instanceof ThreeDRequestMonitoringTriggered));
+        .accept(argThat(events -> events.get(0) instanceof ThreeDRequestMonitoringTriggered));
   }
 
   @Test
