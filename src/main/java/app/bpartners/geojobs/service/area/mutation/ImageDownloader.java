@@ -12,6 +12,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Set;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +22,7 @@ public class ImageDownloader {
   private final HttpClient client;
   private final Duration timeout;
 
+  @Autowired
   public ImageDownloader() {
     this(Duration.ofSeconds(30));
   }

@@ -11,6 +11,7 @@ import java.net.http.HttpTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +24,14 @@ class ImageDownloaderTest {
 
   private final ImageDownloader subject = new ImageDownloader(TIMEOUT);
   private HttpServer server;
+  private CountDownLatch serverStopped;
 
   @TempDir Path tempDir;
 
   @BeforeEach
   @SneakyThrows
   void startServer() {
+    serverStopped = new CountDownLatch(1);
     server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     server.createContext(
         "/image.jpg",
@@ -40,9 +43,7 @@ class ImageDownloaderTest {
     server.createContext(
         "/stalled.jpg",
         exchange -> {
-          sleepQuietly(TIMEOUT.multipliedBy(4));
-          exchange.sendResponseHeaders(200, IMAGE_BYTES.length);
-          exchange.getResponseBody().write(IMAGE_BYTES);
+          awaitQuietly(serverStopped);
           exchange.close();
         });
     server.createContext(
@@ -56,6 +57,7 @@ class ImageDownloaderTest {
 
   @AfterEach
   void stopServer() {
+    serverStopped.countDown();
     server.stop(0);
   }
 
@@ -83,18 +85,18 @@ class ImageDownloaderTest {
   void download_refuses_non_http_urls() {
     var localFile = tempDir.resolve("source.jpg");
     Files.write(localFile, IMAGE_BYTES);
+    var fileUrl = localFile.toUri().toString();
 
-    assertThrows(
-        IllegalArgumentException.class, () -> subject.download(localFile.toUri().toString()));
+    assertThrows(IllegalArgumentException.class, () -> subject.download(fileUrl));
   }
 
   private String url(String path) {
     return "http://127.0.0.1:" + server.getAddress().getPort() + path;
   }
 
-  private static void sleepQuietly(Duration duration) {
+  private static void awaitQuietly(CountDownLatch latch) {
     try {
-      Thread.sleep(duration.toMillis());
+      latch.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
