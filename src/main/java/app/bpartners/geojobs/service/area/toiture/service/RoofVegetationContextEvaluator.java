@@ -31,7 +31,7 @@ public class RoofVegetationContextEvaluator {
 
   private static final double NO_VEGETATION_DISTANCE_METERS = 1000.0;
 
-  private static final Set<DetectableType> VEGETATION_TYPES =
+  public static final Set<DetectableType> VEGETATION_TYPES =
       EnumSet.of(
           ARBRE, ARBRE_INDIVIDUALISE, CANOPE, ESPACE_ARBORE, ESPACE_VERT, ESPACE_VERT_PARKING);
 
