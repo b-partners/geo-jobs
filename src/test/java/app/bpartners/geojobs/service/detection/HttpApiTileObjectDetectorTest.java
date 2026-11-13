@@ -24,6 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -40,6 +42,7 @@ import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver.Resolution;
 import app.bpartners.geojobs.service.detection.inference.ResolvedModelCard;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -78,7 +81,7 @@ class HttpApiTileObjectDetectorTest {
       new ResolvedModelCard(TOMBS_CARD, 20, 10.0);
 
   private final CustomBucketComponent customBucketComponentMock = mock();
-  private final TileObjectDetectorConf tileObjectDetectorConfMock = mock();
+  private final ModelVersionConf modelVersionConfMock = mock();
   private final DetectionFileObjectRepository detectionFileObjectRepositoryMock = mock();
   private final BucketComponent bucketComponentMock = mock();
   private final FileWriter fileWriterMock = mock();
@@ -93,7 +96,7 @@ class HttpApiTileObjectDetectorTest {
           objectMapper,
           customBucketComponentMock,
           "https://default.detection.test",
-          tileObjectDetectorConfMock,
+          modelVersionConfMock,
           new DetectionResponseAggregator(),
           new DetectionResponseAggregatorV1(),
           new DetectionResponseV1ToV2Mapper(),
@@ -114,7 +117,10 @@ class HttpApiTileObjectDetectorTest {
     var calledUrls = ConcurrentHashMap.<String>newKeySet();
     answerOnceEveryApiIsCalled(concurrentCallsLatch, calledUrls);
 
-    assertDoesNotThrow(() -> subject.apply(tileDetectionTask(), null, detectableObjectConfs()));
+    assertDoesNotThrow(
+        () ->
+            subject.apply(
+                tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels()));
 
     assertEquals(Set.of(V1_API_URL, FIRST_V2_API_URL, SECOND_V2_API_URL), calledUrls);
   }
@@ -127,7 +133,8 @@ class HttpApiTileObjectDetectorTest {
     var concurrentCallsLatch = new CountDownLatch(3);
     answerOnceEveryApiIsCalled(concurrentCallsLatch, ConcurrentHashMap.newKeySet());
 
-    var actual = subject.apply(tileDetectionTask(), null, detectableObjectConfs());
+    var actual =
+        subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
 
     assertEquals(3, actual.getImages().size());
     assertTrue(
@@ -149,7 +156,8 @@ class HttpApiTileObjectDetectorTest {
             invocation -> v2Response(((InferenceRequest) invocation.getArgument(0)).modelCardId()));
     var mask = tempFile(new byte[] {4, 5, 6});
 
-    var actual = subject.apply(tileDetectionTask(), mask, detectableObjectConfs());
+    var actual =
+        subject.apply(tileDetectionTask(), mask, detectableObjectConfs(), detectableObjectModels());
 
     var requestCaptor = ArgumentCaptor.forClass(InferenceRequest.class);
     verify(inferenceApiClientMock, times(2)).infer(requestCaptor.capture());
@@ -186,7 +194,11 @@ class HttpApiTileObjectDetectorTest {
         .thenReturn(new ResponseEntity<>(v1Response(V1_API_URL), HttpStatus.OK));
 
     var actual =
-        subject.apply(tileDetectionTask(), tempFile(new byte[] {4}), detectableObjectConfs());
+        subject.apply(
+            tileDetectionTask(),
+            tempFile(new byte[] {4}),
+            detectableObjectConfs(),
+            detectableObjectModels());
 
     verify(inferenceApiClientMock, times(1)).infer(any());
     verify(restTemplateMock, times(1))
@@ -214,7 +226,11 @@ class HttpApiTileObjectDetectorTest {
             });
 
     var actual =
-        subject.apply(tileDetectionTask(), tempFile(new byte[] {4}), detectableObjectConfs());
+        subject.apply(
+            tileDetectionTask(),
+            tempFile(new byte[] {4}),
+            detectableObjectConfs(),
+            detectableObjectModels());
 
     assertEquals(1, actual.getImages().size());
   }
@@ -227,7 +243,9 @@ class HttpApiTileObjectDetectorTest {
 
     assertThrows(
         IllegalStateException.class,
-        () -> subject.apply(tileDetectionTask(), null, detectableObjectConfs()));
+        () ->
+            subject.apply(
+                tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels()));
     verify(inferenceApiClientMock, never()).infer(any());
   }
 
@@ -266,7 +284,8 @@ class HttpApiTileObjectDetectorTest {
             new Resolution(List.of(), Set.of(), Set.of(PISCINE, VELUX, MOISISSURE_NOIRCIE)));
     answerOnceEveryApiIsCalled(new CountDownLatch(3), ConcurrentHashMap.newKeySet());
 
-    var actual = subject.apply(tileDetectionTask(), null, detectableObjectConfs());
+    var actual =
+        subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
 
     verify(inferenceApiClientMock, never()).infer(any());
     assertEquals(3, actual.getImages().size());
@@ -277,7 +296,7 @@ class HttpApiTileObjectDetectorTest {
     setUpTile(tile);
     when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
-    subject.apply(tileDetectionTask(), null, detectableObjectConfs());
+    subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
     var captor = ArgumentCaptor.forClass(Predicate.class);
     verify(modelCardResolverMock).resolve(any(), any(), anyInt(), captor.capture());
     return captor.getValue();
@@ -295,7 +314,7 @@ class HttpApiTileObjectDetectorTest {
     var task = tileDetectionTask();
     task.getTile().setCoordinates(new TileCoordinates().x(1).y(1).z(21));
 
-    subject.apply(task, null, detectableObjectConfs());
+    subject.apply(task, null, detectableObjectConfs(), detectableObjectModels());
 
     verify(modelCardResolverMock).resolve(any(), any(), eq(21), any());
   }
@@ -308,7 +327,8 @@ class HttpApiTileObjectDetectorTest {
     task.setSpatialResolutionInCm(20.0);
 
     assertThrows(
-        IllegalStateException.class, () -> subject.apply(task, null, detectableObjectConfs()));
+        IllegalStateException.class,
+        () -> subject.apply(task, null, detectableObjectConfs(), detectableObjectModels()));
   }
 
   @Test
@@ -319,7 +339,7 @@ class HttpApiTileObjectDetectorTest {
     var task = tileDetectionTask();
     task.setSpatialResolutionInCm(20.0);
 
-    subject.apply(task, null, detectableObjectConfs());
+    subject.apply(task, null, detectableObjectConfs(), detectableObjectModels());
 
     verify(modelCardResolverMock).resolve(any(), eq(20.0), anyInt(), any());
   }
@@ -438,7 +458,7 @@ class HttpApiTileObjectDetectorTest {
     when(customBucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
     when(customBucketComponentMock.download(BUCKET_NAME, TILE_BUCKET_PATH))
         .thenReturn(tileImageFile);
-    when(tileObjectDetectorConfMock.getTileDetectionApiUrls()).thenReturn(tileDetectionApiUrls());
+    when(modelVersionConfMock.getTileDetectorUrls(any(), any())).thenReturn(tileDetectionApiUrls());
   }
 
   private TileDetectionTask tileDetectionTask() {
@@ -469,13 +489,20 @@ class HttpApiTileObjectDetectorTest {
         .build();
   }
 
-  private String tileDetectionApiUrls() {
-    return """
-           [
-             {"objectType": "PISCINE", "url": "%s", "version": "V1"},
-             {"objectType": "VELUX", "url": "%s", "version": "V2"},
-             {"objectType": "MOISISSURE_NOIRCIE", "url": "%s", "version": "V2"}
-           ]"""
-        .formatted(V1_API_URL, FIRST_V2_API_URL, SECOND_V2_API_URL);
+  private List<DetectableObjectModel> detectableObjectModels() {
+    return List.of(new DetectableObjectModel().modelName(ModelName.TOITURE));
+  }
+
+  @SneakyThrows
+  private List<TileDetectorUrl> tileDetectionApiUrls() {
+    return objectMapper.readValue(
+        """
+        [
+          {"objectType": "PISCINE", "url": "%s", "version": "V1"},
+          {"objectType": "VELUX", "url": "%s", "version": "V2"},
+          {"objectType": "MOISISSURE_NOIRCIE", "url": "%s", "version": "V2"}
+        ]"""
+            .formatted(V1_API_URL, FIRST_V2_API_URL, SECOND_V2_API_URL),
+        new TypeReference<>() {});
   }
 }
