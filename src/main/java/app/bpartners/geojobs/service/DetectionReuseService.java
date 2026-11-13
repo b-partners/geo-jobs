@@ -5,7 +5,9 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationRequested;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketObjectCopier;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,13 +31,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DetectionReuseService {
   private static final int MAX_CANDIDATES = 10;
+  private static final int MAX_NEARBY_CANDIDATES = 20;
+  private static final double NEARBY_BOUNDS_MARGIN = 1.01;
   private static final String DEFAULT_FOLDER = "reused";
+  private static final String ZONE_IMAGES_FOLDER = "zone_images/";
   private static final Set<DetectionFileType> REUSED_FILE_TYPES =
       Set.of(
           DetectionFileType.ASSEMBLE_VGG,
@@ -45,18 +52,26 @@ public class DetectionReuseService {
   private final DetectionRepository detectionRepository;
   private final InferenceSignatureComputer inferenceSignatureComputer;
   private final BucketObjectCopier bucketObjectCopier;
+  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent customBucketComponent;
   private final Workers workers;
   private final EventProducer eventProducer;
   private final DetectionSucceededService detectionSucceededService;
+  private final ZoneSimilarityConf zoneSimilarityConf;
 
   public DetectionReuseFingerprint fingerprintOf(Detection detection) {
     String zoneHash = null;
     String inferenceSignature = null;
+    ZoneBounds zoneBounds = null;
     try {
       zoneHash =
           AnalysisProjectKeys.zoneHashOfIndividual(detection.getDomainProvidedGeoJsonZone())
               .orElse(null);
       if (zoneHash != null) {
+        zoneBounds =
+            ZoneGeometry.ofIndividual(detection.getDomainProvidedGeoJsonZone())
+                .map(ZoneGeometry::bounds)
+                .orElse(null);
         inferenceSignature =
             inferenceSignatureComputer
                 .compute(
@@ -69,7 +84,7 @@ public class DetectionReuseService {
           detection.getEndToEndId(),
           e);
     }
-    return new DetectionReuseFingerprint(zoneHash, inferenceSignature);
+    return new DetectionReuseFingerprint(zoneHash, inferenceSignature, zoneBounds);
   }
 
   public Optional<Detection> reuseResultsOf(Detection target) {
@@ -120,11 +135,78 @@ public class DetectionReuseService {
             PageRequest.of(0, MAX_CANDIDATES));
     for (var candidateId : candidateIds) {
       var candidate = detectionRepository.findById(candidateId);
-      if (candidate.isPresent() && isCompatible(candidate.get(), target)) {
+      if (candidate.isPresent()
+          && isCompatible(candidate.get(), target)
+          && hasRequiredImage(candidate.get(), target)) {
         return candidate;
       }
     }
-    return Optional.empty();
+    return findNearbySource(target);
+  }
+
+  private Optional<Detection> findNearbySource(Detection target) {
+    if (!zoneSimilarityConf.isEnabled()) {
+      return Optional.empty();
+    }
+    var targetZone = ZoneGeometry.ofIndividual(target.getDomainProvidedGeoJsonZone());
+    if (targetZone.isEmpty()) {
+      return Optional.empty();
+    }
+    var bounds = targetZone.get().bounds();
+    var toleranceInMeters = zoneSimilarityConf.getMaxDisplacementInMeters() * NEARBY_BOUNDS_MARGIN;
+    var toleranceLat = toleranceInMeters / ZoneGeometry.METERS_PER_DEGREE;
+    var toleranceLon =
+        toleranceLat / Math.cos(Math.toRadians((bounds.minLat() + bounds.maxLat()) / 2));
+    var candidateIds =
+        detectionRepository.findReusableSourceIdsNear(
+            target.getCommunityOwnerId(),
+            target.getInferenceSignature(),
+            target.isIntegrationTest(),
+            target.getId(),
+            bounds.minLon(),
+            bounds.minLat(),
+            bounds.maxLon(),
+            bounds.maxLat(),
+            toleranceLon,
+            toleranceLat,
+            PageRequest.of(0, MAX_NEARBY_CANDIDATES));
+    Detection best = null;
+    var bestIou = 0.0;
+    for (var candidateId : candidateIds) {
+      var candidate = detectionRepository.findById(candidateId);
+      if (candidate.isEmpty() || !isCompatible(candidate.get(), target)) {
+        continue;
+      }
+      var iou = similarityOf(targetZone.get(), candidate.get());
+      if (iou.isPresent()
+          && iou.getAsDouble() > bestIou
+          && hasRequiredImage(candidate.get(), target)) {
+        best = candidate.get();
+        bestIou = iou.getAsDouble();
+      }
+    }
+    if (best != null) {
+      log.info(
+          "Detection(e2Id={}) matches the zone of detection(id={}) with iou={}",
+          target.getEndToEndId(),
+          best.getId(),
+          bestIou);
+    }
+    return Optional.ofNullable(best);
+  }
+
+  private OptionalDouble similarityOf(ZoneGeometry targetZone, Detection candidate) {
+    var candidateZone = ZoneGeometry.ofIndividual(candidate.getDomainProvidedGeoJsonZone());
+    if (candidateZone.isEmpty()) {
+      return OptionalDouble.empty();
+    }
+    var iou = targetZone.iouWith(candidateZone.get());
+    if (iou < zoneSimilarityConf.getMinIou()
+        || !targetZone.isWithinDisplacementOf(
+            candidateZone.get(), zoneSimilarityConf.getMaxDisplacementInMeters())) {
+      return OptionalDouble.empty();
+    }
+    return OptionalDouble.of(iou);
   }
 
   static boolean isCompatible(Detection source, Detection target) {
@@ -134,8 +216,56 @@ public class DetectionReuseService {
         && Objects.equals(source.spatialResolutionInCm(), target.spatialResolutionInCm())
         && objectsOf(source).equals(objectsOf(target))
         && source.getGeoJsonDelimitationType() == target.getGeoJsonDelimitationType()
-        && source.isOutputZipped() == target.isOutputZipped()
-        && (!target.needsImageOutput() || source.getImageFileKey() != null);
+        && source.isOutputZipped() == target.isOutputZipped();
+  }
+
+  private boolean hasRequiredImage(Detection source, Detection target) {
+    return !target.needsImageOutput()
+        || source.getImageFileKey() != null
+        || !zoneImageKeysToCopy(source, target).isEmpty();
+  }
+
+  private Map<String, String> zoneImageKeysToCopy(Detection source, Detection target) {
+    var existingKeys =
+        customBucketComponent
+            .listObjects(bucketComponent.getBucketName(), ZONE_IMAGES_FOLDER + source.getId())
+            .stream()
+            .map(S3Object::key)
+            .collect(Collectors.toSet());
+    var candidates = new LinkedHashMap<String, String>();
+    candidates.put(
+        ZONE_IMAGES_FOLDER + source.getId() + ".jpg", ZONE_IMAGES_FOLDER + target.getId() + ".jpg");
+    var sourceFeatureKey = featureImageKeyOf(source);
+    var targetFeatureKey = featureImageKeyOf(target);
+    if (sourceFeatureKey != null && targetFeatureKey != null) {
+      candidates.put(sourceFeatureKey, targetFeatureKey);
+    }
+    var keysToCopy = new LinkedHashMap<String, String>();
+    candidates.forEach(
+        (sourceKey, targetKey) -> {
+          if (existingKeys.contains(sourceKey)) {
+            keysToCopy.put(sourceKey, targetKey);
+          }
+        });
+    return keysToCopy;
+  }
+
+  private static String featureImageKeyOf(Detection detection) {
+    var features = detection.getProvidedGeoJsonZone();
+    if (features == null
+        || features.isEmpty()
+        || features.getFirst().getProperties() == null
+        || features.getFirst().getProperties().get("id") == null
+        || detection.getZoneName() == null) {
+      return null;
+    }
+    return ZONE_IMAGES_FOLDER
+        + detection.getId()
+        + "/"
+        + features.getFirst().getProperties().get("id")
+        + "/"
+        + detection.getZoneName()
+        + ".jpg";
   }
 
   private static String layerOf(Detection detection) {
@@ -166,6 +296,9 @@ public class DetectionReuseService {
 
   private Detection copyResults(Detection source, Detection target, List<String> copiedKeys) {
     var destinationBySourceKey = new LinkedHashMap<String, String>();
+    if (target.needsImageOutput()) {
+      destinationBySourceKey.putAll(zoneImageKeysToCopy(source, target));
+    }
     var geojsonKey =
         destinationOf(source, target, source.getGeojsonS3FileKey(), destinationBySourceKey);
     var vggKey = destinationOf(source, target, source.getVggFileKey(), destinationBySourceKey);
