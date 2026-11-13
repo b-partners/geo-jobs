@@ -104,9 +104,6 @@ class FeatureRoofResultPropertiesComputerTest {
             "{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILES\"}",
             DetectedRoofCovering.class))
         .thenReturn(expectedCovering);
-    // "Full valid data" includes real vegetation detections nearby - without this,
-    // hasVegetationData() is false and vegetation_index/fire_risk/maintenance_vegetation are
-    // correctly omitted (see should_omit_vegetation_properties_when_no_vegetation_data_detected).
     when(polygonObjectTypeConverter.convertFrom(anyCollection()))
         .thenReturn(
             List.of(
@@ -118,7 +115,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertEquals("existing_value", result.get("existing_key"));
     assertEquals(150.0, result.get("roof_area_in_m2"));
@@ -135,21 +133,44 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  void should_omit_vegetation_properties_when_no_vegetation_data_detected() {
-    // setUp() stubs polygonObjectTypeConverter to return no polygons at all, so
-    // hasVegetationData() is false even though roofAssessmentFacade still returns a non-null
-    // assessment (e.g. computed from slope/covering alone) - the properties must not leak out.
+  void should_omit_vegetation_properties_when_vegetation_was_not_requested() {
+    // Vegetation polygons nearby but the job never asked for vegetation detection (TOITURE only):
+    // the assessment is not backed by a requested measurement, so it must not leak out.
+    when(polygonObjectTypeConverter.convertFrom(anyCollection()))
+        .thenReturn(
+            List.of(
+                new MultiPolygonObjectType(nearbyVegetationMultiPolygon(), DetectableType.ARBRE)));
+
     Map<String, Object> result =
         subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            false);
 
     assertFalse(result.containsKey("vegetation_index"));
     assertFalse(result.containsKey("fire_risk"));
     assertFalse(result.containsKey("maintenance_vegetation"));
+  }
+
+  @Test
+  void should_expose_vegetation_properties_when_requested_even_if_none_was_found() {
+    // setUp() stubs polygonObjectTypeConverter to return no polygons: vegetation was requested
+    // and none was found near the roof, which is a measured absence worth exposing.
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            null,
+            true);
+
+    assertEquals(VegetationIndex.FAIBLE, result.get("vegetation_index"));
+    assertEquals(FireRiskLevel.MODERE, result.get("fire_risk"));
+    assertEquals(MaintenancePriority.PRIORITAIRE, result.get("maintenance_vegetation"));
   }
 
   @Test
@@ -162,7 +183,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertEquals(150.0, result.get("roof_area_in_m2"));
     assertNull(result.get("addresses"));
@@ -190,7 +212,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertEquals("ROOF_TUILES", result.get("revetement_1"));
     assertNull(result.get("revetement_2"));
@@ -219,7 +242,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertNull(result.get("addresses"));
     assertFalse(result.containsKey("revetement_1"));
@@ -241,7 +265,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertNull(result.get("revetement_1"));
     assertNull(result.get("revetement_2"));
@@ -270,7 +295,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            mutationContext);
+            mutationContext,
+            true);
 
     assertEquals(MutationType.DETERIORATION, result.get("mutation"));
     assertEquals("https://geodata.test/new.jpg", result.get("mutation_recent_image_url"));
@@ -297,7 +323,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            mutationContext);
+            mutationContext,
+            true);
 
     assertEquals(MutationType.UNKNOWN, result.get("mutation"));
     assertEquals(150.0, result.get("roof_area_in_m2"));
@@ -316,7 +343,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            mutationContext);
+            mutationContext,
+            true);
 
     assertNull(result.get("mutation_recent_image_url"));
     assertNull(result.get("mutation_older_image_url"));
@@ -332,7 +360,8 @@ class FeatureRoofResultPropertiesComputerTest {
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
             detectedObjects,
-            null);
+            null,
+            true);
 
     assertEquals(MutationType.UNKNOWN, result.get("mutation"));
     assertFalse(result.containsKey("mutation_recent_image_url"));
