@@ -28,7 +28,6 @@ import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +42,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 class TileDetectionTaskConsumerIT {
+  private static final String URL_1 =
+      "https://v6fceptj3rg5if4d7ieussgu3i0gytod.lambda-url.eu-west-3.on.aws/";
+  private static final String URL_2 =
+      "https://jgzoqzwhm6r3oxcovqidd5onvm0sipnc.lambda-url.eu-west-3.on.aws/";
+  private static final String URL_3 = "https://821ylmm5c2.execute-api.eu-west-3.amazonaws.com/Prod";
+  private static final String URL_4 =
+      "https://2smhvqvloy3s3hexpaz7r6duvi0hlkos.lambda-url.eu-west-3.on.aws";
+
   private static final String DUMMY_BUCKET_NAME = "dummyBucketName";
   private static final String TILE_BUCKET_PATCH = "tileBucketPatch";
 
@@ -210,11 +217,34 @@ class TileDetectionTaskConsumerIT {
         ESPACE_VERT);
   }
 
-  @SneakyThrows
   private List<TileDetectorUrl> tileDetectorUrls() {
-    return objectMapper.readValue(
-        new ClassPathResource("conf/tileObjectDetectorConf.json").getFile(),
-        new TypeReference<>() {});
+    return List.of(
+        tileDetectorUrl(PISCINE, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(PASSAGE_PIETON, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(TROTTOIR, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(LINE, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(VOIE_CARROSSABLE, URL_2, DetectionApiVersion.V1),
+        tileDetectorUrl(PARKING, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(TOITURE_REVETEMENT, URL_3, DetectionApiVersion.V2),
+        tileDetectorUrl(PANNEAU_PHOTOVOLTAIQUE, URL_1, DetectionApiVersion.V1),
+        tileDetectorUrl(MOISISSURE_NOIRCIE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(MOISISSURE_CLAIR, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(MOISISSURE_COULEUR, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(MOISISSURE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(USURE_IMPORTANTE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(USURE_LEGER, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(USURE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(OBSTACLE, URL_3, DetectionApiVersion.V2),
+        tileDetectorUrl(CHEMINEE, URL_3, DetectionApiVersion.V2),
+        tileDetectorUrl(HUMIDITE_INTENSE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(HUMIDITE_CLAIR, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(HUMIDITE, URL_4, DetectionApiVersion.V1),
+        tileDetectorUrl(VELUX, URL_3, DetectionApiVersion.V2));
+  }
+
+  private TileDetectorUrl tileDetectorUrl(
+      DetectableType objectType, String url, DetectionApiVersion version) {
+    return TileDetectorUrl.builder().objectType(objectType).url(url).version(version).build();
   }
 
   private app.bpartners.geojobs.repository.model.Feature featureForDelimitation() {
