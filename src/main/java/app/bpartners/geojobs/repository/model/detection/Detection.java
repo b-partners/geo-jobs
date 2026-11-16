@@ -184,6 +184,18 @@ public class Detection implements Serializable {
   @Column(name = "inference_signature")
   private String inferenceSignature;
 
+  @Column(name = "zone_min_lon")
+  private Double zoneMinLon;
+
+  @Column(name = "zone_min_lat")
+  private Double zoneMinLat;
+
+  @Column(name = "zone_max_lon")
+  private Double zoneMaxLon;
+
+  @Column(name = "zone_max_lat")
+  private Double zoneMaxLat;
+
   @Column(name = "source_detection_id")
   private String sourceDetectionId;
 

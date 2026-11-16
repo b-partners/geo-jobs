@@ -38,17 +38,18 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   public void accept(CityJSONRequestCreated created, boolean isSync) {
     var communityAuthorization =
         communityAuthorizationRepository.findById(created.getCommunityOwnerId()).orElseThrow();
-    if (!communityAuthorization.isIntegrationTestUsage()) {
+    var request =
+        cityJSONRequestRepository
+            .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
+            .orElseThrow();
+    // A redelivered event finds the request already FAILED/UNAVAILABLE: monitor it only once.
+    if (!communityAuthorization.isIntegrationTestUsage()
+        && PROCESSING.equals(request.getStatus())) {
       eventProducer.accept(
           List.of(
               new ThreeDRequestMonitoringTriggered(
                   created.getRequestId(), created.getCommunityOwnerId())));
     }
-
-    var request =
-        cityJSONRequestRepository
-            .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
-            .orElseThrow();
 
     processCityJSONFacade(request, isSync);
   }
@@ -133,10 +134,11 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
           e.getMessage(),
           e);
       if (e.isNoLidarDataFound()) {
+        // Definitive answer from threed: retrying the event would not find lidar data either.
         updateStatus(request, UNAVAILABLE, GEOMETRY_CONSTRUCTION, failureMessage(e));
-      } else {
-        updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
+        return;
       }
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
       throw e;
     } catch (Exception e) {
       log.error(
