@@ -123,7 +123,7 @@ public class CreateDetectionValidator implements Consumer<CreateDetection> {
 
   private void appendModelVersionError(
       DetectableObjectModel model, StringBuilder exceptionMessageBuilder) {
-    if (model.getModelName() == null || model.getModelVersion() == null) {
+    if (model.getModelName() == null) {
       return;
     }
     if (!modelVersionConf.hasConfiguration(model.getModelName(), model.getModelVersion())) {

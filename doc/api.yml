@@ -3890,13 +3890,15 @@ components:
             - $ref: '#/components/schemas/ModelVersion'
           description: |
             Optional version of the model to process the detection with.
-            When omitted, the earliest available version of the given `modelName` is used as the default.
+            When omitted, the default version `1.1.0` is used and returned in the response.
+            Detections created before model versioning are returned with the version `legacy`, which cannot be requested.
     ModelVersion:
       type: string
       description: |
         Version of the detectable object model, following semantic versioning (MAJOR.MINOR.PATCH).
-        Optional. When not provided, the earliest available version of the model is used as the default.
-      pattern: '^\d+\.\d+\.\d+$'
+        Optional. When not provided, the default version `1.1.0` is used.
+        The reserved value `legacy` is only returned for detections created before model versioning and is rejected as input.
+      pattern: '^(\d+\.\d+\.\d+|legacy)$'
       example: '1.0.0'
     ModelName:
       type: string

@@ -125,12 +125,24 @@ class ModelVersionConfTest {
   }
 
   @Test
-  void uses_earliest_version_for_inference_mappings_when_no_model_provided() {
+  void uses_default_version_for_inference_mappings_when_no_model_provided() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+    var toitureMappings =
+        List.of(
+            new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v2.0", 21, 5.0),
+            new ModelCardMapping(TOITURE_REVETEMENT, "revets-fp-v1", 19, 20.0),
+            new ModelCardMapping(VELUX, "obstacles-only", 21, 20.0, 5.0));
+
+    assertEquals(4, subject.getInferenceMappings(List.of()).size());
+    assertEquals(4, subject.getInferenceMappings(null).size());
+    assertEquals(toitureMappings, subject.getInferenceMappings(List.of(model(TOITURE, null))));
+  }
+
+  @Test
+  void uses_earliest_version_for_inference_mappings_of_a_legacy_model() {
     givenVersion("1.1.0", INFERENCE_CONF);
 
-    assertTrue(subject.getInferenceMappings(List.of()).isEmpty());
-    assertTrue(subject.getInferenceMappings(null).isEmpty());
-    assertTrue(subject.getInferenceMappings(List.of(model(TOITURE, null))).isEmpty());
+    assertTrue(subject.getInferenceMappings(List.of(model(TOITURE, "legacy"))).isEmpty());
   }
 
   @Test
@@ -170,10 +182,25 @@ class ModelVersionConfTest {
   }
 
   @Test
-  void resolves_earliest_version_when_none_provided() {
-    assertEquals("1.0.0", subject.resolveVersion(null));
-    assertEquals("1.0.0", subject.resolveVersion(""));
+  void resolves_default_version_when_none_provided() {
+    assertEquals("1.1.0", subject.resolveVersion(null));
+    assertEquals("1.1.0", subject.resolveVersion(""));
     assertEquals("1.0.0", subject.resolveVersion("1.0.0"));
+  }
+
+  @Test
+  void resolves_legacy_version_as_the_earliest_version() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertEquals("1.0.0", subject.resolveVersion("legacy"));
+  }
+
+  @Test
+  void does_not_accept_legacy_as_a_requested_version() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertFalse(subject.hasConfiguration(TOITURE, "legacy"));
+    assertFalse(subject.hasConfiguration(TOITURE, "not-a-version"));
   }
 
   @Test
@@ -184,7 +211,7 @@ class ModelVersionConfTest {
 
   @Test
   void loads_toiture_urls_from_s3_conf() {
-    var urls = subject.getTileDetectorUrls(TOITURE, null);
+    var urls = subject.getTileDetectorUrls(TOITURE, "1.0.0");
 
     assertEquals(2, urls.size());
     var toitureRevetement =
@@ -215,8 +242,11 @@ class ModelVersionConfTest {
 
   @Test
   void has_no_configuration_for_undefined_model() {
-    assertTrue(subject.hasConfiguration(LOM, null));
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertFalse(subject.hasConfiguration(LOM, null));
     assertFalse(subject.hasConfiguration(LOM, "1.0.0"));
+    assertTrue(subject.hasConfiguration(TOITURE, null));
   }
 
   @Test

@@ -28,6 +28,8 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Component
 public class ModelVersionConf {
+  public static final String DEFAULT_VERSION = "1.1.0";
+  public static final String LEGACY_VERSION = "legacy";
   private static final String MODEL_VERSION_CONF_PREFIX = "conf/%s/model-versions/";
   private static final String CONF_FILE_EXTENSION = ".json";
   private static final Comparator<String> BY_SEMANTIC_VERSION = comparingSemanticVersion();
@@ -45,20 +47,25 @@ public class ModelVersionConf {
 
   public String resolveVersion(String requestedVersion) {
     if (requestedVersion == null || requestedVersion.isBlank()) {
+      return DEFAULT_VERSION;
+    }
+    if (LEGACY_VERSION.equals(requestedVersion)) {
       return earliestVersion();
     }
-    if (!supportedVersions().contains(requestedVersion)) {
+    if (!isSupported(requestedVersion)) {
       throw new BadRequestException("Unsupported model version " + requestedVersion);
     }
     return requestedVersion;
   }
 
   public boolean hasConfiguration(ModelName modelName, String requestedVersion) {
-    if (requestedVersion == null || requestedVersion.isBlank()) {
-      return true;
-    }
-    return supportedVersions().contains(requestedVersion)
-        && confByModel(requestedVersion).containsKey(modelName);
+    var version =
+        requestedVersion == null || requestedVersion.isBlank() ? DEFAULT_VERSION : requestedVersion;
+    return isSupported(version) && confByModel(version).containsKey(modelName);
+  }
+
+  private boolean isSupported(String version) {
+    return supportedVersions().stream().anyMatch(version::equals);
   }
 
   public Set<String> getAvailableVersions(ModelName modelName) {
@@ -88,7 +95,7 @@ public class ModelVersionConf {
             : models.stream().filter(model -> model.getModelName() != null).toList();
     var mappingsByTypeAndResolution = new LinkedHashMap<List<Object>, ModelCardMapping>();
     if (selectedModels.isEmpty()) {
-      confByModel(earliestVersion())
+      confByModel(resolveVersion(null))
           .values()
           .forEach(modelConf -> collect(modelConf.inference(), mappingsByTypeAndResolution));
     }

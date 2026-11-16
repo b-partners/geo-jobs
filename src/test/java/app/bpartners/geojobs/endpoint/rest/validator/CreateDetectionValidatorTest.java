@@ -60,8 +60,8 @@ class CreateDetectionValidatorTest {
     when(bucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
     when(bucketConfMock.getBucketName()).thenReturn(BUCKET_NAME);
     when(bucketComponentMock.listObjects(BUCKET_NAME, CONF_PREFIX))
-        .thenReturn(List.of(S3Object.builder().key(CONF_PREFIX + "1.0.0.json").build()));
-    when(bucketComponentMock.download(BUCKET_NAME, CONF_PREFIX + "1.0.0.json"))
+        .thenReturn(List.of(S3Object.builder().key(CONF_PREFIX + "1.1.0.json").build()));
+    when(bucketComponentMock.download(BUCKET_NAME, CONF_PREFIX + "1.1.0.json"))
         .thenReturn(confFile.toFile());
   }
 
@@ -192,7 +192,7 @@ class CreateDetectionValidatorTest {
     var createDetection =
         new CreateDetection()
             .detectableObjectModelList(
-                List.of(new DetectableObjectModel().modelName(TOITURE).modelVersion("1.0.0")))
+                List.of(new DetectableObjectModel().modelName(TOITURE).modelVersion("1.1.0")))
             .emailReceiver("email@receiver.com")
             .zoneName("dummy zone name");
 
@@ -210,7 +210,7 @@ class CreateDetectionValidatorTest {
 
     var actual = assertThrows(BadRequestException.class, () -> subject.accept(createDetection));
     assertEquals(
-        "Model BP_TOITURE has no configuration for version 9.9.9. Available versions: [1.0.0]. ",
+        "Model BP_TOITURE has no configuration for version 9.9.9. Available versions: [1.1.0]. ",
         actual.getMessage());
   }
 
@@ -219,13 +219,13 @@ class CreateDetectionValidatorTest {
     var createDetection =
         new CreateDetection()
             .detectableObjectModelList(
-                List.of(new DetectableObjectModel().modelName(LOM).modelVersion("1.0.0")))
+                List.of(new DetectableObjectModel().modelName(LOM).modelVersion("1.1.0")))
             .emailReceiver("email@receiver.com")
             .zoneName("dummy zone name");
 
     var actual = assertThrows(BadRequestException.class, () -> subject.accept(createDetection));
     assertEquals(
-        "Model BP_LOM has no configuration for version 1.0.0. Available versions: []. ",
+        "Model BP_LOM has no configuration for version 1.1.0. Available versions: []. ",
         actual.getMessage());
   }
 }
