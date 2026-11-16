@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.service.detection.DetectionResponseV2.REGION
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
@@ -59,14 +60,18 @@ public class RoofCoveringDetector {
 
   @SneakyThrows
   public RoofCoveringDetectionResponse apply(
-      Tile tile, File maskFile, Double spatialResolutionInCm) {
+      Tile tile,
+      File maskFile,
+      Double spatialResolutionInCm,
+      List<DetectableObjectModel> detectableObjectModels) {
     var tileImageFile =
         bucketComponent.download(
             bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
     var imageBase64 = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
     var maskBase64 =
         maskFile == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(maskFile));
-    var resolvedModelCard = resolveModelCard(tile, tileImageFile, spatialResolutionInCm);
+    var resolvedModelCard =
+        resolveModelCard(tile, tileImageFile, spatialResolutionInCm, detectableObjectModels);
     if (resolvedModelCard != null) {
       return applyWithInferenceApi(
           resolvedModelCard, tileImageFile.getName(), imageBase64, maskBase64);
@@ -87,10 +92,14 @@ public class RoofCoveringDetector {
   }
 
   private ResolvedModelCard resolveModelCard(
-      Tile tile, File tileImageFile, Double spatialResolutionInCm) {
+      Tile tile,
+      File tileImageFile,
+      Double spatialResolutionInCm,
+      List<DetectableObjectModel> detectableObjectModels) {
     var tileSize = HttpApiTileObjectDetector.readImageSize(tileImageFile);
     return modelCardResolver
         .resolve(
+            detectableObjectModels,
             List.of(DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build()),
             spatialResolutionInCm,
             HttpApiTileObjectDetector.tileZoom(tile),
