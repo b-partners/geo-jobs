@@ -7,6 +7,8 @@ import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +19,8 @@ public class LambdaFallbackConf {
   private final CustomBucketComponent bucketComponent;
   private final ObjectMapper om;
   private final String env = System.getenv("ENV");
-  private volatile List<TileDetectorUrl> tileDetectorUrls;
+  private final Map<String, List<TileDetectorUrl>> tileDetectorUrlsByKey =
+      new ConcurrentHashMap<>();
 
   public LambdaFallbackConf(CustomBucketComponent bucketComponent, ObjectMapper om) {
     this.bucketComponent = bucketComponent;
@@ -25,25 +28,13 @@ public class LambdaFallbackConf {
   }
 
   public List<TileDetectorUrl> getTileDetectorUrls() {
-    var local = tileDetectorUrls;
-    if (local == null) {
-      synchronized (this) {
-        local = tileDetectorUrls;
-        if (local == null) {
-          local = load();
-          tileDetectorUrls = local;
-        }
-      }
-    }
-    return local;
+    return tileDetectorUrlsByKey.computeIfAbsent(
+        String.format(LAMBDA_FALLBACK_CONF_KEY, env), this::load);
   }
 
   @SneakyThrows
-  private List<TileDetectorUrl> load() {
-    var file =
-        bucketComponent.download(
-            bucketComponent.getBucketConf().getBucketName(),
-            String.format(LAMBDA_FALLBACK_CONF_KEY, env));
+  private List<TileDetectorUrl> load(String bucketKey) {
+    var file = bucketComponent.download(bucketComponent.getBucketConf().getBucketName(), bucketKey);
     try {
       List<TileDetectorUrl> urls =
           om.readValue(readString(file.toPath()), new TypeReference<>() {});

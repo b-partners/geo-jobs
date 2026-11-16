@@ -31,6 +31,8 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 class ModelVersionConfTest {
@@ -144,56 +146,27 @@ class ModelVersionConfTest {
         actual);
   }
 
-  @Test
-  void rejects_entry_defining_both_model_card_and_url() {
-    givenVersion(
-        "1.1.0",
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
         """
         {"BP_TOITURE": [{"objectType": "VELUX", "modelCardId": "c", "zoomLevel": 21,
-                         "spatialResolution": 5, "url": "https://u"}]}""");
-
-    assertThrows(
-        IllegalStateException.class,
-        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
-  }
-
-  @Test
-  void rejects_entry_defining_neither_model_card_nor_url() {
-    givenVersion(
-        "1.1.0",
+                         "spatialResolution": 5, "url": "https://u"}]}""",
         """
-        {"BP_TOITURE": [{"objectType": "VELUX"}]}""");
-
-    assertThrows(
-        IllegalStateException.class,
-        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
-  }
-
-  @Test
-  void rejects_inference_mapping_without_zoom_level() {
-    givenVersion(
-        "1.1.0",
+        {"BP_TOITURE": [{"objectType": "VELUX"}]}""",
         """
-        {"BP_TOITURE": [{"objectType": "VELUX", "modelCardId": "c", "spatialResolution": 5}]}""");
-
-    assertThrows(
-        IllegalStateException.class,
-        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
-  }
-
-  @Test
-  void rejects_same_type_mapped_twice_for_the_same_spatial_resolution() {
-    givenVersion(
-        "1.1.0",
+        {"BP_TOITURE": [{"objectType": "VELUX", "modelCardId": "c", "spatialResolution": 5}]}""",
         """
         {"BP_TOITURE": [
           {"objectType": "VELUX", "modelCardId": "a", "zoomLevel": 21, "spatialResolution": 5},
           {"objectType": "VELUX", "modelCardId": "b", "zoomLevel": 21, "spatialResolution": 5}
-        ]}""");
+        ]}"""
+      })
+  void rejects_invalid_model_version_conf(String invalidConf) {
+    givenVersion("1.1.0", invalidConf);
+    var models = List.of(model(TOITURE, "1.1.0"));
 
-    assertThrows(
-        IllegalStateException.class,
-        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+    assertThrows(IllegalStateException.class, () -> subject.getInferenceMappings(models));
   }
 
   @Test

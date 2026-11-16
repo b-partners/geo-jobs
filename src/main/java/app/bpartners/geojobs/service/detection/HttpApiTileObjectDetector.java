@@ -519,7 +519,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private List<TileDetectorUrl> getApiUrls(
       List<DetectableObjectConfiguration> objectConfigurations,
       List<DetectableObjectModel> detectableObjectModels) {
-    Map<DetectableType, TileDetectorUrl> urlByType = new HashMap<>();
+    Map<DetectableType, TileDetectorUrl> urlByType = new EnumMap<>(DetectableType.class);
     lambdaFallbackConf
         .getTileDetectorUrls()
         .forEach(url -> urlByType.put(url.getObjectType(), url));
