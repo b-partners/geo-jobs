@@ -82,6 +82,7 @@ class HttpApiTileObjectDetectorTest {
 
   private final CustomBucketComponent customBucketComponentMock = mock();
   private final ModelVersionConf modelVersionConfMock = mock();
+  private final LambdaFallbackConf lambdaFallbackConfMock = mock();
   private final DetectionFileObjectRepository detectionFileObjectRepositoryMock = mock();
   private final BucketComponent bucketComponentMock = mock();
   private final FileWriter fileWriterMock = mock();
@@ -97,6 +98,7 @@ class HttpApiTileObjectDetectorTest {
           customBucketComponentMock,
           "https://default.detection.test",
           modelVersionConfMock,
+          lambdaFallbackConfMock,
           new DetectionResponseAggregator(),
           new DetectionResponseAggregatorV1(),
           new DetectionResponseV1ToV2Mapper(),
@@ -127,6 +129,45 @@ class HttpApiTileObjectDetectorTest {
 
   @SneakyThrows
   @Test
+  void prefers_the_lambda_pinned_by_the_model_version_over_the_fallback_one() {
+    setUpTile();
+    resolveNothing();
+    var fallbackUrls =
+        List.of(
+            TileDetectorUrl.builder()
+                .objectType(PISCINE)
+                .url("https://fallback.detection.test")
+                .version(DetectionApiVersion.V1)
+                .build(),
+            TileDetectorUrl.builder()
+                .objectType(VELUX)
+                .url(FIRST_V2_API_URL)
+                .version(DetectionApiVersion.V2)
+                .build(),
+            TileDetectorUrl.builder()
+                .objectType(MOISISSURE_NOIRCIE)
+                .url(SECOND_V2_API_URL)
+                .version(DetectionApiVersion.V2)
+                .build());
+    var versionedUrls =
+        List.of(
+            TileDetectorUrl.builder()
+                .objectType(PISCINE)
+                .url(V1_API_URL)
+                .version(DetectionApiVersion.V1)
+                .build());
+    when(lambdaFallbackConfMock.getTileDetectorUrls()).thenReturn(fallbackUrls);
+    when(modelVersionConfMock.getTileDetectorUrls(any(), any())).thenReturn(versionedUrls);
+    var calledUrls = ConcurrentHashMap.<String>newKeySet();
+    answerOnceEveryApiIsCalled(new CountDownLatch(3), calledUrls);
+
+    subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    assertEquals(Set.of(V1_API_URL, FIRST_V2_API_URL, SECOND_V2_API_URL), calledUrls);
+  }
+
+  @SneakyThrows
+  @Test
   void aggregates_every_api_response_whatever_their_completion_order() {
     setUpTile();
     resolveNothing();
@@ -149,7 +190,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void calls_inference_api_only_for_mapped_types_and_never_the_lambdas() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES, RESOLVED_TOMBS), Set.of(), Set.of()));
     when(inferenceApiClientMock.infer(any()))
         .thenAnswer(
@@ -187,7 +228,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void falls_back_to_lambdas_only_for_unmapped_types() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES), Set.of(PISCINE), Set.of()));
     when(inferenceApiClientMock.infer(any())).thenReturn(v2Response("damages"));
     when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponse.class)))
@@ -213,7 +254,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void keeps_other_results_when_one_inference_call_fails() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES, RESOLVED_TOMBS), Set.of(), Set.of()));
     when(inferenceApiClientMock.infer(any()))
         .thenAnswer(
@@ -238,7 +279,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void fails_when_mask_required_but_missing() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES), Set.of(), Set.of()));
 
     assertThrows(
@@ -279,7 +320,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void falls_back_to_lambdas_for_types_whose_model_card_does_not_support_the_tile_size() {
     setUpTile(png(1024, 1024));
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(
             new Resolution(List.of(), Set.of(), Set.of(PISCINE, VELUX, MOISISSURE_NOIRCIE)));
     answerOnceEveryApiIsCalled(new CountDownLatch(3), ConcurrentHashMap.newKeySet());
@@ -294,11 +335,11 @@ class HttpApiTileObjectDetectorTest {
   @SuppressWarnings("unchecked")
   private Predicate<DeployedModelCard> capturedCompatibilityPredicate(byte[] tile) {
     setUpTile(tile);
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
     subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
     var captor = ArgumentCaptor.forClass(Predicate.class);
-    verify(modelCardResolverMock).resolve(any(), any(), anyInt(), captor.capture());
+    verify(modelCardResolverMock).resolve(any(), any(), any(), anyInt(), captor.capture());
     return captor.getValue();
   }
 
@@ -309,14 +350,14 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void resolves_model_cards_for_the_zoom_of_the_tile() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
     var task = tileDetectionTask();
     task.getTile().setCoordinates(new TileCoordinates().x(1).y(1).z(21));
 
     subject.apply(task, null, detectableObjectConfs(), detectableObjectModels());
 
-    verify(modelCardResolverMock).resolve(any(), any(), eq(21), any());
+    verify(modelCardResolverMock).resolve(any(), any(), any(), eq(21), any());
   }
 
   @Test
@@ -334,18 +375,18 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void resolves_model_cards_for_the_spatial_resolution_of_the_detection() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
     var task = tileDetectionTask();
     task.setSpatialResolutionInCm(20.0);
 
     subject.apply(task, null, detectableObjectConfs(), detectableObjectModels());
 
-    verify(modelCardResolverMock).resolve(any(), eq(20.0), anyInt(), any());
+    verify(modelCardResolverMock).resolve(any(), any(), eq(20.0), anyInt(), any());
   }
 
   private void resolveNothing() {
-    when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
         .thenReturn(
             new Resolution(List.of(), Set.of(PISCINE, VELUX, MOISISSURE_NOIRCIE), Set.of()));
   }
@@ -459,6 +500,7 @@ class HttpApiTileObjectDetectorTest {
     when(customBucketComponentMock.download(BUCKET_NAME, TILE_BUCKET_PATH))
         .thenReturn(tileImageFile);
     when(modelVersionConfMock.getTileDetectorUrls(any(), any())).thenReturn(tileDetectionApiUrls());
+    when(lambdaFallbackConfMock.getTileDetectorUrls()).thenReturn(List.of());
   }
 
   private TileDetectionTask tileDetectionTask() {

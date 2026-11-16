@@ -42,7 +42,7 @@ class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
     DetectedTileVggExtractor detectedTileVggExtractorMock = mock();
     VggImageAnnotator vggImageAnnotatorMock = mock();
 
-    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any()))
+    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class), any(), any()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),

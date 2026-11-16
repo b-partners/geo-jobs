@@ -87,7 +87,7 @@ class DetectionReuseServiceTest {
 
   @Test
   void fingerprint_of_an_individual_zone_holds_the_zone_hash_and_the_inference_signature() {
-    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+    when(signatureComputer.compute(any(), any(), any())).thenReturn(Optional.of("card@5.0#v1"));
 
     var actual = subject.fingerprintOf(target(SQUARE));
 
@@ -97,7 +97,7 @@ class DetectionReuseServiceTest {
 
   @Test
   void fingerprint_of_a_zone_shifted_by_a_few_decimeters_is_the_same() {
-    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+    when(signatureComputer.compute(any(), any(), any())).thenReturn(Optional.of("card@5.0#v1"));
     var shifted =
         "[[[2.000004,48.000004],[2.001004,48.000004],[2.001004,48.001004],[2.000004,48.001004],"
             + "[2.000004,48.000004]]]";
@@ -126,7 +126,7 @@ class DetectionReuseServiceTest {
 
   @Test
   void fingerprint_keeps_the_hash_when_the_signature_cannot_be_computed() {
-    when(signatureComputer.compute(any(), any())).thenThrow(new IllegalStateException("s3"));
+    when(signatureComputer.compute(any(), any(), any())).thenThrow(new IllegalStateException("s3"));
 
     var actual = subject.fingerprintOf(target(SQUARE));
 
@@ -420,7 +420,7 @@ class DetectionReuseServiceTest {
 
   @Test
   void fingerprint_holds_the_bounds_of_the_zone() {
-    when(signatureComputer.compute(any(), any())).thenReturn(Optional.of("card@5.0#v1"));
+    when(signatureComputer.compute(any(), any(), any())).thenReturn(Optional.of("card@5.0#v1"));
 
     var bounds = subject.fingerprintOf(target(SQUARE)).zoneBounds();
 

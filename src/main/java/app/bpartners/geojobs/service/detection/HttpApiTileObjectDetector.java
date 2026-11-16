@@ -60,6 +60,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final CustomBucketComponent customBucketComponent;
   private final String defaultDetectionApiUrl;
   private final ModelVersionConf modelVersionConf;
+  private final LambdaFallbackConf lambdaFallbackConf;
   private final DetectionResponseAggregator detectionResponseAggregator;
   private final DetectionResponseAggregatorV1 detectionResponseAggregatorV1;
   private final DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper;
@@ -77,6 +78,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       CustomBucketComponent customBucketComponent,
       @Value("${tile.detection.api.url}") String defaultApiUrl,
       ModelVersionConf modelVersionConf,
+      LambdaFallbackConf lambdaFallbackConf,
       DetectionResponseAggregator detectionResponseAggregator,
       DetectionResponseAggregatorV1 detectionResponseAggregatorV1,
       DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper,
@@ -91,6 +93,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.customBucketComponent = customBucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
     this.modelVersionConf = modelVersionConf;
+    this.lambdaFallbackConf = lambdaFallbackConf;
     this.detectionResponseAggregator = detectionResponseAggregator;
     this.detectionResponseAggregatorV1 = detectionResponseAggregatorV1;
     this.detectionResponseV1ToV2Mapper = detectionResponseV1ToV2Mapper;
@@ -126,6 +129,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     var tileSize = readImageSize(tileImageFile);
     var resolution =
         modelCardResolver.resolve(
+            detectableObjectModels,
             detectableObjectConfigurations,
             tileDetectionTask.getSpatialResolutionInCm(),
             tileZoom(tile),
@@ -515,28 +519,29 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private List<TileDetectorUrl> getApiUrls(
       List<DetectableObjectConfiguration> objectConfigurations,
       List<DetectableObjectModel> detectableObjectModels) {
-    List<TileDetectorUrl> tileDetectionApiUrls =
-        detectableObjectModels.stream()
-            .filter(model -> model.getModelName() != null)
-            .flatMap(
-                model ->
-                    modelVersionConf
-                        .getTileDetectorUrls(model.getModelName(), model.getModelVersion())
-                        .stream())
-            .toList();
+    Map<DetectableType, TileDetectorUrl> urlByType = new HashMap<>();
+    lambdaFallbackConf
+        .getTileDetectorUrls()
+        .forEach(url -> urlByType.put(url.getObjectType(), url));
+    detectableObjectModels.stream()
+        .filter(model -> model.getModelName() != null)
+        .flatMap(
+            model ->
+                modelVersionConf
+                    .getTileDetectorUrls(model.getModelName(), model.getModelVersion())
+                    .stream())
+        .forEach(url -> urlByType.put(url.getObjectType(), url));
     Map<String, TileDetectorUrl> urlsByUrl = new LinkedHashMap<>();
+    var hasUncoveredType = false;
     for (var conf : objectConfigurations) {
-      for (var url : tileDetectionApiUrls) {
-        if (conf.getObjectType().equals(url.getObjectType())) {
-          urlsByUrl.putIfAbsent(url.getUrl(), url);
-        }
+      var url = urlByType.get(conf.getObjectType());
+      if (url == null) {
+        hasUncoveredType = true;
+      } else {
+        urlsByUrl.putIfAbsent(url.getUrl(), url);
       }
     }
-    var detectableTypes =
-        tileDetectionApiUrls.stream().map(TileDetectorUrl::getObjectType).toList();
-    var detectableTypesFromObjectConfiguration =
-        objectConfigurations.stream().map(DetectableObjectConfiguration::getObjectType).toList();
-    if (!new HashSet<>(detectableTypes).containsAll(detectableTypesFromObjectConfiguration)) {
+    if (hasUncoveredType) {
       urlsByUrl.putIfAbsent(
           defaultDetectionApiUrl,
           TileDetectorUrl.builder().url(defaultDetectionApiUrl).version(V2).build());

@@ -75,7 +75,9 @@ public class DetectionReuseService {
         inferenceSignature =
             inferenceSignatureComputer
                 .compute(
-                    detection.getDetectableObjectConfigurations(), detectionResolution(detection))
+                    detection.getDetectableObjectModels(),
+                    detection.getDetectableObjectConfigurations(),
+                    detectionResolution(detection))
                 .orElse(null);
       }
     } catch (RuntimeException e) {

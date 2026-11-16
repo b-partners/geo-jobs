@@ -55,6 +55,7 @@ class TileDetectionTaskConsumerIT {
 
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   ModelVersionConf modelVersionConfMock = mock();
+  LambdaFallbackConf lambdaFallbackConfMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
   RestTemplate restTemplateMock = mock();
@@ -82,6 +83,7 @@ class TileDetectionTaskConsumerIT {
           customBucketComponentMock,
           "dummyApiUrl",
           modelVersionConfMock,
+          lambdaFallbackConfMock,
           detectionResponseAggregator,
           detectionResponseAggregatorV1,
           detectionResponseV1ToV2Mapper,
@@ -163,6 +165,7 @@ class TileDetectionTaskConsumerIT {
     when(customBucketComponentMock.download(DUMMY_BUCKET_NAME, TILE_BUCKET_PATCH))
         .thenReturn(tileImageOriginalFile);
     when(modelVersionConfMock.getTileDetectorUrls(any(), any())).thenReturn(tileDetectorUrls());
+    when(lambdaFallbackConfMock.getTileDetectorUrls()).thenReturn(List.of());
     when(machineDetectedTileRepositoryMock.save(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(restTemplateMock.postForEntity(
