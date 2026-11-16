@@ -4,8 +4,10 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.LOM;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.VEGETATION;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PARKING;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PLACE_STANDARD;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.VELUX;
 import static app.bpartners.geojobs.service.detection.DetectionApiVersion.V1;
 import static app.bpartners.geojobs.service.detection.DetectionApiVersion.V2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,11 +17,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.SneakyThrows;
@@ -48,17 +54,146 @@ class ModelVersionConfTest {
   BucketConf bucketConfMock = mock(BucketConf.class);
   ModelVersionConf subject = new ModelVersionConf(bucketComponentMock, new ObjectMapper());
 
+  private static final String INFERENCE_CONF =
+      """
+{
+  "BP_TOITURE": [
+    {"objectType": "TOITURE_REVETEMENT", "modelCardId": "bp-toiture-revetements-v2.0",
+     "zoomLevel": 21, "spatialResolution": 5},
+    {"objectType": "TOITURE_REVETEMENT", "modelCardId": "revets-fp-v1",
+     "zoomLevel": 19, "spatialResolution": 20},
+    {"objectType": "VELUX", "modelCardId": "obstacles-only", "zoomLevel": 21,
+     "spatialResolution": 20, "inferenceSpatialResolution": 5, "unknown": 1}
+  ],
+  "BP_STATIONNEMENT": [
+    {"objectType": "PARKING", "url": "https://dummy-parking", "version": "V1"},
+    {"objectType": "PLACE_STANDARD", "modelCardId": "stationnement-obb-2cls-v0",
+     "zoomLevel": 20, "spatialResolution": 5}
+  ]
+}""";
+
+  private final List<String> versions = new ArrayList<>();
+
   @BeforeEach
-  @SneakyThrows
   void setUp() {
-    var confFile = Files.createTempFile("model-version", ".json");
-    Files.writeString(confFile, DUMMY_CONF);
     when(bucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
     when(bucketConfMock.getBucketName()).thenReturn(BUCKET_NAME);
+    givenVersion("1.0.0", DUMMY_CONF);
+  }
+
+  @SneakyThrows
+  private void givenVersion(String version, String content) {
+    var confFile = Files.createTempFile("model-version", ".json");
+    Files.writeString(confFile, content);
+    versions.add(version);
     when(bucketComponentMock.listObjects(BUCKET_NAME, CONF_PREFIX))
-        .thenReturn(List.of(S3Object.builder().key(CONF_PREFIX + "1.0.0.json").build()));
-    when(bucketComponentMock.download(BUCKET_NAME, CONF_PREFIX + "1.0.0.json"))
+        .thenReturn(
+            versions.stream()
+                .map(v -> S3Object.builder().key(CONF_PREFIX + v + ".json").build())
+                .toList());
+    when(bucketComponentMock.download(BUCKET_NAME, CONF_PREFIX + version + ".json"))
         .thenReturn(confFile.toFile());
+  }
+
+  private DetectableObjectModel model(ModelName name, String version) {
+    return new DetectableObjectModel().modelName(name).modelVersion(version);
+  }
+
+  @Test
+  void splits_entries_between_inference_mappings_and_lambdas() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertEquals(
+        List.of(
+            new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v2.0", 21, 5.0),
+            new ModelCardMapping(TOITURE_REVETEMENT, "revets-fp-v1", 19, 20.0),
+            new ModelCardMapping(VELUX, "obstacles-only", 21, 20.0, 5.0)),
+        subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+    assertEquals(
+        List.of(new ModelCardMapping(PLACE_STANDARD, "stationnement-obb-2cls-v0", 20, 5.0)),
+        subject.getInferenceMappings(List.of(model(STATIONNEMENT, "1.1.0"))));
+    var stationnementLambdas = subject.getTileDetectorUrls(STATIONNEMENT, "1.1.0");
+    assertEquals(1, stationnementLambdas.size());
+    assertEquals(PARKING, stationnementLambdas.getFirst().getObjectType());
+  }
+
+  @Test
+  void has_no_inference_mapping_for_a_version_defining_only_lambdas() {
+    assertTrue(subject.getInferenceMappings(List.of(model(TOITURE, "1.0.0"))).isEmpty());
+  }
+
+  @Test
+  void uses_earliest_version_for_inference_mappings_when_no_model_provided() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertTrue(subject.getInferenceMappings(List.of()).isEmpty());
+    assertTrue(subject.getInferenceMappings(null).isEmpty());
+    assertTrue(subject.getInferenceMappings(List.of(model(TOITURE, null))).isEmpty());
+  }
+
+  @Test
+  void selects_inference_mappings_of_each_model_with_its_own_version() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    var actual =
+        subject.getInferenceMappings(
+            List.of(model(TOITURE, "1.0.0"), model(STATIONNEMENT, "1.1.0")));
+
+    assertEquals(
+        List.of(new ModelCardMapping(PLACE_STANDARD, "stationnement-obb-2cls-v0", 20, 5.0)),
+        actual);
+  }
+
+  @Test
+  void rejects_entry_defining_both_model_card_and_url() {
+    givenVersion(
+        "1.1.0",
+        """
+        {"BP_TOITURE": [{"objectType": "VELUX", "modelCardId": "c", "zoomLevel": 21,
+                         "spatialResolution": 5, "url": "https://u"}]}""");
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+  }
+
+  @Test
+  void rejects_entry_defining_neither_model_card_nor_url() {
+    givenVersion(
+        "1.1.0",
+        """
+        {"BP_TOITURE": [{"objectType": "VELUX"}]}""");
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+  }
+
+  @Test
+  void rejects_inference_mapping_without_zoom_level() {
+    givenVersion(
+        "1.1.0",
+        """
+        {"BP_TOITURE": [{"objectType": "VELUX", "modelCardId": "c", "spatialResolution": 5}]}""");
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+  }
+
+  @Test
+  void rejects_same_type_mapped_twice_for_the_same_spatial_resolution() {
+    givenVersion(
+        "1.1.0",
+        """
+        {"BP_TOITURE": [
+          {"objectType": "VELUX", "modelCardId": "a", "zoomLevel": 21, "spatialResolution": 5},
+          {"objectType": "VELUX", "modelCardId": "b", "zoomLevel": 21, "spatialResolution": 5}
+        ]}""");
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
   }
 
   @Test

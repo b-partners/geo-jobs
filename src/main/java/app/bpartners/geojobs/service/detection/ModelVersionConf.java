@@ -3,14 +3,19 @@ package app.bpartners.geojobs.service.detection;
 import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.readString;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
+import app.bpartners.geojobs.service.detection.inference.ModelCardMappingValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,8 +35,7 @@ public class ModelVersionConf {
   private final CustomBucketComponent bucketComponent;
   private final ObjectMapper om;
   private final String env = System.getenv("ENV");
-  private final Map<String, Map<ModelName, List<TileDetectorUrl>>> confByVersion =
-      new ConcurrentHashMap<>();
+  private final Map<String, Map<ModelName, ModelConf>> confByVersion = new ConcurrentHashMap<>();
   private final Map<String, Set<String>> supportedVersionsByPrefix = new ConcurrentHashMap<>();
 
   public ModelVersionConf(CustomBucketComponent bucketComponent, ObjectMapper om) {
@@ -69,12 +73,41 @@ public class ModelVersionConf {
 
   public List<TileDetectorUrl> getTileDetectorUrls(ModelName modelName, String requestedVersion) {
     var version = resolveVersion(requestedVersion);
-    var urls = confByModel(version).get(modelName);
-    if (urls == null) {
+    var modelConf = confByModel(version).get(modelName);
+    if (modelConf == null) {
       throw new BadRequestException(
           "Model " + modelName.getValue() + " has no configuration for version " + version);
     }
-    return urls;
+    return modelConf.lambdas();
+  }
+
+  public List<ModelCardMapping> getInferenceMappings(List<DetectableObjectModel> models) {
+    var selectedModels =
+        models == null
+            ? List.<DetectableObjectModel>of()
+            : models.stream().filter(model -> model.getModelName() != null).toList();
+    var mappingsByTypeAndResolution = new LinkedHashMap<List<Object>, ModelCardMapping>();
+    if (selectedModels.isEmpty()) {
+      confByModel(earliestVersion())
+          .values()
+          .forEach(modelConf -> collect(modelConf.inference(), mappingsByTypeAndResolution));
+    }
+    for (var model : selectedModels) {
+      var modelConf =
+          confByModel(resolveVersion(model.getModelVersion())).get(model.getModelName());
+      if (modelConf != null) {
+        collect(modelConf.inference(), mappingsByTypeAndResolution);
+      }
+    }
+    return List.copyOf(mappingsByTypeAndResolution.values());
+  }
+
+  private static void collect(
+      List<ModelCardMapping> mappings, Map<List<Object>, ModelCardMapping> collected) {
+    mappings.forEach(
+        mapping ->
+            collected.putIfAbsent(
+                List.of(mapping.objectType(), mapping.spatialResolution()), mapping));
   }
 
   private String earliestVersion() {
@@ -104,26 +137,60 @@ public class ModelVersionConf {
         .collect(Collectors.toCollection(() -> new TreeSet<>(BY_SEMANTIC_VERSION)));
   }
 
-  private Map<ModelName, List<TileDetectorUrl>> confByModel(String version) {
+  private Map<ModelName, ModelConf> confByModel(String version) {
     return confByVersion.computeIfAbsent(version, this::load);
   }
 
   @SneakyThrows
-  private Map<ModelName, List<TileDetectorUrl>> load(String version) {
+  private Map<ModelName, ModelConf> load(String version) {
     var bucketKey = String.format(MODEL_VERSION_CONF_PREFIX, env) + version + CONF_FILE_EXTENSION;
     var file = bucketComponent.download(bucketComponent.getBucketConf().getBucketName(), bucketKey);
     var rawConf = readString(file.toPath());
 
     deleteIfExists(file.toPath());
 
-    Map<String, List<TileDetectorUrl>> rawConfByModel =
+    Map<String, List<ModelVersionEntry>> rawConfByModel =
         om.readValue(rawConf, new TypeReference<>() {});
 
-    Map<ModelName, List<TileDetectorUrl>> confByModel = new EnumMap<>(ModelName.class);
+    Map<ModelName, ModelConf> confByModel = new EnumMap<>(ModelName.class);
     rawConfByModel.forEach(
-        (modelName, urls) -> confByModel.put(ModelName.fromValue(modelName), urls));
+        (modelName, entries) ->
+            confByModel.put(ModelName.fromValue(modelName), toModelConf(entries)));
     return confByModel;
   }
+
+  private static ModelConf toModelConf(List<ModelVersionEntry> entries) {
+    var inference = new ArrayList<ModelCardMapping>();
+    var lambdas = new ArrayList<TileDetectorUrl>();
+    for (var entry : entries) {
+      var hasModelCard = entry.modelCardId() != null;
+      var hasUrl = entry.url() != null;
+      if (hasModelCard == hasUrl) {
+        throw new IllegalStateException(
+            "Model version entry must define either modelCardId or url: " + entry);
+      }
+      if (hasModelCard) {
+        inference.add(
+            new ModelCardMapping(
+                entry.objectType(),
+                entry.modelCardId(),
+                entry.zoomLevel(),
+                entry.spatialResolution(),
+                entry.inferenceSpatialResolution()));
+      } else {
+        lambdas.add(
+            TileDetectorUrl.builder()
+                .objectType(entry.objectType())
+                .url(entry.url())
+                .version(entry.version())
+                .build());
+      }
+    }
+    ModelCardMappingValidator.validate(inference);
+    return new ModelConf(List.copyOf(inference), List.copyOf(lambdas));
+  }
+
+  private record ModelConf(List<ModelCardMapping> inference, List<TileDetectorUrl> lambdas) {}
 
   private static Comparator<String> comparingSemanticVersion() {
     return (left, right) -> {
