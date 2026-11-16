@@ -20,6 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.ArrayList;
@@ -302,6 +304,37 @@ class ModelCardResolverTest {
     assertEquals(List.of(19), subject.tilingZoomLevels(configs, 20.0));
     assertEquals(List.of(21), subject.tilingZoomLevels(configs, 5.0));
     assertEquals(Set.of(5.0, 20.0), subject.supportedSpatialResolutionsInCm(configs));
+  }
+
+  @Test
+  void resolves_mappings_of_the_requested_model_versions_when_models_provided() {
+    var models =
+        List.of(new DetectableObjectModel().modelName(ModelName.TOITURE).modelVersion("1.1.0"));
+    when(conf.getMappings(models))
+        .thenReturn(List.of(new ModelCardMapping(HUMIDITE, "damages", 19, 5.0)));
+
+    assertEquals(19, subject.tilingZoomOf(models, HUMIDITE, null));
+    assertEquals(List.of(19), subject.tilingZoomLevels(models, configs(HUMIDITE), null));
+    assertEquals(
+        Set.of(5.0), subject.supportedSpatialResolutionsInCmOfTypes(models, List.of(HUMIDITE)));
+    assertEquals(
+        List.of(RESOLVED_DAMAGES.modelCard().modelCardId()),
+        subject.mappingsUsedBy(models, configs(HUMIDITE), null).stream()
+            .map(ModelCardMapping::modelCardId)
+            .toList());
+    assertEquals(DAMAGES_ZOOM, subject.tilingZoomOf(HUMIDITE, null));
+  }
+
+  @Test
+  void resolves_model_cards_of_the_requested_model_versions_when_models_provided() {
+    var models = List.of(new DetectableObjectModel().modelName(ModelName.TOITURE));
+    when(conf.getMappings(models))
+        .thenReturn(List.of(new ModelCardMapping(TOMBE, "tombs", DEFAULT_ZOOM, 10.0)));
+
+    var actual = subject.resolve(models, configs(HUMIDITE, TOMBE), null, DEFAULT_ZOOM, ANY);
+
+    assertEquals(List.of(RESOLVED_TOMBS), actual.modelCards());
+    assertEquals(Set.of(HUMIDITE), actual.unmappedTypes());
   }
 
   private static List<DetectableObjectConfiguration> configs(DetectableType... types) {
