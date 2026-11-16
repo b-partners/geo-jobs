@@ -177,7 +177,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                 .build(),
             mask,
             tileDetectionTask.getSpatialResolutionInCm(),
-            detectableObjectModels);
+            detectableObjectModels,
+            detectableObjectConfigurations,
+            detectionResponse);
     var machineDetectedTile =
         detectionMapper.toDetectedTile(
             detectionResponse,
