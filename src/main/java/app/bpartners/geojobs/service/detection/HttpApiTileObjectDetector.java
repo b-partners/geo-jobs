@@ -28,7 +28,6 @@ import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
 import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.detection.inference.ResolvedModelCard;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.Dimension;
 import java.io.File;
