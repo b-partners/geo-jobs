@@ -126,6 +126,7 @@ public class DashboardApiKeyCheckTriggeredService
         userApiKeys.stream()
             .filter(apiKey -> DASHBOARD.equals(apiKey.type()))
             .map(UserApiKey::key)
+            .filter(key -> key != null && !key.isBlank())
             .toList();
 
     if (dashboardApiKeys.isEmpty()) {
