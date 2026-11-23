@@ -26,7 +26,9 @@ import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +53,7 @@ class ModelVersionConfTest {
 
   private static final String BUCKET_NAME = "dummyBucket";
   private static final String CONF_PREFIX = "conf/null/model-versions/";
+  private static final String MODEL_CONF_PREFIX = "conf/null/models/%s/";
 
   CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   BucketConf bucketConfMock = mock(BucketConf.class);
@@ -75,6 +78,7 @@ class ModelVersionConfTest {
 }""";
 
   private final List<String> versions = new ArrayList<>();
+  private final Map<String, List<String>> modelKeysByPrefix = new HashMap<>();
 
   @BeforeEach
   void setUp() {
@@ -95,6 +99,33 @@ class ModelVersionConfTest {
                 .toList());
     when(bucketComponentMock.download(BUCKET_NAME, CONF_PREFIX + version + ".json"))
         .thenReturn(confFile.toFile());
+  }
+
+  @SneakyThrows
+  private void givenModelVersion(ModelName modelName, String version, String content) {
+    var confFile = Files.createTempFile("model-version", ".json");
+    Files.writeString(confFile, content);
+    var prefix = MODEL_CONF_PREFIX.formatted(modelName.getValue());
+    var key = prefix + "versions/" + version + ".json";
+    givenModelKey(prefix, key);
+    when(bucketComponentMock.download(BUCKET_NAME, key)).thenReturn(confFile.toFile());
+  }
+
+  @SneakyThrows
+  private void givenCurrent(ModelName modelName, String version) {
+    var confFile = Files.createTempFile("model-current", ".json");
+    Files.writeString(confFile, "{\"version\": \"%s\"}".formatted(version));
+    var prefix = MODEL_CONF_PREFIX.formatted(modelName.getValue());
+    var key = prefix + "current.json";
+    givenModelKey(prefix, key);
+    when(bucketComponentMock.download(BUCKET_NAME, key)).thenReturn(confFile.toFile());
+  }
+
+  private void givenModelKey(String prefix, String key) {
+    var keys = modelKeysByPrefix.computeIfAbsent(prefix, p -> new ArrayList<>());
+    keys.add(key);
+    when(bucketComponentMock.listObjects(BUCKET_NAME, prefix))
+        .thenReturn(keys.stream().map(k -> S3Object.builder().key(k).build()).toList());
   }
 
   private DetectableObjectModel model(ModelName name, String version) {
@@ -183,16 +214,16 @@ class ModelVersionConfTest {
 
   @Test
   void resolves_default_version_when_none_provided() {
-    assertEquals("1.1.0", subject.resolveVersion(null));
-    assertEquals("1.1.0", subject.resolveVersion(""));
-    assertEquals("1.0.0", subject.resolveVersion("1.0.0"));
+    assertEquals("1.1.0", subject.resolveVersion(TOITURE, null));
+    assertEquals("1.1.0", subject.resolveVersion(TOITURE, ""));
+    assertEquals("1.0.0", subject.resolveVersion(TOITURE, "1.0.0"));
   }
 
   @Test
   void resolves_legacy_version_as_the_earliest_version() {
     givenVersion("1.1.0", INFERENCE_CONF);
 
-    assertEquals("1.0.0", subject.resolveVersion("legacy"));
+    assertEquals("1.0.0", subject.resolveVersion(TOITURE, "legacy"));
   }
 
   @Test
@@ -205,7 +236,8 @@ class ModelVersionConfTest {
 
   @Test
   void throws_when_unsupported_version_resolved() {
-    var actual = assertThrows(BadRequestException.class, () -> subject.resolveVersion("2.0.0"));
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.resolveVersion(TOITURE, "2.0.0"));
     assertEquals("Unsupported model version 2.0.0", actual.getMessage());
   }
 
@@ -254,5 +286,88 @@ class ModelVersionConfTest {
     assertEquals(Set.of("1.0.0"), subject.getAvailableVersions(TOITURE));
     assertEquals(Set.of("1.0.0"), subject.getAvailableVersions(VEGETATION));
     assertEquals(Set.of(), subject.getAvailableVersions(LOM));
+  }
+
+  private static final String TOITURE_MODEL_CONF =
+      """
+[
+  {"objectType": "TOITURE_REVETEMENT", "modelCardId": "bp-toiture-revetements-v3.0",
+   "zoomLevel": 21, "spatialResolution": 5}
+]""";
+
+  @Test
+  void reads_a_model_from_its_own_versioned_directory() {
+    givenModelVersion(TOITURE, "2.0.0", TOITURE_MODEL_CONF);
+
+    assertEquals(
+        List.of(new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v3.0", 21, 5.0)),
+        subject.getInferenceMappings(List.of(model(TOITURE, "2.0.0"))));
+    assertEquals(Set.of("1.0.0", "2.0.0"), subject.getAvailableVersions(TOITURE));
+  }
+
+  @Test
+  void versions_models_independently_of_each_other() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+    givenModelVersion(TOITURE, "2.0.0", TOITURE_MODEL_CONF);
+
+    assertEquals(Set.of("1.0.0", "1.1.0", "2.0.0"), subject.getAvailableVersions(TOITURE));
+    assertEquals(Set.of("1.0.0", "1.1.0"), subject.getAvailableVersions(STATIONNEMENT));
+    assertEquals(
+        List.of(new ModelCardMapping(PLACE_STANDARD, "stationnement-obb-2cls-v0", 20, 5.0)),
+        subject.getInferenceMappings(List.of(model(STATIONNEMENT, "1.1.0"))));
+  }
+
+  @Test
+  void prefers_the_model_directory_over_the_legacy_file_for_the_same_version() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+    givenModelVersion(TOITURE, "1.1.0", TOITURE_MODEL_CONF);
+
+    assertEquals(
+        List.of(new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v3.0", 21, 5.0)),
+        subject.getInferenceMappings(List.of(model(TOITURE, "1.1.0"))));
+  }
+
+  @Test
+  void uses_current_pointer_as_default_version_of_a_model() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+    givenModelVersion(TOITURE, "2.0.0", TOITURE_MODEL_CONF);
+    givenCurrent(TOITURE, "2.0.0");
+
+    assertEquals("2.0.0", subject.defaultVersion(TOITURE));
+    assertEquals("2.0.0", subject.resolveVersion(TOITURE, null));
+    assertEquals("1.1.0", subject.defaultVersion(STATIONNEMENT));
+    assertEquals(
+        List.of(new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v3.0", 21, 5.0)),
+        subject.getInferenceMappings(List.of(model(TOITURE, null))));
+    assertEquals(
+        List.of(
+            new ModelCardMapping(TOITURE_REVETEMENT, "bp-toiture-revetements-v3.0", 21, 5.0),
+            new ModelCardMapping(PLACE_STANDARD, "stationnement-obb-2cls-v0", 20, 5.0)),
+        subject.getInferenceMappings(List.of()));
+  }
+
+  @Test
+  void rejects_a_current_pointer_to_an_unpublished_version() {
+    givenModelVersion(TOITURE, "2.0.0", TOITURE_MODEL_CONF);
+    givenCurrent(TOITURE, "3.0.0");
+
+    assertThrows(IllegalStateException.class, () -> subject.defaultVersion(TOITURE));
+  }
+
+  @Test
+  void resolves_legacy_as_the_earliest_version_of_the_model() {
+    givenModelVersion(LOM, "0.5.0", "[]");
+
+    assertEquals("0.5.0", subject.resolveVersion(LOM, "legacy"));
+    assertEquals("1.0.0", subject.resolveVersion(TOITURE, "legacy"));
+  }
+
+  @Test
+  void does_not_resolve_a_version_published_for_another_model() {
+    givenModelVersion(TOITURE, "2.0.0", TOITURE_MODEL_CONF);
+
+    assertFalse(subject.hasConfiguration(STATIONNEMENT, "2.0.0"));
+    assertThrows(
+        BadRequestException.class, () -> subject.getTileDetectorUrls(STATIONNEMENT, "2.0.0"));
   }
 }
