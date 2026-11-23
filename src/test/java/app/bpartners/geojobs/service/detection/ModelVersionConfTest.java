@@ -1,9 +1,11 @@
 package app.bpartners.geojobs.service.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.CLIMAT_RESILIENCE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.LOM;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.VEGETATION;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.ZAN;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PARKING;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PLACE_STANDARD;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
@@ -23,6 +25,7 @@ import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -111,10 +114,14 @@ class ModelVersionConfTest {
     when(bucketComponentMock.download(BUCKET_NAME, key)).thenReturn(confFile.toFile());
   }
 
-  @SneakyThrows
   private void givenCurrent(ModelName modelName, String version) {
+    givenCurrentPointer(modelName, "{\"version\": \"%s\"}".formatted(version));
+  }
+
+  @SneakyThrows
+  private void givenCurrentPointer(ModelName modelName, String rawPointer) {
     var confFile = Files.createTempFile("model-current", ".json");
-    Files.writeString(confFile, "{\"version\": \"%s\"}".formatted(version));
+    Files.writeString(confFile, rawPointer);
     var prefix = MODEL_CONF_PREFIX.formatted(modelName.getValue());
     var key = prefix + "current.json";
     givenModelKey(prefix, key);
@@ -369,5 +376,135 @@ class ModelVersionConfTest {
     assertFalse(subject.hasConfiguration(STATIONNEMENT, "2.0.0"));
     assertThrows(
         BadRequestException.class, () -> subject.getTileDetectorUrls(STATIONNEMENT, "2.0.0"));
+  }
+
+  @Test
+  void falls_back_to_the_default_version_for_an_unnamed_model() {
+    assertEquals("1.1.0", subject.defaultVersion(null));
+    assertEquals(Set.of(), subject.getAvailableVersions(null));
+    assertFalse(subject.hasConfiguration(null, null));
+  }
+
+  @Test
+  void treats_a_blank_requested_version_as_the_default_version() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    assertTrue(subject.hasConfiguration(TOITURE, ""));
+    assertTrue(subject.hasConfiguration(TOITURE, " "));
+  }
+
+  @Test
+  void throws_when_the_default_version_has_no_configuration_for_the_model() {
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.getTileDetectorUrls(LOM, null));
+
+    assertEquals("Model BP_LOM has no configuration for version 1.1.0", actual.getMessage());
+  }
+
+  @Test
+  void ignores_selected_models_without_a_name_when_collecting_inference_mappings() {
+    givenVersion("1.1.0", INFERENCE_CONF);
+
+    var actual =
+        subject.getInferenceMappings(List.of(model(null, "1.0.0"), model(STATIONNEMENT, "1.1.0")));
+
+    assertEquals(
+        List.of(new ModelCardMapping(PLACE_STANDARD, "stationnement-obb-2cls-v0", 20, 5.0)),
+        actual);
+  }
+
+  @Test
+  void throws_when_legacy_is_requested_for_a_model_without_any_version() {
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.resolveVersion(LOM, "legacy"));
+
+    assertTrue(
+        actual.getMessage().startsWith("No model version configuration found for model BP_LOM"));
+  }
+
+  @Test
+  void ignores_unexpected_keys_in_the_model_directory() {
+    var prefix = MODEL_CONF_PREFIX.formatted(LOM.getValue());
+    givenModelKey(prefix, prefix + "readme.md");
+    givenModelKey(prefix, prefix + "versions/notes.txt");
+    givenModelKey(prefix, prefix + "versions/nested/1.0.0.json");
+    givenModelKey(prefix, prefix + "versions/.json");
+    givenModelKey(prefix, prefix + "versions/1.2.0.json");
+
+    assertEquals(Set.of("1.2.0"), subject.getAvailableVersions(LOM));
+  }
+
+  @Test
+  void ignores_unexpected_keys_in_the_legacy_directory() {
+    when(bucketComponentMock.listObjects(BUCKET_NAME, CONF_PREFIX))
+        .thenReturn(
+            List.of(
+                    CONF_PREFIX + "1.0.0.json",
+                    CONF_PREFIX + "notes.txt",
+                    CONF_PREFIX + "archive/0.9.0.json",
+                    CONF_PREFIX + ".json")
+                .stream()
+                .map(key -> S3Object.builder().key(key).build())
+                .toList());
+
+    assertEquals(Set.of("1.0.0"), subject.getAvailableVersions(TOITURE));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{}", "{\"version\": \" \"}"})
+  void rejects_a_current_pointer_without_a_version(String rawPointer) {
+    givenCurrentPointer(TOITURE, rawPointer);
+
+    var actual = assertThrows(IllegalStateException.class, () -> subject.defaultVersion(TOITURE));
+
+    assertTrue(actual.getMessage().endsWith("must define a version"));
+  }
+
+  @Test
+  void rejects_a_malformed_current_pointer() {
+    givenCurrentPointer(TOITURE, "not json");
+
+    assertThrows(JsonProcessingException.class, () -> subject.defaultVersion(TOITURE));
+  }
+
+  @Test
+  void rejects_an_invalid_conf_in_the_model_directory() {
+    givenModelVersion(TOITURE, "2.0.0", "[{\"objectType\": \"VELUX\"}]");
+    var models = List.of(model(TOITURE, "2.0.0"));
+
+    assertThrows(IllegalStateException.class, () -> subject.getInferenceMappings(models));
+  }
+
+  @Test
+  void propagates_a_failure_to_download_a_model_conf() {
+    var prefix = MODEL_CONF_PREFIX.formatted(TOITURE.getValue());
+    var key = prefix + "versions/2.0.0.json";
+    givenModelKey(prefix, key);
+    when(bucketComponentMock.download(BUCKET_NAME, key))
+        .thenThrow(new IllegalStateException("boom"));
+    var models = List.of(model(TOITURE, "2.0.0"));
+
+    var actual =
+        assertThrows(IllegalStateException.class, () -> subject.getInferenceMappings(models));
+
+    assertEquals("boom", actual.getMessage());
+  }
+
+  @Test
+  void orders_versions_with_a_different_number_of_parts() {
+    var lomPrefix = MODEL_CONF_PREFIX.formatted(LOM.getValue());
+    givenModelKey(lomPrefix, lomPrefix + "versions/1.0.1.json");
+    givenModelKey(lomPrefix, lomPrefix + "versions/1.0.json");
+    var zanPrefix = MODEL_CONF_PREFIX.formatted(ZAN.getValue());
+    givenModelKey(zanPrefix, zanPrefix + "versions/1.0.json");
+    givenModelKey(zanPrefix, zanPrefix + "versions/1.0.1.json");
+    var climatPrefix = MODEL_CONF_PREFIX.formatted(CLIMAT_RESILIENCE.getValue());
+    givenModelKey(climatPrefix, climatPrefix + "versions/2.json");
+    givenModelKey(climatPrefix, climatPrefix + "versions/1.0.1.json");
+
+    assertEquals(List.of("1.0", "1.0.1"), List.copyOf(subject.getAvailableVersions(LOM)));
+    assertEquals(List.of("1.0", "1.0.1"), List.copyOf(subject.getAvailableVersions(ZAN)));
+    assertEquals(
+        List.of("1.0.1", "2"), List.copyOf(subject.getAvailableVersions(CLIMAT_RESILIENCE)));
   }
 }
