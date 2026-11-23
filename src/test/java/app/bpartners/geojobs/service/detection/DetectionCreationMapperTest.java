@@ -63,6 +63,7 @@ class DetectionCreationMapperTest {
   MapLayerResolver mapLayerResolverMock = mock();
   GeoServerConfiguration geoServerConfigurationMock = mock();
   ModelCardResolver modelCardResolverMock = mock();
+  ModelVersionConf modelVersionConfMock = defaultVersionConf();
 
   DetectionCreationMapper subject =
       new DetectionCreationMapper(
@@ -73,7 +74,14 @@ class DetectionCreationMapperTest {
           geoServerConfigurationMock,
           geometryConverterMock,
           buildingFinderMock,
-          new DefaultResolutionModelValidator(false));
+          new DefaultResolutionModelValidator(false),
+          modelVersionConfMock);
+
+  private static ModelVersionConf defaultVersionConf() {
+    var conf = mock(ModelVersionConf.class);
+    when(conf.defaultVersion(any())).thenReturn(ModelVersionConf.DEFAULT_VERSION);
+    return conf;
+  }
 
   @Test
   void map_detection_with_detectable_object_model_list_ok() {
@@ -562,7 +570,8 @@ class DetectionCreationMapperTest {
         geoServerConfigurationMock,
         geometryConverterMock,
         buildingFinderMock,
-        new DefaultResolutionModelValidator(toiture20CmEnabled));
+        new DefaultResolutionModelValidator(toiture20CmEnabled),
+        modelVersionConfMock);
   }
 
   private static InferenceModelCardConf roofObstacleConf() {

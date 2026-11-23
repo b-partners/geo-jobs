@@ -61,13 +61,15 @@ public class DetectionCreationMapper {
   private final BuildingFinder buildingFinder;
   private final DefaultResolutionModelValidator defaultResolutionModelValidator;
 
-  private static DetectableObjectModel withVersion(DetectableObjectModel model) {
+  private final ModelVersionConf modelVersionConf;
+
+  private DetectableObjectModel withVersion(DetectableObjectModel model) {
     if (model == null || (model.getModelVersion() != null && !model.getModelVersion().isBlank())) {
       return model;
     }
     return new DetectableObjectModel()
         .modelName(model.getModelName())
-        .modelVersion(ModelVersionConf.DEFAULT_VERSION);
+        .modelVersion(modelVersionConf.defaultVersion(model.getModelName()));
   }
 
   public Detection apply(
@@ -81,7 +83,7 @@ public class DetectionCreationMapper {
         createDetection.getDetectableObjectModelList() == null
             ? null
             : createDetection.getDetectableObjectModelList().stream()
-                .map(DetectionCreationMapper::withVersion)
+                .map(this::withVersion)
                 .toList();
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
