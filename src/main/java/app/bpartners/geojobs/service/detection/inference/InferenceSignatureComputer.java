@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.detection.inference;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.repository.ModelCardVersionRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.ModelCardVersion;
@@ -21,10 +22,18 @@ public class InferenceSignatureComputer {
 
   public Optional<String> compute(
       List<DetectableObjectConfiguration> objectConfigurations, Double spatialResolutionInCm) {
+    return compute(List.of(), objectConfigurations, spatialResolutionInCm);
+  }
+
+  public Optional<String> compute(
+      List<DetectableObjectModel> models,
+      List<DetectableObjectConfiguration> objectConfigurations,
+      Double spatialResolutionInCm) {
     if (objectConfigurations == null || objectConfigurations.isEmpty()) {
       return Optional.empty();
     }
-    var mappings = modelCardResolver.mappingsUsedBy(objectConfigurations, spatialResolutionInCm);
+    var mappings =
+        modelCardResolver.mappingsUsedBy(models, objectConfigurations, spatialResolutionInCm);
     if (mappings.isEmpty()) {
       return Optional.empty();
     }

@@ -1899,7 +1899,7 @@ components:
         geoJsonDelimitationType: "PARCEL_FREE_DELIMITATION"
         geoJsonOutput: "ZIP"
     DetectionParcelGeoJsonZone:
-      summary: Parcel detection with roof and vegetation over a GeoJSON zone
+      summary: Parcel detection with roof and vegetation over a GeoJSON zone (explicit model version)
       value:
         emailReceiver: "<your-email-to-be-notified>"
         zoneName: "<your-zone-name>"
@@ -1907,6 +1907,7 @@ components:
         needsImageOutput: true
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
+            modelVersion: "1.0.0"
           - modelName: "BP_VEGETATION"
         geoJsonZone:
           - type: "Feature"
@@ -3884,6 +3885,21 @@ components:
       properties:
         modelName:
           $ref: '#/components/schemas/ModelName'
+        modelVersion:
+          allOf:
+            - $ref: '#/components/schemas/ModelVersion'
+          description: |
+            Optional version of the model to process the detection with.
+            When omitted, the default version `1.1.0` is used and returned in the response.
+            Detections created before model versioning are returned with the version `legacy`, which cannot be requested.
+    ModelVersion:
+      type: string
+      description: |
+        Version of the detectable object model, following semantic versioning (MAJOR.MINOR.PATCH).
+        Optional. When not provided, the default version `1.1.0` is used.
+        The reserved value `legacy` is only returned for detections created before model versioning and is rejected as input.
+      pattern: '^(\d+\.\d+\.\d+|legacy)$'
+      example: '1.0.0'
     ModelName:
       type: string
       description: |

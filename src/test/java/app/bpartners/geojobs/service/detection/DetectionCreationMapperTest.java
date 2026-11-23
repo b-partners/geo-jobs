@@ -63,6 +63,7 @@ class DetectionCreationMapperTest {
   MapLayerResolver mapLayerResolverMock = mock();
   GeoServerConfiguration geoServerConfigurationMock = mock();
   ModelCardResolver modelCardResolverMock = mock();
+  ModelVersionConf modelVersionConfMock = defaultVersionConf();
 
   DetectionCreationMapper subject =
       new DetectionCreationMapper(
@@ -73,7 +74,14 @@ class DetectionCreationMapperTest {
           geoServerConfigurationMock,
           geometryConverterMock,
           buildingFinderMock,
-          new DefaultResolutionModelValidator(false));
+          new DefaultResolutionModelValidator(false),
+          modelVersionConfMock);
+
+  private static ModelVersionConf defaultVersionConf() {
+    var conf = mock(ModelVersionConf.class);
+    when(conf.defaultVersion(any())).thenReturn(ModelVersionConf.DEFAULT_VERSION);
+    return conf;
+  }
 
   @Test
   void map_detection_with_detectable_object_model_list_ok() {
@@ -83,8 +91,43 @@ class DetectionCreationMapperTest {
 
     var actual = subject.apply(createDetection, detectionE2Id, communityOwnerId, false, null);
 
-    assertTrue(actual.getDetectableObjectModelList().containsAll(detectableObjectModelList()));
+    assertEquals(
+        List.of(
+            new DetectableObjectModel().modelName(TOITURE).modelVersion("1.1.0"),
+            new DetectableObjectModel().modelName(VEGETATION).modelVersion("1.1.0")),
+        actual.getDetectableObjectModelList());
     assertFalse(actual.getDetectableObjectConfigurations().isEmpty()); // TODO
+  }
+
+  @Test
+  void keep_the_provided_model_version_and_default_the_missing_one() {
+    var createDetection =
+        createDetection()
+            .detectableObjectModelList(
+                List.of(
+                    new DetectableObjectModel().modelName(TOITURE).modelVersion("1.0.0"),
+                    new DetectableObjectModel().modelName(VEGETATION).modelVersion(" ")));
+
+    var actual = subject.apply(createDetection, randomUUID().toString(), null, false, null);
+
+    assertEquals(
+        List.of("1.0.0", "1.1.0"),
+        actual.getDetectableObjectModelList().stream()
+            .map(DetectableObjectModel::getModelVersion)
+            .toList());
+  }
+
+  @Test
+  void default_the_version_of_the_single_model_without_mutating_the_request() {
+    var createDetection =
+        createDetection()
+            .detectableObjectModelList(null)
+            .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE));
+
+    var actual = subject.apply(createDetection, randomUUID().toString(), null, false, null);
+
+    assertEquals("1.1.0", actual.getDetectableObjectModel().getModelVersion());
+    assertNull(createDetection.getDetectableObjectModel().getModelVersion());
   }
 
   @Test
@@ -527,7 +570,8 @@ class DetectionCreationMapperTest {
         geoServerConfigurationMock,
         geometryConverterMock,
         buildingFinderMock,
-        new DefaultResolutionModelValidator(toiture20CmEnabled));
+        new DefaultResolutionModelValidator(toiture20CmEnabled),
+        modelVersionConfMock);
   }
 
   private static InferenceModelCardConf roofObstacleConf() {
