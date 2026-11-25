@@ -3005,6 +3005,11 @@ components:
           description: |
             Dashboard API key to store as is for the created consumer.
             When not provided, the key is retrieved from, or generated in, the BirdIA dashboard.
+        dashboardUserId:
+          type: string
+          description: |
+            Dashboard user id of the consumer. Lets a trusted caller (see `x-on-behalf-of`)
+            act as this consumer, with the consumer's own quotas.
         consumerType:
           type: string
           enum:

@@ -40,6 +40,8 @@ public class CommunityAuthorization implements Serializable {
 
   @Column private String dashboardApiKey;
 
+  @Column private String dashboardUserId;
+
   @Column private boolean isApiKeyRevoked;
 
   @Column private double maxSurface;

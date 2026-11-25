@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
+import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.ON_BEHALF_OF_HEADER;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,7 +26,9 @@ public class ApiKeyAuthFilter extends AbstractAuthenticationProcessingFilter {
       HttpServletRequest request, HttpServletResponse response) {
     String apiKey = request.getHeader(API_KEY_HEADER);
     AuthenticationManager manager = this.getAuthenticationManager();
-    return manager.authenticate(new UsernamePasswordAuthenticationToken(API_KEY_HEADER, apiKey));
+    var token = new UsernamePasswordAuthenticationToken(API_KEY_HEADER, apiKey);
+    token.setDetails(request.getHeader(ON_BEHALF_OF_HEADER));
+    return manager.authenticate(token);
   }
 
   @Override

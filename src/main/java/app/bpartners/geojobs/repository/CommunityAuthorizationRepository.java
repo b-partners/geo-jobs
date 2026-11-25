@@ -27,6 +27,8 @@ public interface CommunityAuthorizationRepository
 
   Optional<CommunityAuthorization> findByEmail(String email);
 
+  Optional<CommunityAuthorization> findByDashboardUserId(String dashboardUserId);
+
   @Query(
       """
       SELECT DISTINCT c FROM community_authorization c

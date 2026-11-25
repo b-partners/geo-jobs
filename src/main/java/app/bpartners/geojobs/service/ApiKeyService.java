@@ -60,6 +60,11 @@ public class ApiKeyService {
       existing.setDashboardApiKey(requested.getDashboardApiKey());
       changed = true;
     }
+    if (requested.getDashboardUserId() != null
+        && !requested.getDashboardUserId().equals(existing.getDashboardUserId())) {
+      existing.setDashboardUserId(requested.getDashboardUserId());
+      changed = true;
+    }
     if (existing.getMostRecentApiKey() == null) {
       addRequestedApiKey(existing, requestedApiKey);
       changed = true;
