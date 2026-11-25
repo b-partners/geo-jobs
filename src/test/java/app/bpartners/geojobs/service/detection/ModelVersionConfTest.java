@@ -16,7 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
@@ -133,6 +136,31 @@ class ModelVersionConfTest {
     keys.add(key);
     when(bucketComponentMock.listObjects(BUCKET_NAME, prefix))
         .thenReturn(keys.stream().map(k -> S3Object.builder().key(k).build()).toList());
+  }
+
+  @Test
+  void warm_up_loads_the_confs_so_that_resolving_afterwards_does_not_hit_the_bucket() {
+    givenModelVersion(
+        TOITURE,
+        "2.0.0",
+        "[{\"objectType\": \"VELUX\", \"url\": \"https://dummy\", \"version\": \"V2\"}]");
+    givenCurrent(TOITURE, "2.0.0");
+
+    subject.warmUp();
+    clearInvocations(bucketComponentMock);
+
+    assertEquals("2.0.0", subject.defaultVersion(TOITURE));
+    subject.getInferenceMappings(List.of(model(TOITURE, null)));
+    verify(bucketComponentMock, org.mockito.Mockito.never()).download(anyString(), anyString());
+    verify(bucketComponentMock, org.mockito.Mockito.never()).listObjects(anyString(), anyString());
+  }
+
+  @Test
+  void warm_up_does_not_throw_when_a_model_conf_is_broken() {
+    givenModelVersion(TOITURE, "2.0.0", "not json");
+    givenCurrent(TOITURE, "2.0.0");
+
+    org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> subject.warmUp());
   }
 
   private DetectableObjectModel model(ModelName name, String version) {
