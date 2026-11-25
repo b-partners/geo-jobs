@@ -21,13 +21,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Component
+@Slf4j
 public class ModelVersionConf {
   public static final String DEFAULT_VERSION = "1.1.0";
   public static final String LEGACY_VERSION = "legacy";
@@ -51,6 +56,35 @@ public class ModelVersionConf {
   public ModelVersionConf(CustomBucketComponent bucketComponent, ObjectMapper om) {
     this.bucketComponent = bucketComponent;
     this.om = om;
+  }
+
+  public void warmUp() {
+    var tasks = new ArrayList<Callable<Void>>();
+    for (var modelName : ModelName.values()) {
+      tasks.add(
+          () -> {
+            warm(modelName.getValue(), () -> conf(modelName, defaultVersion(modelName)));
+            return null;
+          });
+    }
+    tasks.add(
+        () -> {
+          warm("legacy", () -> legacyVersions().forEach(this::legacyConf));
+          return null;
+        });
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      executor.invokeAll(tasks);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private static void warm(String label, Runnable loading) {
+    try {
+      loading.run();
+    } catch (Exception e) {
+      log.warn("Could not warm up the model version conf of {}: {}", label, e.getMessage());
+    }
   }
 
   public String defaultVersion(ModelName modelName) {
@@ -129,6 +163,16 @@ public class ModelVersionConf {
     return List.copyOf(mappingsByTypeAndResolution.values());
   }
 
+  private static <K, V> V cached(Map<K, V> cache, K key, Function<K, V> loader) {
+    var cachedValue = cache.get(key);
+    if (cachedValue != null) {
+      return cachedValue;
+    }
+    var loaded = loader.apply(key);
+    var concurrent = cache.putIfAbsent(key, loaded);
+    return concurrent != null ? concurrent : loaded;
+  }
+
   private static boolean containsVersion(Set<String> versions, String version) {
     return versions.stream().anyMatch(version::equals);
   }
@@ -156,7 +200,7 @@ public class ModelVersionConf {
   }
 
   private ModelListing listing(ModelName modelName) {
-    return listingByModel.computeIfAbsent(modelName, this::listModel);
+    return cached(listingByModel, modelName, this::listModel);
   }
 
   private ModelListing listModel(ModelName modelName) {
@@ -205,8 +249,7 @@ public class ModelVersionConf {
   }
 
   private Optional<ModelConf> conf(ModelName modelName, String version) {
-    return confByModelVersion.computeIfAbsent(
-        new ModelVersionKey(modelName, version), this::loadModelConf);
+    return cached(confByModelVersion, new ModelVersionKey(modelName, version), this::loadModelConf);
   }
 
   @SneakyThrows
@@ -225,8 +268,8 @@ public class ModelVersionConf {
   }
 
   private Set<String> legacyVersions() {
-    return legacyVersionsByPrefix.computeIfAbsent(
-        String.format(LEGACY_CONF_PREFIX, env), this::listLegacyVersions);
+    return cached(
+        legacyVersionsByPrefix, String.format(LEGACY_CONF_PREFIX, env), this::listLegacyVersions);
   }
 
   private Set<String> listLegacyVersions(String prefix) {
@@ -245,7 +288,7 @@ public class ModelVersionConf {
     if (!containsVersion(legacyVersions(), version)) {
       return Map.of();
     }
-    return legacyConfByVersion.computeIfAbsent(version, this::loadLegacy);
+    return cached(legacyConfByVersion, version, this::loadLegacy);
   }
 
   @SneakyThrows
