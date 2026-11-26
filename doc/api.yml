@@ -4031,6 +4031,10 @@ components:
         to:
           type: string
           format: date
+        detectionStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthStatus'
         additionalExportedAttributes:
           type: array
           items:
