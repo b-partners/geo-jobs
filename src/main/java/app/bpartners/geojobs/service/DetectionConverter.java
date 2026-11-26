@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 public class DetectionConverter
     implements BiFunction<List<Detection>, List<DetectionExportAttribute>, File> {
   private static final String[] HEADERS = {
-    "ID", "Adresse ou Nom de zone", "Superficie (m²)", "Date de création"
+    "ID", "Adresse ou Nom de zone", "Superficie (m²)", "Date de création", "Statut"
   };
   private final GeometrySquareMeterArea geometrySquareMeterArea;
   private final GeometryConverter geometryConverter;
@@ -45,7 +45,11 @@ public class DetectionConverter
                   var areaInSquareMeters = geometrySquareMeterArea.apply(unifiedProcessedGeoJson);
                   var creationDatetime = detection.getCreationDatetime();
                   return new DetectionExportPayload(
-                      e2Id, zoneName, areaInSquareMeters, creationDatetime);
+                      e2Id,
+                      zoneName,
+                      areaInSquareMeters,
+                      creationDatetime,
+                      detection.exportStatus());
                 })
             .toList();
 
@@ -147,6 +151,8 @@ public class DetectionConverter
               LocalDateTime.ofInstant(payload.creationDatetime(), ZoneId.systemDefault()));
           dateCell.setCellStyle(dateStyle);
         }
+
+        row.createCell(4).setCellValue(payload.status().name());
       }
 
       for (int i = 0; i < HEADERS.length; i++) {
@@ -160,5 +166,9 @@ public class DetectionConverter
   }
 
   private record DetectionExportPayload(
-      String e2Id, String zoneName, Double areaInSquareMeters, Instant creationDatetime) {}
+      String e2Id,
+      String zoneName,
+      Double areaInSquareMeters,
+      Instant creationDatetime,
+      HealthStatus status) {}
 }
