@@ -20,13 +20,10 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ImportedZoneTilingJobSavedService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
-//  TODO: enable accept_truncated_ok
-@Disabled
 public class ImportedZoneTilingJobSavedServiceTest {
   CustomBucketComponent customBucketComponentMock = mock();
   ZoneTilingJobService tilingJobServiceMock = mock();
@@ -46,6 +43,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
     String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
     List<S3Object> s3Objects =
         List.of(
+            S3Object.builder().key("defaultPath/20/fusionAll/").build(),
             S3Object.builder().key("defaultPath/20/fusionAll/100_200").build(),
             S3Object.builder().key("defaultPath/20/fusionAll/200_200").build());
     when(tilingJobServiceMock.findById(jobId))
@@ -82,10 +80,10 @@ public class ImportedZoneTilingJobSavedServiceTest {
     List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
     var firstTask = savedParcelTilingTasks.getFirst();
     var lastTask = savedParcelTilingTasks.getLast();
-    assertEquals(1, savedParcelTilingTasks.size());
+    assertEquals(2, savedParcelTilingTasks.size());
     Tile firstTile = firstTask.getParcelContent().getFirstTile();
     Tile lastTile = lastTask.getParcelContent().getFirstTile();
-    assertEquals(s3Objects.size(), savedParcelTilingTasks.size());
+    assertEquals(s3Objects.size() - 1, savedParcelTilingTasks.size());
     assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(
         Tile.builder()
@@ -116,6 +114,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
     String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
     List<S3Object> s3Objects =
         List.of(
+            S3Object.builder().key("s3ObjectKeyFolder/").build(),
             S3Object.builder().key("s3ObjectKeyLayer1/20/100/200").build(),
             S3Object.builder().key("s3ObjectKeyLayer2/20/200/200").build());
     when(tilingJobServiceMock.findById(jobId))
@@ -152,10 +151,10 @@ public class ImportedZoneTilingJobSavedServiceTest {
     List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
     var firstTask = savedParcelTilingTasks.getFirst();
     var lastTask = savedParcelTilingTasks.getLast();
-    assertEquals(1, savedParcelTilingTasks.size());
+    assertEquals(2, savedParcelTilingTasks.size());
     Tile firstTile = firstTask.getParcelContent().getFirstTile();
     Tile lastTile = lastTask.getParcelContent().getFirstTile();
-    assertEquals(s3Objects.size(), savedParcelTilingTasks.size());
+    assertEquals(s3Objects.size() - 1, savedParcelTilingTasks.size());
     assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(
         Tile.builder()
@@ -178,7 +177,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
   @Test
   void accept_truncated_ok() {
     Long startFrom = 0L;
-    Long endAt = 1L;
+    Long endAt = 2L;
     String jobId = "jobId";
     String dummyBucketName = "dummyBucketName";
     String dummyBucketPrefix = "dummyBucketPrefix";
@@ -186,6 +185,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
     String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
     List<S3Object> s3Objects =
         List.of(
+            S3Object.builder().key("s3ObjectKeyFolder/").build(),
             S3Object.builder().key("s3ObjectKeyLayer1/20/100/200").build(),
             S3Object.builder().key("s3ObjectKeyLayer2/20/100/200").build());
     when(tilingJobServiceMock.findById(jobId))
