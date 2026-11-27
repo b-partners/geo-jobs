@@ -106,9 +106,6 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
           eventProducerMock,
-          featureMapper,
-          geometryConverter,
-          geoJsonMapper,
           detectionServiceMock,
           zipGeoJsonAssemblerMock,
           new GeoFeatureConverter(objectMapper));

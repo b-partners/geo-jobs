@@ -9,7 +9,6 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
@@ -280,22 +279,6 @@ public class GeometryConverter {
     }
 
     return geometryFactory.createMultiPolygon(polygons);
-  }
-
-  public MultiPolygon unifyMultiPolygon(List<MultiPolygon> multiPolygons) {
-    GeometryCollection collection =
-        new GeometryCollection(multiPolygons.toArray(new Geometry[0]), geometryFactory);
-    Geometry union = collection.union();
-    // Cas 1 : déjà un MultiPolygon
-    if (union instanceof MultiPolygon) {
-      return (MultiPolygon) union;
-    }
-
-    // Cas 2 : un seul Polygon, on l'encapsule dans un MultiPolygon
-    if (union instanceof Polygon) {
-      return geometryFactory.createMultiPolygon(new Polygon[] {(Polygon) union});
-    }
-    throw new NotImplementedException("GeometryCollection not supported for now");
   }
 
   public List<List<List<List<BigDecimal>>>> multiPolygonToNestedList(MultiPolygon multiPolygon) {

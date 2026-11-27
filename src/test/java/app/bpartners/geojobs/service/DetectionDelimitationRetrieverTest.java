@@ -2,17 +2,23 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.USER_DEFINED_DELIMITATION;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.ZONE;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -24,6 +30,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -31,8 +38,8 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.ArgumentCaptor;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 
 class DetectionDelimitationRetrieverTest {
   GeometryConverter geometryConverterMock = mock();
@@ -387,5 +394,205 @@ class DetectionDelimitationRetrieverTest {
     var restFeature = toRestFeature(feature);
     restFeature.putPropertiesItem("zoom", feature.getZoom());
     return toDomainFeature(restFeature);
+  }
+
+  private static Feature pointFeature() {
+    return Feature.builder()
+        .properties(new HashMap<>())
+        .zoom(20)
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .geometryType(POINT)
+                .actualInstanceStringValue("{\"type\": \"Point\", \"coordinates\": [2.35, 48.85]}")
+                .build())
+        .build();
+  }
+
+  private static Feature twoPolygonsMultiPolygonFeature() {
+    return Feature.builder()
+        .properties(new HashMap<>())
+        .zoom(20)
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .geometryType(MULTI_POLYGON)
+                .actualInstanceStringValue(
+                    """
+                    {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                        [[[0.0, 0.0], [10.0, 0.0], [5.0, 10.0], [0.0, 0.0]]],
+                        [[[20.0, 20.0], [30.0, 20.0], [25.0, 30.0], [20.0, 20.0]]]
+                      ]
+                    }
+                    """)
+                .build())
+        .build();
+  }
+
+  @Test
+  void detection_without_roof_based_model_is_returned_untouched_and_not_saved() {
+    var detection =
+        Detection.builder()
+            .id("detectionId")
+            .detectableObjectModel(new DetectableObjectModel().modelName(STATIONNEMENT))
+            .build();
+
+    var actual = subject.apply(detection);
+
+    assertSame(detection, actual);
+    verifyNoInteractions(detectionRepositoryMock);
+  }
+
+  @Test
+  void parcel_delimitations_are_fetched_from_ign_cadastre_for_parcel_delimitation_type() {
+    var providedGeoJson = polygonFeature();
+    var detection = detection(List.of(providedGeoJson), PARCEL);
+    var providedGeometry = mock(org.locationtech.jts.geom.Geometry.class);
+    var parcelFeature = multiPolygonFeature();
+    when(geometryConverterMock.readGeometryFromString(
+            providedGeoJson.getGeometry().getActualInstanceStringValue()))
+        .thenReturn(providedGeometry);
+    when(ignCadastreFeatureFetcher.apply(providedGeometry)).thenReturn(List.of(parcelFeature));
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any())).thenReturn(List.of());
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    var detectionCaptor = ArgumentCaptor.forClass(Detection.class);
+    verify(detectionRepositoryMock).save(detectionCaptor.capture());
+    var parcelDelimitations = detectionCaptor.getValue().getParcelDelimitations();
+    assertEquals(1, parcelDelimitations.size());
+    assertEquals(providedGeoJson, parcelDelimitations.getFirst().feature());
+    assertEquals(List.of(parcelFeature), parcelDelimitations.getFirst().delimitations());
+    assertEquals(1, detectionCaptor.getValue().getFeatureWithDelimitations().size());
+  }
+
+  @Test
+  void roof_delimitations_are_searched_for_a_provided_point_with_its_zoom() {
+    var providedGeoJson = pointFeature();
+    var detection = detection(List.of(providedGeoJson), ZONE);
+    var buildingMultiPolygon = new GeometryFactory().createMultiPolygon();
+    var multiPolygonFromPoint = multiPolygonFeature();
+    when(buildingFinderMock.getBuildingMultiPolygon(any(Point.class)))
+        .thenReturn(buildingMultiPolygon);
+    when(geometryConverterMock.toFeature(any(), eq(20), any(), eq(buildingMultiPolygon)))
+        .thenReturn(multiPolygonFromPoint);
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    assertEquals(multiPolygonFromPoint, savedDelimitation());
+  }
+
+  @Test
+  void roof_delimitations_are_searched_for_each_polygon_of_a_provided_multi_polygon() {
+    var providedGeoJson = twoPolygonsMultiPolygonFeature();
+    var detection = detection(List.of(providedGeoJson), ZONE);
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any())).thenReturn(List.of());
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    verify(buildingFinderMock, times(2)).retrieveRoofPolygonsFrom(any());
+    var detectionCaptor = ArgumentCaptor.forClass(Detection.class);
+    verify(detectionRepositoryMock).save(detectionCaptor.capture());
+    assertEquals(2, detectionCaptor.getValue().getFeatureWithDelimitations().size());
+  }
+
+  @SneakyThrows
+  @Test
+  void roof_found_inside_provided_polygon_becomes_a_feature_with_its_addresses() {
+    var providedGeoJson = polygonFeature();
+    var detection = detection(List.of(providedGeoJson), ZONE);
+    var addresses = List.of("1 rue de la Paix Paris 75002");
+    var roofGeometry = new GeometryFactory().createMultiPolygon();
+    var roofFeature = multiPolygonFeature();
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any()))
+        .thenReturn(List.of(new RoofDetails(roofGeometry, addresses)));
+    when(objectMapperMock.writeValueAsString(addresses)).thenReturn("serialized addresses");
+    when(geometryConverterMock.toFeature(any(), eq(20), any(), eq(roofGeometry)))
+        .thenReturn(roofFeature);
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    assertEquals(roofFeature, savedDelimitation());
+    var propertiesCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(geometryConverterMock)
+        .toFeature(
+            any(),
+            eq(20),
+            propertiesCaptor.capture(),
+            any(org.locationtech.jts.geom.MultiPolygon.class));
+    assertEquals("serialized addresses", propertiesCaptor.getValue().get("addresses"));
+  }
+
+  @SneakyThrows
+  @Test
+  void roof_addresses_serialization_failure_is_reported() {
+    var detection = detection(List.of(polygonFeature()), ZONE);
+    var roofDetails = new RoofDetails(new GeometryFactory().createMultiPolygon(), List.of("a"));
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any())).thenReturn(List.of(roofDetails));
+    when(objectMapperMock.writeValueAsString(any()))
+        .thenThrow(new JsonProcessingException("serialization failed") {});
+
+    var error = assertThrows(RuntimeException.class, () -> subject.apply(detection));
+
+    assertEquals("serialization failed", error.getCause().getMessage());
+  }
+
+  @SneakyThrows
+  @Test
+  void first_roof_addresses_are_kept_when_several_roofs_are_found_for_a_user_defined_polygon() {
+    var detection = detection(List.of(polygonFeature()), USER_DEFINED_DELIMITATION);
+    var firstAddresses = List.of("first address");
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any()))
+        .thenReturn(
+            List.of(
+                new RoofDetails(null, firstAddresses), new RoofDetails(null, List.of("second"))));
+    when(objectMapperMock.writeValueAsString(firstAddresses)).thenReturn("first serialized");
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    assertEquals("first serialized", savedDelimitation().getProperties().get("addresses"));
+  }
+
+  @Test
+  void empty_addresses_are_set_when_rnb_lookup_fails_for_a_user_defined_polygon() {
+    var detection = detection(List.of(polygonFeature()), USER_DEFINED_DELIMITATION);
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any()))
+        .thenThrow(new BuildingFootPrintSourceUnavailableException("rnb unavailable"));
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    assertEquals(List.of(), savedDelimitation().getProperties().get("addresses"));
+  }
+
+  @SneakyThrows
+  @Test
+  void multi_polygon_provided_with_user_defined_delimitation_gets_rnb_addresses() {
+    var detection = detection(List.of(multiPolygonFeature()), USER_DEFINED_DELIMITATION);
+    var addresses = List.of("2 rue de la Paix Paris 75002");
+    when(buildingFinderMock.retrieveRoofPolygonsFrom(any()))
+        .thenReturn(List.of(new RoofDetails(null, addresses)));
+    when(objectMapperMock.writeValueAsString(addresses)).thenReturn("serialized");
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    subject.apply(detection);
+
+    var delimitation = savedDelimitation();
+    assertEquals(MULTI_POLYGON, delimitation.getGeometry().getGeometryType());
+    assertEquals("serialized", delimitation.getProperties().get("addresses"));
+  }
+
+  @Test
+  void point_cannot_be_used_as_user_defined_delimitation() {
+    var detection = detection(List.of(pointFeature()), USER_DEFINED_DELIMITATION);
+
+    var error = assertThrows(IllegalStateException.class, () -> subject.apply(detection));
+
+    assertEquals("Point is not supported", error.getMessage());
   }
 }

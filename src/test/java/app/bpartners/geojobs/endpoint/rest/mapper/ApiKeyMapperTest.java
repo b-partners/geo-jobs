@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.ApiKeyMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
@@ -22,9 +21,7 @@ import org.junit.jupiter.api.Test;
 class ApiKeyMapperTest {
 
   CreateApiKeyValidator createApiKeyValidatorMock = mock(CreateApiKeyValidator.class);
-  ApiKeyMapper subject =
-      new ApiKeyMapper(new DetectableObjectTypeMapper(), createApiKeyValidatorMock);
-  DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
+  ApiKeyMapper subject = new ApiKeyMapper(createApiKeyValidatorMock);
 
   @Test
   void map_api_key_rest_from_detectable_object_model_to_domain() {

@@ -413,15 +413,6 @@ public class DetectionCreationMapper {
     return null;
   }
 
-  private List<app.bpartners.geojobs.repository.model.Feature> extractDetectionMultiPolygonGeoJson(
-      List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone,
-      List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone) {
-    if (providedGeoJsonZone.isEmpty() || geoJsonZone == null) {
-      return providedGeoJsonZone;
-    }
-    return geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
-  }
-
   private List<BigDecimal> retrieveFirstPoint(
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone) {
     var firstFeature = geoJsonZone.getFirst();

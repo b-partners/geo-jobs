@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
@@ -96,10 +95,7 @@ public class BoundaryMerger
         for (var p : unified) {
           var convexHull = p.convexHull();
           var md = new MinimumDiameter(convexHull);
-          var polygon =
-              tomb.equals(tp.type())
-                  ? (Polygon) p.getEnvelope()
-                  : (Polygon) md.getMinimumRectangle();
+          var polygon = (Polygon) md.getMinimumRectangle();
           polygon.setUserData(p.getUserData());
           result.add(new TiledPolygon(polygon, tp.type(), tp.originTile(), tp.tilingConf()));
         }
@@ -119,8 +115,6 @@ public class BoundaryMerger
               var label = (String) userData.get("label");
               return new TiledPolygon(ll.polygon(), routeTypeFrom(label), origin, tilingConf);
             })
-        .map(tp -> tomb.equals(tp.type()) ? resize(tp) : tp)
-        .filter(Objects::nonNull)
         .map(TiledPolygon::latLonPolygon)
         .collect(toSet());
   }
@@ -211,10 +205,6 @@ public class BoundaryMerger
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
   }
 
-  private Set<Integer> hash(Set<Polygon> toHash) {
-    return toHash.stream().map(Objects::hash).collect(Collectors.toSet());
-  }
-
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
     try {
       var baseTile = base.originTile();
@@ -237,51 +227,6 @@ public class BoundaryMerger
     } catch (Exception e) {
       return false;
     }
-  }
-
-  private TiledPolygon resize(TiledPolygon tile) {
-    var polygon = tile.polygon();
-    final double PAIR_WIDTH = 120;
-    final double PAIR_HEIGHT = 100;
-    final double REDUCED_WIDTH = 100;
-    final double REDUCED_HEIGHT = 50;
-    final double SIZE_THRESHOLD_WIDTH = 110;
-    final double SIZE_THRESHOLD_HEIGHT = 110;
-
-    if (polygon.getArea() < 2500) {
-      return null;
-    }
-    Coordinate center = polygon.getCentroid().getCoordinate();
-
-    Envelope envelope = polygon.getEnvelopeInternal();
-
-    boolean isVertical = envelope.getHeight() > envelope.getWidth();
-
-    double targetWidth, targetHeight;
-    if (envelope.getWidth() > SIZE_THRESHOLD_WIDTH
-        && envelope.getHeight() > SIZE_THRESHOLD_HEIGHT) {
-      targetWidth = isVertical ? PAIR_HEIGHT : PAIR_WIDTH;
-      targetHeight = isVertical ? PAIR_WIDTH : PAIR_HEIGHT;
-    } else {
-      targetWidth = isVertical ? REDUCED_HEIGHT : REDUCED_WIDTH;
-      targetHeight = isVertical ? REDUCED_WIDTH : REDUCED_HEIGHT;
-    }
-
-    double minX = center.x - targetWidth / 2;
-    double minY = center.y - targetHeight / 2;
-
-    Coordinate[] coords =
-        new Coordinate[] {
-          new Coordinate(minX, minY),
-          new Coordinate(minX + targetWidth, minY),
-          new Coordinate(minX + targetWidth, minY + targetHeight),
-          new Coordinate(minX, minY + targetHeight),
-          new Coordinate(minX, minY)
-        };
-
-    Polygon resized = geometryFactory.createPolygon(coords);
-    resized.setUserData(polygon.getUserData());
-    return new TiledPolygon(resized, tile.type(), tile.originTile(), tile.tilingConf());
   }
 
   public static Set<LatLonPolygon> noSuperposition(

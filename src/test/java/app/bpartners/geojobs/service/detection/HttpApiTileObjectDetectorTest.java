@@ -1,8 +1,11 @@
 package app.bpartners.geojobs.service.detection;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE_NOIRCIE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.VELUX;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.TILE_DETECTION_RESULT_V1;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.TILE_DETECTION_RESULT_V2;
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.OBJECT_DETECTION;
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.SEMANTIC_SEGMENTATION;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
@@ -18,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -35,6 +39,8 @@ import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
+import app.bpartners.geojobs.repository.model.detection.DetectionFileType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.inference.DeployedModelCard;
 import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
@@ -61,6 +67,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 class HttpApiTileObjectDetectorTest {
@@ -546,5 +553,176 @@ class HttpApiTileObjectDetectorTest {
         ]"""
             .formatted(V1_API_URL, FIRST_V2_API_URL, SECOND_V2_API_URL),
         new TypeReference<>() {});
+  }
+
+  private TileDetectionTask debugTileDetectionTask() {
+    return tileDetectionTask().toBuilder().debugMode(true).build();
+  }
+
+  private List<DetectionFileObject> persistedDetectionFiles() {
+    var captor = ArgumentCaptor.forClass(DetectionFileObject.class);
+    verify(detectionFileObjectRepositoryMock, atLeastOnce()).save(captor.capture());
+    return captor.getAllValues();
+  }
+
+  @Test
+  void gives_no_detection_for_a_task_without_tile() {
+    var taskWithoutTile = tileDetectionTask().toBuilder().tile(null).build();
+
+    var actual =
+        subject.apply(taskWithoutTile, null, detectableObjectConfs(), detectableObjectModels());
+
+    assertNull(actual);
+    verify(inferenceApiClientMock, never()).infer(any());
+  }
+
+  @Test
+  void persists_inference_responses_when_the_task_is_in_debug_mode() {
+    setUpTile();
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_TOMBS), Set.of(), Set.of()));
+    when(inferenceApiClientMock.infer(any())).thenReturn(v2Response("tombs"));
+    when(fileWriterMock.write(any(), any(), anyString())).thenReturn(tempFile(new byte[] {1}));
+
+    subject.apply(
+        debugTileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    var persisted = persistedDetectionFiles();
+    assertEquals(1, persisted.size());
+    assertEquals(DetectionFileType.TILE_DETECTION_RESULT_V2, persisted.getFirst().getFileType());
+    assertTrue(persisted.getFirst().getBucketKey().startsWith("dummyTileBucketPath_response_v2_"));
+    assertTrue(persisted.getFirst().getBucketKey().endsWith(".json"));
+    assertFalse(persisted.getFirst().getFileName().contains("/"));
+    verify(bucketComponentMock).upload(any(), eq(persisted.getFirst().getBucketKey()));
+  }
+
+  @Test
+  void does_not_persist_any_response_outside_debug_mode() {
+    setUpTile();
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_TOMBS), Set.of(), Set.of()));
+    when(inferenceApiClientMock.infer(any())).thenReturn(v2Response("tombs"));
+
+    subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    verify(detectionFileObjectRepositoryMock, never()).save(any());
+  }
+
+  @Test
+  void persists_every_lambda_response_when_the_task_is_in_debug_mode() {
+    setUpTile();
+    resolveNothing();
+    var concurrentCallsLatch = new CountDownLatch(3);
+    answerOnceEveryApiIsCalled(concurrentCallsLatch, ConcurrentHashMap.<String>newKeySet());
+    when(fileWriterMock.write(any(), any(), anyString())).thenReturn(tempFile(new byte[] {1}));
+
+    subject.apply(
+        debugTileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    var fileTypes =
+        persistedDetectionFiles().stream().map(DetectionFileObject::getFileType).toList();
+    assertEquals(3, fileTypes.size());
+    assertEquals(1, fileTypes.stream().filter(TILE_DETECTION_RESULT_V1::equals).count());
+    assertEquals(2, fileTypes.stream().filter(TILE_DETECTION_RESULT_V2::equals).count());
+  }
+
+  @Test
+  void gives_no_detection_when_every_lambda_api_answers_an_error_status_or_fails() {
+    setUpTile();
+    resolveNothing();
+    when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponseV2.class)))
+        .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+    when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponse.class)))
+        .thenReturn(new ResponseEntity<>(v1Response(V1_API_URL), HttpStatus.ACCEPTED));
+
+    var actual =
+        subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    assertNull(actual);
+  }
+
+  @Test
+  void uses_the_default_detection_api_for_types_without_any_configured_lambda() {
+    setUpTile();
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(), Set.of(ARBRE), Set.of()));
+    when(restTemplateMock.postForEntity(
+            eq("https://default.detection.test"), any(), eq(DetectionResponseV2.class)))
+        .thenReturn(
+            new ResponseEntity<>(v2Response("https://default.detection.test"), HttpStatus.OK));
+
+    var actual =
+        subject.apply(
+            tileDetectionTask(),
+            null,
+            List.of(detectableObjectConf(ARBRE)),
+            detectableObjectModels());
+
+    verify(restTemplateMock)
+        .postForEntity(eq("https://default.detection.test"), any(), eq(DetectionResponseV2.class));
+    assertEquals(1, actual.getImages().size());
+  }
+
+  @Test
+  void reports_the_unsupported_types_and_still_falls_back_to_lambdas() {
+    setUpTile();
+    when(modelCardResolverMock.isInferenceApiEnabled()).thenReturn(true);
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(), Set.of(VELUX), Set.of(PISCINE)));
+    when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponseV2.class)))
+        .thenReturn(new ResponseEntity<>(v2Response(FIRST_V2_API_URL), HttpStatus.OK));
+    when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponse.class)))
+        .thenReturn(new ResponseEntity<>(v1Response(V1_API_URL), HttpStatus.OK));
+
+    var actual =
+        subject.apply(tileDetectionTask(), null, detectableObjectConfs(), detectableObjectModels());
+
+    verify(restTemplateMock, times(1))
+        .postForEntity(eq(V1_API_URL), any(), eq(DetectionResponse.class));
+    verify(restTemplateMock, times(1))
+        .postForEntity(eq(FIRST_V2_API_URL), any(), eq(DetectionResponseV2.class));
+    assertFalse(actual.getImages().isEmpty());
+  }
+
+  @Test
+  void rejects_model_cards_requiring_several_images() {
+    setUpTile();
+    var severalImagesCard =
+        new DeployedModelCard("multi", OBJECT_DETECTION, 2, false, null, null, true);
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(
+            new Resolution(
+                List.of(new ResolvedModelCard(severalImagesCard, 20, 10.0)), Set.of(), Set.of()));
+    var task = tileDetectionTask();
+    var configurations = detectableObjectConfs();
+    var models = detectableObjectModels();
+
+    var error =
+        assertThrows(
+            IllegalStateException.class, () -> subject.apply(task, null, configurations, models));
+
+    assertTrue(error.getMessage().contains("requires several images"));
+  }
+
+  @Test
+  void ignores_inference_calls_answering_nothing() {
+    setUpTile();
+    when(modelCardResolverMock.resolve(any(), any(), any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_TOMBS, RESOLVED_DAMAGES), Set.of(), Set.of()));
+    when(inferenceApiClientMock.infer(any()))
+        .thenAnswer(
+            invocation -> {
+              var request = (InferenceRequest) invocation.getArgument(0);
+              return request.modelCardId().equals("tombs") ? null : v2Response("damages");
+            });
+
+    var actual =
+        subject.apply(
+            tileDetectionTask(),
+            tempFile(new byte[] {4}),
+            detectableObjectConfs(),
+            detectableObjectModels());
+
+    assertEquals(1, actual.getImages().size());
   }
 }

@@ -5,13 +5,21 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.PA
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
+import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
+import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
+import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
+import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateJob;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
+import app.bpartners.gen.annotator.endpoint.rest.model.JobStatus;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
+import app.bpartners.gen.annotator.endpoint.rest.model.Task;
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -24,6 +32,7 @@ import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.annotator.AnnotatorApiConf;
+import app.bpartners.geojobs.service.annotator.AnnotatorUserInfoGetter;
 import app.bpartners.geojobs.service.annotator.CreateAnnotationBatchExtractor;
 import app.bpartners.geojobs.service.annotator.LabelConverter;
 import app.bpartners.geojobs.service.annotator.LabelExtractor;
@@ -54,6 +63,7 @@ class AnnotationServiceTest {
   CreateAnnotationBatchExtractor batchExtractor =
       new CreateAnnotationBatchExtractor(labelExtractor, new PolygonExtractor());
   TaskExtractor taskExtractor = new TaskExtractor(batchExtractor, labelExtractor);
+  AnnotatorUserInfoGetter annotatorUserInfoGetterMock = mock();
   AnnotationService subject;
 
   @NonNull
@@ -110,7 +120,7 @@ class AnnotationServiceTest {
             taskExtractor,
             labelConverterMock,
             labelExtractor,
-            mock(),
+            annotatorUserInfoGetterMock,
             deliverJobServiceMock,
             objectConfigurationRepositoryMock,
             bucketComponentMock);
@@ -157,5 +167,194 @@ class AnnotationServiceTest {
         .machineDetectedTiles(detectedTiles())
         .detectableObjectConfigurations(detectableObjects())
         .build();
+  }
+
+  private AdminApi adminApi() {
+    return adminApiMockedConstruction.constructed().getFirst();
+  }
+
+  private JobsApi jobsApi() {
+    return jobsApiMockedConstruction.constructed().getFirst();
+  }
+
+  private static ApiException annotatorError(String message) {
+    return new ApiException(message);
+  }
+
+  @SneakyThrows
+  @Test
+  void get_annotation_job_by_id_returns_the_annotator_job() {
+    var job = new Job().id("annotationJobId");
+    when(jobsApi().getJob("annotationJobId")).thenReturn(job);
+
+    var actual = subject.getAnnotationJobById("annotationJobId");
+
+    assertEquals(job, actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void get_annotation_job_by_id_reports_annotator_errors() {
+    when(jobsApi().getJob("annotationJobId")).thenThrow(annotatorError("annotator down"));
+
+    var error =
+        assertThrows(
+            app.bpartners.geojobs.model.exception.ApiException.class,
+            () -> subject.getAnnotationJobById("annotationJobId"));
+
+    assertEquals(
+        app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION,
+        error.getType());
+  }
+
+  @SneakyThrows
+  @Test
+  void add_annotation_task_sends_the_task_to_the_annotation_job() {
+    var task = new CreateAnnotatedTask().id("taskId");
+
+    subject.addAnnotationTask("annotationJobId", task);
+
+    verify(adminApi()).addAnnotatedTasksToAnnotatedJob("annotationJobId", List.of(task));
+  }
+
+  @SneakyThrows
+  @Test
+  void add_annotation_task_reports_annotator_errors() {
+    var task = new CreateAnnotatedTask().id("taskId");
+    when(adminApi().addAnnotatedTasksToAnnotatedJob(any(), any()))
+        .thenThrow(annotatorError("rejected"));
+
+    assertThrows(
+        app.bpartners.geojobs.model.exception.ApiException.class,
+        () -> subject.addAnnotationTask("annotationJobId", task));
+  }
+
+  @SneakyThrows
+  @Test
+  void get_annotations_reads_the_first_page_of_500_batches_of_the_task() {
+    var batches = List.of(new AnnotationBatch().id("batchId"));
+    when(adminApi().getAnnotationBatchesByJobTask("annotationJobId", "taskId", 1, 500))
+        .thenReturn(batches);
+
+    var actual = subject.getAnnotations("annotationJobId", "taskId");
+
+    assertEquals(batches, actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void get_annotations_reports_annotator_errors() {
+    when(adminApi().getAnnotationBatchesByJobTask(any(), any(), any(), any()))
+        .thenThrow(annotatorError("batches unavailable"));
+
+    assertThrows(
+        app.bpartners.geojobs.model.exception.ApiException.class,
+        () -> subject.getAnnotations("annotationJobId", "taskId"));
+  }
+
+  @SneakyThrows
+  @Test
+  void retrieve_tasks_extracts_zoom_and_tile_coordinates_from_the_task_filename() {
+    when(adminApi().getJobTasks("annotationJobId", 1, 10, null, "userId"))
+        .thenReturn(
+            List.of(
+                new Task().id("annotationTask1").filename("tile_20_544680_383095.jpg"),
+                new Task().id("annotationTask2").filename("a1b2_19_100_200.jpg")));
+
+    var actual =
+        subject.retrieveTasksFromAnnotationJob(
+            "humanZdjId", "retrievingJobId", "annotationJobId", 1, 10, "userId");
+
+    assertEquals(2, actual.size());
+    var first = actual.getFirst();
+    assertEquals("annotationTask1", first.getAnnotationTaskId());
+    assertEquals("annotationJobId", first.getAnnotationJobId());
+    assertEquals("retrievingJobId", first.getJobId());
+    assertEquals("humanZdjId", first.getHumanZoneDetectionJobId());
+    assertEquals(20, first.getZoom());
+    assertEquals(544680, first.getXTile());
+    assertEquals(383095, first.getYTile());
+    assertEquals(19, actual.getLast().getZoom());
+    assertEquals(100, actual.getLast().getXTile());
+    assertEquals(200, actual.getLast().getYTile());
+  }
+
+  @SneakyThrows
+  @Test
+  void retrieve_tasks_reports_annotator_errors() {
+    when(adminApi().getJobTasks(any(), any(), any(), any(), any()))
+        .thenThrow(annotatorError("tasks unavailable"));
+
+    assertThrows(
+        app.bpartners.geojobs.model.exception.ApiException.class,
+        () ->
+            subject.retrieveTasksFromAnnotationJob(
+                "humanZdjId", "retrievingJobId", "annotationJobId", 1, 10, "userId"));
+  }
+
+  @SneakyThrows
+  @Test
+  void save_annotation_job_uses_the_default_bucket_without_configured_storage() {
+    when(bucketComponentMock.getBucketName()).thenReturn("defaultBucket");
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId("detectionJobId"))
+        .thenReturn(List.of(DetectableObjectConfiguration.builder().build()));
+    when(annotatorUserInfoGetterMock.getTeamId()).thenReturn("teamId");
+
+    subject.saveAnnotationJob(
+        "detectionJobId",
+        "annotationJobId",
+        "jobName",
+        List.of(new Label().name("PISCINE")),
+        JobStatus.PENDING);
+
+    var captor = ArgumentCaptor.forClass(CrupdateJob.class);
+    verify(jobsApi()).saveJob(eq("annotationJobId"), captor.capture());
+    var saved = captor.getValue();
+    assertEquals("annotationJobId", saved.getId());
+    assertEquals("jobName", saved.getName());
+    assertEquals("defaultBucket", saved.getBucketName());
+    assertEquals("tech@birdia.fr", saved.getOwnerEmail());
+    assertEquals("teamId", saved.getTeamId());
+    assertEquals(JobStatus.PENDING, saved.getStatus());
+    assertEquals(1024, saved.getImagesHeight());
+    assertEquals(1024, saved.getImagesWidth());
+  }
+
+  @SneakyThrows
+  @Test
+  void save_annotation_job_uses_the_bucket_configured_on_the_detectable_objects() {
+    when(bucketComponentMock.getBucketName()).thenReturn("defaultBucket");
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId("detectionJobId"))
+        .thenReturn(
+            List.of(
+                DetectableObjectConfiguration.builder().build(),
+                DetectableObjectConfiguration.builder().bucketStorageName("customBucket").build()));
+
+    subject.saveAnnotationJob(
+        "detectionJobId", "annotationJobId", "jobName", List.of(), JobStatus.PENDING);
+
+    var captor = ArgumentCaptor.forClass(CrupdateJob.class);
+    verify(jobsApi()).saveJob(eq("annotationJobId"), captor.capture());
+    assertEquals("customBucket", captor.getValue().getBucketName());
+  }
+
+  @SneakyThrows
+  @Test
+  void save_annotation_job_reports_annotator_errors_to_cause_a_retry() {
+    when(bucketComponentMock.getBucketName()).thenReturn("defaultBucket");
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId("detectionJobId"))
+        .thenReturn(List.of());
+    when(jobsApi().saveJob(any(), any())).thenThrow(annotatorError("annotator down"));
+    var labels = List.of(new Label().name("PISCINE"));
+
+    var error =
+        assertThrows(
+            app.bpartners.geojobs.model.exception.ApiException.class,
+            () ->
+                subject.saveAnnotationJob(
+                    "detectionJobId", "annotationJobId", "jobName", labels, JobStatus.PENDING));
+
+    assertTrue(error.getMessage().contains("annotationJob(id=annotationJobId"));
+    assertTrue(error.getMessage().contains("annotator down"));
   }
 }
