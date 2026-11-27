@@ -10,6 +10,8 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.ImageController;
 import app.bpartners.geojobs.endpoint.rest.model.ImageDetails;
+import app.bpartners.geojobs.endpoint.rest.model.ImageZoomLevel;
+import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -20,6 +22,7 @@ import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.FileType;
 import java.math.BigDecimal;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -178,5 +181,95 @@ class ImageControllerTest {
             () -> subject.getImage(notFoundAddress, null, null, null, null, null, null));
 
     assertEquals(expectedMessageException, actual.getMessage());
+  }
+
+  private AreaPictureDetails detailsWithPositionAndTile() {
+    var layer = mock(AreaPictureMapLayer.class);
+    when(layer.precisionLevelInCm()).thenReturn(5);
+    return new AreaPictureDetails(
+        "areaPictureId",
+        layer,
+        new app.bpartners.geojobs.service.dashboard.component.GeoPosition(48.85, 2.35),
+        new app.bpartners.geojobs.service.dashboard.component.TileCoordinates(
+            100, 200, new app.bpartners.geojobs.service.dashboard.component.Zoom("HOUSES_0", 20)));
+  }
+
+  @Test
+  void get_image_by_coordinates_uses_them_as_address_and_geo_position() {
+    reset(areaPictureApiMock);
+    var details = detailsWithPositionAndTile();
+    when(areaPictureApiMock.crupdateAreaPictureDetails(any(), any(), any())).thenReturn(details);
+    var longitude = BigDecimal.valueOf(2.5);
+    var latitude = BigDecimal.valueOf(48.5);
+
+    var actual = subject.getImage(null, null, null, null, longitude, latitude, null);
+
+    assertNull(actual.getAddress());
+    assertEquals(latitude, actual.getCurrentGeoPosition().getLatitude());
+    assertEquals(longitude, actual.getCurrentGeoPosition().getLongitude());
+    assertEquals(100, actual.getMinTileCoordinates().getX());
+    assertEquals(200, actual.getMinTileCoordinates().getY());
+    assertEquals(20, actual.getMinTileCoordinates().getZ());
+    var detailsCaptor = ArgumentCaptor.forClass(CrupdateAreaPictureDetails.class);
+    verify(areaPictureApiMock).crupdateAreaPictureDetails(any(), detailsCaptor.capture(), any());
+    assertEquals("48.5,2.5", detailsCaptor.getValue().address());
+  }
+
+  @Test
+  void get_image_by_address_uses_the_geo_position_found_for_the_address() {
+    reset(areaPictureApiMock);
+    var details = detailsWithPositionAndTile();
+    when(areaPictureApiMock.crupdateAreaPictureDetails(any(), any(), any())).thenReturn(details);
+
+    var actual = subject.getImage("some address", null, null, null, null, null, null);
+
+    assertEquals("some address", actual.getAddress());
+    assertEquals(BigDecimal.valueOf(48.85), actual.getCurrentGeoPosition().getLatitude());
+    assertEquals(BigDecimal.valueOf(2.35), actual.getCurrentGeoPosition().getLongitude());
+  }
+
+  @Test
+  void get_image_maps_the_requested_zoom_levels_to_tiling_zoom_levels() {
+    subject.getImage("address", ImageZoomLevel.BUILDING, null, null, null, null, null);
+    subject.getImage("address", ImageZoomLevel.NEIGHBORHOOD, null, null, null, null, null);
+    subject.getImage("address", ImageZoomLevel.DISTRICT, null, null, null, null, null);
+
+    var detailsCaptor = ArgumentCaptor.forClass(CrupdateAreaPictureDetails.class);
+    verify(areaPictureApiMock, times(3))
+        .crupdateAreaPictureDetails(any(), detailsCaptor.capture(), any());
+    assertEquals(
+        List.of(
+            ZoneTilingJob.ZoomLevelEnum.HOUSES_0,
+            ZoneTilingJob.ZoomLevelEnum.BUILDING,
+            ZoneTilingJob.ZoomLevelEnum.BUILDINGS),
+        detailsCaptor.getAllValues().stream().map(CrupdateAreaPictureDetails::zoomLevel).toList());
+  }
+
+  @Test
+  void get_image_reports_area_picture_details_failures() {
+    reset(areaPictureApiMock);
+    when(areaPictureApiMock.crupdateAreaPictureDetails(any(), any(), any()))
+        .thenThrow(new IllegalStateException("geodata down"));
+
+    var error =
+        assertThrows(
+            ApiException.class,
+            () -> subject.getImage("some address", null, null, null, null, null, null));
+
+    assertEquals("Unable to retrieve image of address : some address", error.getMessage());
+  }
+
+  @Test
+  void get_image_reports_file_download_failures() {
+    reset(fileApiMock);
+    when(fileApiMock.downloadOrUploadFile(any(), any(), any()))
+        .thenThrow(new IllegalStateException("file api down"));
+
+    var error =
+        assertThrows(
+            ApiException.class,
+            () -> subject.getImage("some address", null, null, null, null, null, null));
+
+    assertEquals("Unable to retrieve image of address : some address", error.getMessage());
   }
 }
