@@ -6,13 +6,11 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
-import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import app.bpartners.geojobs.validator.CreateApiKeyValidator;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ApiKeyMapper {
-  private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final CreateApiKeyValidator createApiKeyValidator;
 
   public List<CommunityAuthorization> toCommunityAuthorization(List<CreateApiKey> createApiKeys) {
@@ -89,15 +86,6 @@ public class ApiKeyMapper {
                     .multiPolygon(authorizedZone.getZone())
                     .build())
         .toList();
-  }
-
-  private CommunityDetectableObjectType toCommunityDetectableObjectType(
-      String newCommunityId, DetectableObjectType detectableObjectType) {
-    return CommunityDetectableObjectType.builder()
-        .id(randomUUID().toString())
-        .communityAuthorizationId(newCommunityId)
-        .type(detectableObjectTypeMapper.toDomain(detectableObjectType))
-        .build();
   }
 
   private Authority.Role toDomain(CreateApiKey.ConsumerTypeEnum rest) {
