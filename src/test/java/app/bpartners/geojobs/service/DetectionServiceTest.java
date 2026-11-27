@@ -13,6 +13,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
+import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.ZIP_BUCKET_FOLDER;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.io.File.createTempFile;
 import static java.time.Instant.now;
@@ -26,6 +27,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
@@ -47,6 +49,8 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.PaymentRequiredException;
+import app.bpartners.geojobs.model.page.BoundedPageSize;
+import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.CachedAreaPictureMapLayerRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -1872,5 +1876,190 @@ class DetectionServiceTest {
               assertEquals(detectionId, ((FeatureVggRequested) event).getDetectionIdentifier());
             });
     assertEquals(REQUEST_ACCEPTED, actual.getComputedStep().getName());
+  }
+
+  private app.bpartners.geojobs.repository.model.detection.Detection.DetectionBuilder
+      persistedDetection(String detectionId, String e2eId) {
+    return app.bpartners.geojobs.repository.model.detection.Detection.builder()
+        .id(detectionId)
+        .endToEndId(e2eId)
+        .zoneName("zoneName");
+  }
+
+  @Test
+  void configure_file_result_requires_a_community() {
+    var file = mock(MultipartFile.class);
+
+    var error =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> subject.configureFileResult(null, "e2eId", file, "geojson"));
+
+    assertEquals("To sumbit result, communityAuthorizationId is mandatory", error.getMessage());
+  }
+
+  @Test
+  void configure_file_result_fails_when_detection_is_unknown_for_the_community() {
+    var file = mock(MultipartFile.class);
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId("e2eId", "communityId"))
+        .thenReturn(Optional.empty());
+
+    var error =
+        assertThrows(
+            NotFoundException.class,
+            () -> subject.configureFileResult("communityId", "e2eId", file, "geojson"));
+
+    assertEquals(
+        "Detection(e2e.id=e2eId) not found for communityOwnerId=communityId", error.getMessage());
+  }
+
+  @SneakyThrows
+  @Test
+  void configure_file_result_stores_zip_results_in_the_zip_folder_and_finishes_post_processing() {
+    var detection = persistedDetection("detectionId", "e2eId").build();
+    var multipartFile = mock(MultipartFile.class);
+    var bytes = new byte[] {1};
+    var toUpload = mock(File.class);
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId("e2eId", "communityId"))
+        .thenReturn(Optional.of(detection));
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    when(multipartFile.getBytes()).thenReturn(bytes);
+    when(fileWriterMock.apply(bytes, null)).thenReturn(toUpload);
+
+    var actual = subject.configureFileResult("communityId", "e2eId", multipartFile, "ZIP");
+
+    var keyCaptor = ArgumentCaptor.forClass(String.class);
+    verify(bucketComponentMock).upload(eq(toUpload), keyCaptor.capture());
+    assertEquals(ZIP_BUCKET_FOLDER + "detectionId/zoneName.zip", keyCaptor.getValue());
+    var savedCaptor =
+        ArgumentCaptor.forClass(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    verify(detectionRepositoryMock, atLeastOnce()).save(savedCaptor.capture());
+    assertEquals(
+        ZIP_BUCKET_FOLDER + "detectionId/zoneName.zip",
+        savedCaptor.getAllValues().getFirst().getGeojsonS3FileKey());
+    assertEquals("e2eId", actual.getEndToEndId());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
+  }
+
+  @SneakyThrows
+  @Test
+  void send_mail_about_prospect_sends_the_pdf_result_to_the_prospect() {
+    var detection = persistedDetection("detectionId", "e2eId").pdfFileKey("result.pdf").build();
+    var prospect = new Prospect();
+    var pdf = mock(File.class);
+    when(detectionRepositoryMock.findByEndToEndId("e2eId")).thenReturn(Optional.of(detection));
+    when(bucketComponentMock.download("result.pdf")).thenReturn(pdf);
+
+    var actual = subject.sendMailAboutProspect("e2eId", prospect);
+
+    verify(roofAnalysisMailerMock).accept(prospect, pdf);
+    assertEquals("detectionId", actual.getId());
+    assertEquals(MACHINE_DETECTION, actual.getCurrentStep().getName());
+  }
+
+  @Test
+  void send_mail_about_prospect_fails_when_detection_is_unknown() {
+    var prospect = new Prospect();
+    when(detectionRepositoryMock.findByEndToEndId("e2eId")).thenReturn(Optional.empty());
+
+    assertThrows(
+        java.util.NoSuchElementException.class,
+        () -> subject.sendMailAboutProspect("e2eId", prospect));
+  }
+
+  @Test
+  void update_detection_step_notifies_when_detection_asks_for_notifications() {
+    var detection = persistedDetection("detectionId", "e2eId").toNotify(true).build();
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId("e2eId", "communityId"))
+        .thenReturn(Optional.of(detection));
+    var step =
+        new DetectionStep()
+            .name(TILING)
+            .status(
+                new Status()
+                    .progression(Status.ProgressionEnum.PROCESSING)
+                    .health(Status.HealthEnum.UNKNOWN)
+                    .creationDatetime(Instant.now()))
+            .statistics(List.of())
+            .updatedAt(Instant.now());
+
+    subject.updateDetectionStep("e2eId", "communityId", step);
+
+    var captor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock).accept(captor.capture());
+    assertTrue(captor.getValue().getFirst() instanceof DetectionStepUpdated);
+    verify(detectionRepositoryMock).save(detection);
+  }
+
+  private List<app.bpartners.geojobs.repository.model.detection.Detection> detectionsFor(
+      app.bpartners.geojobs.repository.model.detection.Detection persisted,
+      Optional<String> communityId,
+      Optional<String> zoneName) {
+    return subject.getDetectionsByCriteria(
+        communityId,
+        new PageFromOne(1),
+        new BoundedPageSize(10),
+        Instant.parse("2026-02-01T00:00:00Z"),
+        Instant.parse("2026-03-01T00:00:00Z"),
+        zoneName);
+  }
+
+  @Test
+  void detections_by_criteria_filter_by_community_and_zone_name() {
+    var persisted = persistedDetection("id1", "e2e1").build();
+    when(detectionRepositoryMock
+            .findByCommunityOwnerIdAndCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
+                eq("communityId"), any(), any(), eq("zone"), any()))
+        .thenReturn(List.of(persisted));
+
+    var actual = detectionsFor(persisted, Optional.of("communityId"), Optional.of("zone"));
+
+    assertEquals(1, actual.size());
+    assertEquals("e2e1", actual.getFirst().getId());
+  }
+
+  @Test
+  void detections_by_criteria_filter_by_community_only() {
+    var persisted = persistedDetection("id1", "e2e1").build();
+    when(detectionRepositoryMock
+            .findByCommunityOwnerIdAndCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+                eq("communityId"), any(), any(), any()))
+        .thenReturn(List.of(persisted));
+
+    var actual = detectionsFor(persisted, Optional.of("communityId"), Optional.empty());
+
+    assertEquals(1, actual.size());
+  }
+
+  @Test
+  void detections_by_criteria_filter_by_zone_name_only() {
+    var persisted = persistedDetection("id1", "e2e1").build();
+    when(detectionRepositoryMock
+            .findAllByCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
+                any(), any(), eq("zone"), any()))
+        .thenReturn(List.of(persisted));
+
+    var actual = detectionsFor(persisted, Optional.empty(), Optional.of("zone"));
+
+    assertEquals(1, actual.size());
+  }
+
+  @Test
+  void detections_by_criteria_without_filter_expose_the_statistic_of_the_furthest_job() {
+    var withZdj = persistedDetection("id1", "e2e1").zdjId("zdj1").ztjId("ztj1").build();
+    var withZtjOnly = persistedDetection("id2", "e2e2").ztjId("ztj2").build();
+    var withoutJob = persistedDetection("id3", "e2e3").build();
+    when(detectionRepositoryMock.findAllByCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+            any(), any(), any()))
+        .thenReturn(List.of(withZdj, withZtjOnly, withoutJob));
+    when(zoneDetectionJobServiceMock.getTaskStatistic("zdj1")).thenReturn(new TaskStatistic());
+    when(tilingJobServiceMock.getTaskStatistic("ztj2")).thenReturn(new TaskStatistic());
+
+    var actual = detectionsFor(withZdj, Optional.empty(), Optional.empty());
+
+    assertEquals(3, actual.size());
+    assertEquals(MACHINE_DETECTION, actual.get(0).getCurrentStep().getName());
+    assertEquals(TILING, actual.get(1).getCurrentStep().getName());
+    assertEquals(REQUEST_ACCEPTED, actual.get(2).getCurrentStep().getName());
   }
 }
